@@ -38,4 +38,4 @@ class BaseViewSet(viewsets.ModelViewSet):
             message=f"{self.entity_name} deleted successfully",
             data=None,
             status=status.HTTP_200_OK
-        )
+        ) 
