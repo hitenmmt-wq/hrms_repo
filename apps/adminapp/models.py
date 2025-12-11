@@ -7,8 +7,8 @@ class Users(AbstractUser):
     username = None
     role = models.CharField(max_length=50, null=True, blank=True, default="employee")
     email = models.EmailField(unique=True, null=True, blank=True)
-    # department = models.ForeignKey("Department", on_delete=models.CASCADE, related_name="user_department", null=True, blank=True)
-    # salary = models.FloatField(default=0.0)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE, related_name="user_department", null=True, blank=True)
+    profile = models.ImageField(upload_to="profile", null=True, blank=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -67,3 +67,32 @@ class Attendance(BaseModel):
 
     def __str__(self):
         return f"{self.user.email} - {self.date} - {self.status}"
+    
+    
+# class EmployeeSalary(BaseModel):
+#     user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_salary")
+#     status = models.CharField(max_length=50, default="pending")
+    
+#     start_pay_period = models.DateField(null=True, blank=True)
+#     end_pay_period = models.DateField(null=True, blank=True)
+    
+#     month = models.CharField(max_length=50)
+#     year = models.CharField(max_length=50)
+    
+#     starting_salary = models.FloatField(default=0.0)
+#     previous_salary = models.FloatField(default=0.0)
+#     current_salary = models.FloatField(default=0.0)
+
+#     def __str__(self):
+#         return f"{self.user.email} - {self.month} - {self.year}"
+    
+# class EmployeePayslip(BaseModel):
+#     employee_salary = models.ForeignKey("EmployeeSalary", on_delete=models.CASCADE, related_name="employee_payslip")
+#     basic_fee = models.FloatField(default=0.0)
+#     basic_fee = models.FloatField(default=0.0)
+#     basic_fee = models.FloatField(default=0.0)
+#     status = models.CharField(max_length=50, default="pending")
+    
+
+#     def __str__(self):
+#         return f"{self.user.email} - {self.month} - {self.year}"
