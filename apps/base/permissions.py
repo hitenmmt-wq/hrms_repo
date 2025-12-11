@@ -16,3 +16,7 @@ class IsHr(BasePermission):
 class IsEmployee(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == "employee"
+
+class IsAuthenticated(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
