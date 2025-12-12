@@ -9,6 +9,9 @@ class Users(AbstractUser):
     email = models.EmailField(unique=True, null=True, blank=True)
     department = models.ForeignKey("Department", on_delete=models.CASCADE, related_name="user_department", null=True, blank=True)
     profile = models.ImageField(upload_to="profile", null=True, blank=True)
+    employee_id = models.CharField(max_length=50, null=True, blank=True)
+    position = models.ForeignKey("Position", on_delete=models.CASCADE, related_name="user_position", null=True, blank=True)
+    joining_date = models.DateTimeField(null=True, blank=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -17,6 +20,12 @@ class Users(AbstractUser):
         return self.email
     
 class Department(BaseModel):
+    name = models.CharField(max_length=50)
+    
+    def __str__(self):
+        return self.name
+    
+class Position(BaseModel):
     name = models.CharField(max_length=50)
     
     def __str__(self):
@@ -38,16 +47,34 @@ class Leave(BaseModel):
         ("privilege ", "privilege "),
         ("other", "other"),
     )
-    user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_leaves")
+    employee = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_leaves")
     leave_type = models.CharField(max_length=50, choices=LEAVE_TYPE, default="other")
     from_date = models.DateField()
     to_date = models.DateField(null=True, blank=True)
+    total_days = models.IntegerField(null=True, blank=True)
     reason = models.TextField()
     status = models.CharField(max_length=50, default="pending")
-
+    
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(Users, null=True, blank=True, related_name="approved_leaves",on_delete=models.SET_NULL)
+    response_text = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=["employee", "from_date", "to_date"]),
+            models.Index(fields=["status"]),
+        ]
+        
     def __str__(self):
         return f"{self.user.email} - {self.leave_type} - {self.status}"
     
+    def save(self, *args, **kwargs):
+        if not self.to_date:
+            self.total_days = 1
+        else:
+            self.total_days = (self.to_date - self.from_date).days + 1  
+        super().save(*args, **kwargs)
+            
 
 class Attendance(BaseModel):
     ATTENDANCE_TYPE = (
@@ -62,7 +89,7 @@ class Attendance(BaseModel):
     date = models.DateField()
     check_in = models.TimeField(null=True, blank=True)
     check_out = models.TimeField(null=True, blank=True)
-    total_time = models.TimeField(null=True, blank=True)
+    work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
 
     def __str__(self):
