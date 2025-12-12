@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apps.adminapp import models
+from apps.employee.models import LeaveBalance
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -12,6 +13,16 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class DepartmentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Department
+        fields = '__all__'
+        
+class PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Position
+        fields = '__all__'
+        
+class PositionListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Position
         fields = '__all__'
 
 class HolidaySerializer(serializers.ModelSerializer):
@@ -43,7 +54,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["role"] = user.role
-        print(f"==>> token: {token}")
         return token
 
     def validate(self, attrs):
@@ -58,8 +68,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "first_name": self.user.first_name or None,
             "last_name": self.user.last_name or None,
         }
-
-        print(f"==>> data: {data}")
         return data
 
 class UserSerializer(serializers.ModelSerializer):
@@ -82,3 +90,44 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Users
         fields = ['first_name', 'last_name', 'profile']
+        
+class LeaveApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Leave
+        fields = ["id", "leave_type", "start_date", "end_date", "reason"]
+
+    def validate(self, attrs):
+        if attrs["end_date"] < attrs["start_date"]:
+            raise serializers.ValidationError("end_date cannot be before start_date")
+        # optionally check for future dates, max days, etc.
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        employee = request.user
+        return models.apply_leave(employee, **validated_data)
+    
+class LeaveSerializer(serializers.ModelSerializer):
+    employee = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Leave
+        fields = [
+            "id", "employee", "leave_type", "from_date", "to_date",
+            "total_days", "status", "reason", "approved_at", "approved_by", "response_text"
+        ]
+        read_only_fields = ["total_days", "status", "approved_at", "approved_by"]
+
+    def get_employee(self, obj):
+        return {
+            "id": obj.employee.id,
+            "email": obj.employee.email,
+            "first_name": getattr(obj.employee, "first_name", ""),
+            "last_name": getattr(obj.employee, "last_name", ""),
+        }
+
+
+class LeaveBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeaveBalance
+        fields = ["year", "pl", "sl", "lop"]

@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from apps.adminapp import models
 from apps.adminapp import serializers
 from rest_framework.response import Response
@@ -11,8 +11,9 @@ from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.core.mail import send_mail  
 from django.conf import settings
-from apps.adminapp.filters import HolidayFilter
+from apps.adminapp.custom_filters import HolidayFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.viewset import BaseViewSet
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.decorators import method_decorator
@@ -20,6 +21,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.views import TokenObtainPairView
 import jwt
 from apps.adminapp.tasks import send_email_task
+from apps.base import constants
+from rest_framework.decorators import action
+import json
 # Create your views here.
 
 #  =============================================  USER AUTHENTICATION ==================================================================
@@ -48,10 +52,8 @@ class ChangePassword(APIView):
 class ResetPassword(APIView):
     def post(self, request):
         email = request.data.get("email")
-        print(f"==>> email: {email}")
         try:
             user = models.Users.objects.get(email=email)
-            print(f"==>> user: {user}")
         except models.Users.DoesNotExist:
             return Response({"error": "User with this email does not exist"}, status=404)
 
@@ -66,7 +68,7 @@ class ResetPassword(APIView):
 
         return Response({"message": "Password reset link sent successfully"})
     
-class VerifyResetLink(APIView):
+class ResetPasswordChange(APIView):
     def post(self, request):
         uid = request.data.get("uid")
         token = request.data.get("token")
@@ -89,20 +91,17 @@ class AdminRegister(BaseViewSet):
 
     def create(self, request):
         data = request.data
-        print(data)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             token = RefreshToken.for_user(user).access_token
             
-            activation_link = apps.base.constants.ACCOUNT_ACTIVATION_URL  # f"http://127.0.0.1:8000/adminapp/activate/{token}/"
+            activation_link = constants.ACCOUNT_ACTIVATION_URL  # f"http://127.0.0.1:8000/adminapp/activate/{token}/"
 
-            send_mail(
+            send_email_task.delay(
                 subject="Activate your account",
-                message=f"Click here to activate your account: /n {activation_link}",
-                from_email = settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+                to_email=user.email,
+                text_body=f"Click here to activate your account: {activation_link}",
             )
 
             return Response({"message": "User created successfully"}, status=201)
@@ -133,7 +132,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class UserViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def get(self, request):
         serializer = serializers.UserSerializer(request.user)
         return Response(serializer.data)
     
@@ -143,6 +142,7 @@ class HolidayViewSet(BaseViewSet):
     entity_name = "Holiday"
     permission_classes = [IsAdmin]
     queryset = models.Holiday.objects.all()
+    pagination_class = CustomPageNumberPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = HolidayFilter
     search_fields = ["name"]
@@ -166,6 +166,7 @@ class DepartmentViewSet(BaseViewSet):
     entity_name = "Department"
     permission_classes = [IsAdmin]
     queryset = models.Department.objects.all()
+    pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["name"]
     search_fields = ["name"]
@@ -176,6 +177,24 @@ class DepartmentViewSet(BaseViewSet):
         if self.action == "list":
             return serializers.DepartmentListSerializer
         return serializers.DepartmentSerializer
+    
+#  =============================================  POSITION CRUD API ==================================================================
+
+class PositionViewSet(BaseViewSet):
+    entity_name = "Position"
+    permission_classes = [IsAdmin]
+    queryset = models.Position.objects.all()
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["name"]
+    search_fields = ["name"]
+    ordering_fields = ["name"]
+    ordering = ["name"]
+    
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.PositionListSerializer
+        return serializers.PositionSerializer
     
 #  =============================================  PROFILE CRUD API ==================================================================
 
@@ -193,3 +212,92 @@ class ProfileViewSet(BaseViewSet):
             return serializers.ProfileUpdateSerializer
         return serializers.ProfileSerializer
     
+
+#  =============================================  LEAVES CRUD API ==================================================================
+
+
+class LeaveViewSet(viewsets.ModelViewSet):
+    
+    queryset = models.Leave.objects.select_related("employee", "approved_by").all()
+    serializer_class = serializers.LeaveSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPageNumberPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == "admin":
+            return super().get_queryset()
+        return super().get_queryset().filter(employee=user)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LeaveApplySerializer
+        return LeaveSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        leave = serializer.save()
+        return ApiResponse.success(
+            message="Leave applied successfully",
+            data=LeaveSerializer(leave).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def cancel(self, request, pk=None):
+        leave = get_object_or_404(models.Leave, id=pk, employee=request.user)
+        if leave.status == models.Leave.LEAVE_STATUS_APPROVED:
+            return ApiResponse.error("Cannot cancel approved leave", status=400)
+        leave.status = models.Leave.LEAVE_STATUS_CANCELLED
+        leave.save(update_fields=["status"])
+        return ApiResponse.success("Leave cancelled")
+
+
+class LeaveApprovalViewSet(BaseViewSet):
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        user = request.user
+        if user.role != "admin":
+            return ApiResponse.error("Permission denied", status=403)
+
+        try:
+            leave_data = models.Leave.objects.filter(id=pk).first()
+            leave_data.status = "approved"
+            leave_data.approved_at = datetime.datetime.now()
+            leave_data.approved_by = user
+            leave_data.response_text = request.data.get("response_text", "")
+            leave_data.save(update_fields=["status", "approved_by", "approved_at", "response_text"])
+            
+            serialize = serializers.LeaveSerializer(leave_data)
+            return ApiResponse.success(
+                message="Leave approved",
+                data= serialize.data,
+                status=status.HTTP_200_OK
+            )
+        except Exception as exc:
+            return ApiResponse.error(str(exc), status=400)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        user = request.user
+        if user.role != "admin":
+            return ApiResponse.error("Permission denied", status=403)
+        try:
+            leave = models.Leave.objects.filter(id=pk).first()
+            leave.status = "rejected"
+            leave.approved_by = user
+            leave.approved_at = datetime.datetime.now()
+            leave.response_text = request.data.get("response_text", "")
+            leave.save(update_fields=["status", "approved_by", "approved_at", "response_text"])
+
+            serialize = serializers.LeaveSerializer(leave)
+            return ApiResponse.success(
+                message="Leave rejected",
+                data= serialize.data,
+                status=status.HTTP_200_OK
+            )
+        except Exception as exc:
+            return ApiResponse.error(str(exc), status=400)

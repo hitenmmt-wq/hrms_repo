@@ -12,7 +12,7 @@ class Conversation(models.Model):
     )
     type = models.CharField(max_length=20, choices=CONVERSATION_TYPES)
     name = models.CharField(max_length=255, null=True, blank=True) 
-    participants = models.ManyToManyField(User, related_name="conversations")
+    participants = models.ManyToManyField(Users, related_name="conversations")
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -33,7 +33,7 @@ class Message(BaseModel):
 
 class MessageStatus(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="statuses")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_status")
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="user_status")
     status = models.CharField(max_length=20, default="sent")
     updated_at = models.DateTimeField(auto_now=True)
 
