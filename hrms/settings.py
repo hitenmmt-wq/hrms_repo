@@ -50,6 +50,7 @@ DJANGO_APPS = [
     'apps.adminapp',
     'apps.chat',
     'apps.employee',
+    'apps.attendanceapp',
 ]
 
 THIRD_PARTY_APPS = [

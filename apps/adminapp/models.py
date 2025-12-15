@@ -12,18 +12,27 @@ class Users(AbstractUser):
     employee_id = models.CharField(max_length=50, null=True, blank=True)
     position = models.ForeignKey("Position", on_delete=models.CASCADE, related_name="user_position", null=True, blank=True)
     joining_date = models.DateTimeField(null=True, blank=True)
+    birthdate = models.DateTimeField(null=True, blank=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     
     def __str__(self):
-        return self.email
+        return f"{self.email} - {self.employee_id}"
     
 class Department(BaseModel):
     name = models.CharField(max_length=50)
     
     def __str__(self):
         return self.name
+    
+class Announcement(BaseModel):
+    title = models.CharField(max_length=225)
+    description = models.TextField()
+    date = models.DateTimeField()
+
+    def __str__(self):
+        return self.title
     
 class Position(BaseModel):
     name = models.CharField(max_length=50)
@@ -76,24 +85,24 @@ class Leave(BaseModel):
         super().save(*args, **kwargs)
             
 
-class Attendance(BaseModel):
-    ATTENDANCE_TYPE = (
-        ("present", "present"),
-        ("unpaid_leave", "unpaid_leave"),
-        ("paid_leave", "paid_leave"),
-        ("half_day", "half_day"),
-        ("incomplete_hours", "incomplete_hours"),
-        ("pending", "pending"),
-    )
-    user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_attendance")
-    date = models.DateField()
-    check_in = models.TimeField(null=True, blank=True)
-    check_out = models.TimeField(null=True, blank=True)
-    work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
+# class Attendance(BaseModel):
+#     ATTENDANCE_TYPE = (
+#         ("present", "present"),
+#         ("unpaid_leave", "unpaid_leave"),
+#         ("paid_leave", "paid_leave"),
+#         ("half_day", "half_day"),
+#         ("incomplete_hours", "incomplete_hours"),
+#         ("pending", "pending"),
+#     )
+#     user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_attendance")
+#     date = models.DateField()
+#     check_in = models.TimeField(null=True, blank=True)
+#     check_out = models.TimeField(null=True, blank=True)
+#     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+#     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
 
-    def __str__(self):
-        return f"{self.user.email} - {self.date} - {self.status}"
+#     def __str__(self):
+#         return f"{self.user.email} - {self.date} - {self.status}"
     
     
 # class EmployeeSalary(BaseModel):

@@ -9,9 +9,27 @@ from django_filters.rest_framework import DjangoFilterBackend
 from apps.employee.custom_filters import EmployeeFilter
 from rest_framework import filters
 from apps.employee.models import LeaveBalance
+from django.utils import timezone
 from apps.employee.serializers import * #EmployeeListSerializer, LeaveBalanceSerializer, EmployeeUpdateSerializer, EmployeeCreateSerializer, ApplyLeaveCreateSerializer, ApplyLeaveSerializer
 # Create your views here.
 
+
+class EmployeeDashboardView(APIView):
+    def get(self, request):
+        try:
+                
+            today = timezone.now().date()
+            holiday_list = models.Holiday.objects.filter(date__year=timezone.now().year).order_by("date")
+            upcoming_approved_leaves = models.Leave.objects.filter(status="approved", employee=request.user, date__gte=today).order_by("-id")[:5]
+            leave_history = models.Leave.objects.filter(employee=request.user).order_by("-id")[:5]
+            
+            attendance = ""
+            leave_calender = ""
+            salary = ""
+            
+        except Exception as e:
+            return ApiResponse.error(message="Failed to load dashboard",errors=str(e), status=500)
+        
 
 class EmployeeViewSet(BaseViewSet):
     queryset = models.Users.objects.filter(role="employee")
