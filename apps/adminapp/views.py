@@ -1,30 +1,105 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import viewsets, filters, status
-from apps.adminapp import models
-from apps.adminapp import serializers
-from rest_framework.response import Response
-from rest_framework.decorators import APIView
-import datetime
 from django.utils import timezone
-from apps.base.response import ApiResponse
-from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.core.mail import send_mail  
 from django.conf import settings
-from apps.adminapp.custom_filters import HolidayFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.base.pagination import CustomPageNumberPagination
-from apps.base.viewset import BaseViewSet
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework_simplejwt.views import TokenObtainPairView
-import jwt
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
+from apps.adminapp import models
+from apps.adminapp import serializers
+from apps.base.response import ApiResponse
+from apps.adminapp.custom_filters import HolidayFilter, AnnouncementFilter
+from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
+from apps.base.pagination import CustomPageNumberPagination
+from apps.base.viewset import BaseViewSet
 from apps.adminapp.tasks import send_email_task
 from apps.base import constants
+
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework.response import Response
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import action
+
+import datetime
+import jwt
 import json
 # Create your views here.
+
+#  =============================================  CUSTOM SCRIPT  ==================================================================
+
+class CustomScriptView(APIView):
+    def get(self, request):
+        # data  = models.Users.objects.all().order_by("id")
+        # counter = 1
+        # year = timezone.now().year
+        
+        # for ab in data:
+        #     print(ab.id)
+        #     ab.employee_id = f"EMP{year}{str(counter).zfill(3)}"
+        #     ab.save(update_fields=['employee_id'])
+        #     print("done")
+        #     counter += 1 
+            
+        print("hiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+        return ApiResponse.success({"message": "script worked successfully"})
+
+#  =============================================  ADMIN DASHBOARD  ==================================================================
+
+class AdminDashboardView(APIView):
+    def get(self, request):
+        try:
+            today = timezone.now().date()
+            
+            employee_count = models.Users.objects.filter(is_active=True).count()
+            pending_approval_count = models.Leave.objects.filter(status="pending", from_date__gte=today).count()
+            present_employee = ""
+            absent_employee = ""
+            
+            current_birthdays = models.Users.objects.filter(is_active=True,birthdate__month=today.month,birthdate__day=today.day)
+            upcoming_leaves = models.Leave.objects.filter(status="approved",from_date__gte=today)[:5]
+            upcoming_holidays = models.Holiday.objects.filter(date__gte=today).order_by("date")[:3]
+            late_logins = ""
+
+            recent_joiners = models.Users.objects.filter(is_active=True).order_by("-joining_date")[:3]
+
+            data = {
+                "counts": {
+                    "employee_count": employee_count,
+                    "pending_approvals": pending_approval_count,
+                },
+                "current_birthdays": serializers.UserMiniSerializer(
+                    current_birthdays, many=True
+                ).data,
+                "upcoming_leaves": serializers.LeaveMiniSerializer(
+                    upcoming_leaves, many=True
+                ).data,
+                "upcoming_holidays": serializers.HolidayMiniSerializer(
+                    upcoming_holidays, many=True
+                ).data,
+                "recent_joiners": serializers.UserMiniSerializer(
+                    recent_joiners, many=True
+                ).data,
+            }
+
+            return ApiResponse.success(data=data)
+
+        except Exception as e:
+            return ApiResponse.error(
+                message="Failed to load dashboard",
+                errors=str(e),
+                status=500,
+            )
+        
+        
+    
+        
 
 #  =============================================  USER AUTHENTICATION ==================================================================
 
@@ -53,12 +128,15 @@ class ResetPassword(APIView):
     def post(self, request):
         email = request.data.get("email")
         try:
-            user = models.Users.objects.get(email=email)
+            user = models.Users.objects.filter(email=email).first()
         except models.Users.DoesNotExist:
             return Response({"error": "User with this email does not exist"}, status=404)
 
-        token = jwt.encode({"user_id": user.id}, settings.SECRET_KEY, algorithm="HS256")
-        reset_link = f"http://127.0.0.1:8000/adminapp/auth/confirm_reset_password/{token}"
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = PasswordResetTokenGenerator().make_token(user)
+        # token = jwt.encode({"user_id": user.id}, settings.SECRET_KEY, algorithm="HS256")
+        
+        reset_link = f"http://127.0.0.1:8000/adminapp/auth/confirm_reset_password/?uid={uid}&?token={token}"
 
         send_email_task.delay(
             subject="Reset Password",
@@ -73,17 +151,25 @@ class ResetPasswordChange(APIView):
         uid = request.data.get("uid")
         token = request.data.get("token")
         new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+        
+        if new_password != confirm_password:
+            return Response({"error": "Passwords do not match"}, status=400)
 
         try:
             user_id = force_str(urlsafe_base64_decode(uid))
-            user = User.objects.filter(pk=user_id).first()
-        except:
-            return Response({"message": "Invalid link"}, status=400)
+            user = models.Users.objects.filter(pk=user_id).first()
+        except Exception as e:
+            return Response({"error": f"Invalid reset link, {e}"}, status=400)
 
-        if PasswordResetTokenGenerator().check_token(user, token):
-            return Response({"valid": True})
-        else:
-            return Response({"valid": False}, status=400)
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response({"error": "Invalid or expired token"}, status=400)
+        
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        return Response({"message": "Password reset successful"})
+        
     
 class AdminRegister(BaseViewSet):
     queryset = models.Users.objects.all()
@@ -177,6 +263,25 @@ class DepartmentViewSet(BaseViewSet):
         if self.action == "list":
             return serializers.DepartmentListSerializer
         return serializers.DepartmentSerializer
+    
+    
+#  =============================================  ANNOUNCEMENT CRUD API ==================================================================
+
+class AnnouncementViewSet(BaseViewSet):
+    entity_name = "Announcement"
+    permission_classes = [IsAdmin]
+    queryset = models.Announcement.objects.all()
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = AnnouncementFilter
+    search_fields = ["title"]
+    ordering_fields = ["title"]
+    ordering = ["title"]
+    
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.AnnouncementListSerializer
+        return serializers.AnnouncementSerializer
     
 #  =============================================  POSITION CRUD API ==================================================================
 

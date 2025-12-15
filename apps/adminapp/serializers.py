@@ -15,6 +15,16 @@ class DepartmentListSerializer(serializers.ModelSerializer):
         model = models.Department
         fields = '__all__'
         
+class AnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Announcement
+        fields = '__all__'
+        
+class AnnouncementListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Announcement
+        fields = '__all__'
+                
 class PositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Position

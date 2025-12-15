@@ -12,3 +12,12 @@ class HolidayFilter(django_filters.FilterSet):
 
     def filter_year(self, queryset, name, value):
         return queryset.filter(date__year=value)
+
+
+class AnnouncementFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
+    date = django_filters.DateFilter(field_name="date", lookup_expr="exact")
+
+    class Meta:
+        model = models.Announcement
+        fields = ["title", "date"]
