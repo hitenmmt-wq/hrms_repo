@@ -12,7 +12,6 @@ router.register(r'apply_leave', views.ApplyLeaveViewSet, basename='apply_leave')
 
 urlpatterns = [
     path('', include(router.urls)),
-    # path('auth/confirm_reset_password/<str:token>/', views.ConfirmResetPassword.as_view(), name='confirm_reset_password'),
     
     path("employee_dashboard/", views.EmployeeDashboardView.as_view(), name="employee_dashboard"),
     

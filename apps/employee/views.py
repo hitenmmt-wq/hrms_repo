@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from apps.base.viewset import BaseViewSet
-from apps.adminapp import models
-from apps.adminapp import serializers
+from apps.superadmin import models
+from apps.superadmin import serializers
 from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
 from apps.base.pagination import CustomPageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.employee.custom_filters import EmployeeFilter
+from apps.employee.custom_filters import EmployeeFilter, ApplyLeaveFilter, LeaveBalanceFilter
 from rest_framework import filters
 from apps.employee.models import LeaveBalance
 from django.utils import timezone
@@ -59,6 +59,7 @@ class LeaveBalanceViewSet(BaseViewSet):
     entity_name = "Leave Balance"
     permission_classes = [IsAdmin]
     pagination_class = CustomPageNumberPagination
+    filterset_class = LeaveBalanceFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["year","employee__email","employee__last_name","employee__first_name","employee__role","employee__department__name"]
     ordering_fields = ["employee__email", "employee__role", "employee__first_name", "employee__last_name"]
@@ -73,6 +74,7 @@ class ApplyLeaveViewSet(BaseViewSet):
     entity_name = "Apply Leave"
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPageNumberPagination
+    filterset_class = ApplyLeaveFilter
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["leave_type","employee__email","employee__last_name","employee__first_name", "from_date", "to_date", "status"]
     ordering_fields = ["leave_type","employee__email", "employee__role", "employee__first_name", "employee__last_name"]

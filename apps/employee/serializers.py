@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.adminapp import models
+from apps.superadmin import models
 from apps.employee.models import LeaveBalance
 
 

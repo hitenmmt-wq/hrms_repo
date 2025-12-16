@@ -1,6 +1,6 @@
 from django.db import models
 from apps.base.models import BaseModel
-from apps.adminapp.models import Users  
+from apps.superadmin.models import Users  
 from django.utils import timezone
 # Create your models here.
 

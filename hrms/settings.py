@@ -47,10 +47,10 @@ LOCAL_APPS = [
 ]
 
 DJANGO_APPS = [
-    'apps.adminapp',
+    'apps.superadmin',
     'apps.chat',
     'apps.employee',
-    'apps.attendanceapp',
+    'apps.attendance',
 ]
 
 THIRD_PARTY_APPS = [
@@ -58,6 +58,7 @@ THIRD_PARTY_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'channels',
+    'django_celery_beat',
 ]
 
 INSTALLED_APPS = LOCAL_APPS + THIRD_PARTY_APPS + DJANGO_APPS
@@ -125,7 +126,7 @@ DATABASES = {
 }
 
 
-AUTH_USER_MODEL = 'adminapp.Users'
+AUTH_USER_MODEL = 'superadmin.Users'
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -169,6 +170,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # For Bcrypt Password hashing
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
 ]
 
 # DRF API
@@ -214,6 +216,8 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 
 # Channels configuration

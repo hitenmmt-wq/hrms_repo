@@ -14,6 +14,6 @@ app.autodiscover_tasks()
 CELERY_BEAT_SCHEDULE = {
     'credit-leave-balances-yearly': {
         'task': 'apps.employee.tasks.credit_new_year_employee_leaves',
-        'schedule': crontab(minute=44, hour=18, day_of_month=12, month_of_year=12),
+        'schedule': crontab(minute=20, hour=10, day_of_month=16, month_of_year=12),
     }
 }

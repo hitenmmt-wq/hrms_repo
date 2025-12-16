@@ -1,11 +1,12 @@
 from celery import shared_task
 from django.utils import timezone
-from apps.adminapp import models
+from apps.superadmin import models
+from apps.employee.models import LeaveBalance
 
 
 @shared_task
 def credit_new_year_employee_leaves():
-    current_year = timezone.now().year
+    current_year = timezone.now().year 
     print(f"==>> current_year: {current_year}")
     new_year = current_year + 1
     print(f"==>> new_year: {new_year}")
@@ -15,6 +16,7 @@ def credit_new_year_employee_leaves():
         leaves = LeaveBalance.objects.get_or_create(year=new_year, pl=12, sl=4, lop=0,employee=employee)
         print(leaves)
         
-    print("done------------==============")
+        print("done------------==============")
+    return "Task cron completed successfully...."
         
     
