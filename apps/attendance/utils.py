@@ -36,9 +36,7 @@ def check_in(employee: Users) -> EmployeeAttendance:
     today = timezone.localdate()
 
     attendance, created = EmployeeAttendance.objects.get_or_create(
-        employee=employee,
-        day=today,
-        defaults={"check_in": timezone.now()}
+        employee=employee, day=today, defaults={"check_in": timezone.now()}
     )
 
     print(f"==>> created: {created}")
@@ -54,15 +52,21 @@ def check_in(employee: Users) -> EmployeeAttendance:
 
 @transaction.atomic
 def pause_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
-    if AttendanceBreakLogs.objects.filter(attendance=attendance,restart_time__isnull=True).exists():
+    if AttendanceBreakLogs.objects.filter(
+        attendance=attendance, restart_time__isnull=True
+    ).exists():
         raise ValueError("Break already paused")
 
-    return AttendanceBreakLogs.objects.create(attendance=attendance,pause_time=timezone.now())
+    return AttendanceBreakLogs.objects.create(
+        attendance=attendance, pause_time=timezone.now()
+    )
 
 
 @transaction.atomic
 def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
-    br = AttendanceBreakLogs.objects.filter(attendance=attendance,restart_time__isnull=True).first()
+    br = AttendanceBreakLogs.objects.filter(
+        attendance=attendance, restart_time__isnull=True
+    ).first()
     print(f"==>> br: {br}")
 
     if not br:
@@ -94,9 +98,7 @@ def check_out(attendance: EmployeeAttendance) -> EmployeeAttendance:
     attendance.break_hours = break_hours
     attendance.status = _calculate_status(work_hours)
 
-    attendance.save(
-        update_fields=["check_out", "work_hours", "break_hours", "status"]
-    )
+    attendance.save(update_fields=["check_out", "work_hours", "break_hours", "status"])
     print(f"==>> attendance: {attendance}")
 
     return attendance

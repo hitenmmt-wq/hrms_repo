@@ -5,11 +5,11 @@ from apps.attendance import views
 
 router = DefaultRouter()
 
-router.register(r'employee_attendance', views.AttendanceViewSet, basename='employee_attendance')
+router.register(
+    r"employee_attendance", views.AttendanceViewSet, basename="employee_attendance"
+)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
     # path('auth/confirm_reset_password/<str:token>/', views.ConfirmResetPassword.as_view(), name='confirm_reset_password'),
 ]
-
-

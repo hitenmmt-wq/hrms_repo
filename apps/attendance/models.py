@@ -1,6 +1,7 @@
 from django.db import models
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
+
 # Create your models here.
 
 
@@ -13,26 +14,29 @@ class EmployeeAttendance(BaseModel):
         ("incomplete_hours", "incomplete_hours"),
         ("pending", "pending"),
     )
-    employee = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="attendance_employee")
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="attendance_employee"
+    )
     day = models.DateField()
     check_in = models.DateTimeField(null=True, blank=True)
     check_out = models.DateTimeField(null=True, blank=True)
     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     break_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
-    
+
     class Meta:
         unique_together = ("employee", "day")
         indexes = [
             models.Index(fields=["employee", "day"]),
         ]
+
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"
-    
+
     # def save(self, *args, **kwargs):
     #     if self.check_in and self.check_out:
     #         self.work_hours = (self.check_out - self.check_in).total_seconds() / 3600
-            
+
     #         if self.work_hours >= 8:
     #             self.status = "present"
     #         elif self.work_hours < 8 and self.work_hours > 4:
@@ -41,14 +45,18 @@ class EmployeeAttendance(BaseModel):
     #             self.status = "incomplete_hours"
     #         elif self.work_hours == 0:
     #             self.status = "unpaid_leave"
-                
+
     #         self.save()
-                
+
 
 class AttendanceBreakLogs(BaseModel):
-    attendance = models.ForeignKey(EmployeeAttendance, on_delete=models.CASCADE, related_name="attendance_break_logs")
-    pause_time = models.DateTimeField(null=True,blank=True)
-    restart_time = models.DateTimeField(null=True,blank=True)
-    
+    attendance = models.ForeignKey(
+        EmployeeAttendance,
+        on_delete=models.CASCADE,
+        related_name="attendance_break_logs",
+    )
+    pause_time = models.DateTimeField(null=True, blank=True)
+    restart_time = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"Break - {self.attendance.employee.email}"

@@ -10,18 +10,22 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('employee', '0001_initial'),
+        ("employee", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='leavebalance',
-            name='employee',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='employee_leave_balance', to=settings.AUTH_USER_MODEL),
+            model_name="leavebalance",
+            name="employee",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="employee_leave_balance",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='leavebalance',
-            unique_together={('employee', 'year')},
+            name="leavebalance",
+            unique_together={("employee", "year")},
         ),
     ]

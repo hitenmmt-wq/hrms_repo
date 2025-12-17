@@ -1,6 +1,7 @@
 import django_filters
 from apps.superadmin import models
 
+
 class HolidayFilter(django_filters.FilterSet):
     start_date = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     end_date = django_filters.DateFilter(field_name="date", lookup_expr="lte")

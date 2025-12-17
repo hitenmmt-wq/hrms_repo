@@ -7,35 +7,70 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='AttendanceBreakLogs',
+            name="AttendanceBreakLogs",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('pause_time', models.DateTimeField(blank=True, null=True)),
-                ('restart_time', models.DateTimeField(blank=True, null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("pause_time", models.DateTimeField(blank=True, null=True)),
+                ("restart_time", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='EmployeeAttendance',
+            name="EmployeeAttendance",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('day', models.DateField()),
-                ('check_in', models.DateTimeField(blank=True, null=True)),
-                ('check_out', models.DateTimeField(blank=True, null=True)),
-                ('work_hours', models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ('break_hours', models.DecimalField(decimal_places=2, default=0, max_digits=5)),
-                ('status', models.CharField(choices=[('present', 'present'), ('unpaid_leave', 'unpaid_leave'), ('paid_leave', 'paid_leave'), ('half_day', 'half_day'), ('incomplete_hours', 'incomplete_hours'), ('pending', 'pending')], default='pending', max_length=50)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("day", models.DateField()),
+                ("check_in", models.DateTimeField(blank=True, null=True)),
+                ("check_out", models.DateTimeField(blank=True, null=True)),
+                (
+                    "work_hours",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=5),
+                ),
+                (
+                    "break_hours",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=5),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("present", "present"),
+                            ("unpaid_leave", "unpaid_leave"),
+                            ("paid_leave", "paid_leave"),
+                            ("half_day", "half_day"),
+                            ("incomplete_hours", "incomplete_hours"),
+                            ("pending", "pending"),
+                        ],
+                        default="pending",
+                        max_length=50,
+                    ),
+                ),
             ],
         ),
     ]

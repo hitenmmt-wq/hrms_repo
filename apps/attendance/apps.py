@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class AttendanceappConfig(AppConfig):
-    name = 'apps.attendance'
+    name = "apps.attendance"

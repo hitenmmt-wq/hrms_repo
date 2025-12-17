@@ -7,18 +7,25 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='LeaveBalance',
+            name="LeaveBalance",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('pl', models.IntegerField(blank=True, default=12, null=True)),
-                ('sl', models.IntegerField(blank=True, default=4, null=True)),
-                ('lop', models.IntegerField(blank=True, default=0, null=True)),
-                ('year', models.IntegerField(blank=True, default=2025, null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("pl", models.IntegerField(blank=True, default=12, null=True)),
+                ("sl", models.IntegerField(blank=True, default=4, null=True)),
+                ("lop", models.IntegerField(blank=True, default=0, null=True)),
+                ("year", models.IntegerField(blank=True, default=2025, null=True)),
             ],
         ),
     ]

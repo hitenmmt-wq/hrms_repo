@@ -4,16 +4,17 @@ from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.sites import AlreadyRegistered
 
+
 class Command(BaseCommand):
     help = "Runs makemigrations, migrate and auto-registers models in admin."
 
     def handle(self, *args, **kwargs):
 
         self.stdout.write(self.style.SUCCESS("Running makemigrations..."))
-        call_command('makemigrations')
+        call_command("makemigrations")
 
         self.stdout.write(self.style.SUCCESS("Running migrate..."))
-        call_command('migrate')
+        call_command("migrate")
 
         self.stdout.write(self.style.SUCCESS("Auto-registering models in admin..."))
 

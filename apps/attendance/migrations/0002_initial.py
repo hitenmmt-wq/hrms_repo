@@ -10,27 +10,37 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('attendance', '0001_initial'),
+        ("attendance", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='employeeattendance',
-            name='employee',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attendance_employee', to=settings.AUTH_USER_MODEL),
+            model_name="employeeattendance",
+            name="employee",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="attendance_employee",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='attendancebreaklogs',
-            name='attendance',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attendance_break_logs', to='attendance.employeeattendance'),
+            model_name="attendancebreaklogs",
+            name="attendance",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="attendance_break_logs",
+                to="attendance.employeeattendance",
+            ),
         ),
         migrations.AddIndex(
-            model_name='employeeattendance',
-            index=models.Index(fields=['employee', 'day'], name='attendance__employe_0c0437_idx'),
+            model_name="employeeattendance",
+            index=models.Index(
+                fields=["employee", "day"], name="attendance__employe_0c0437_idx"
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='employeeattendance',
-            unique_together={('employee', 'day')},
+            name="employeeattendance",
+            unique_together={("employee", "day")},
         ),
     ]

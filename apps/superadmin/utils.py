@@ -25,7 +25,9 @@ def get_or_create_balance(employee: User, year: int | None = None) -> LeaveBalan
 
 
 @transaction.atomic
-def apply_leave(employee: User, leave_type: str, start_date: date, end_date: date, reason: str = "") -> Leave:
+def apply_leave(
+    employee: User, leave_type: str, start_date: date, end_date: date, reason: str = ""
+) -> Leave:
     """Apply leave: create Leave record and calculate total_days (no balance deduction until approve)."""
     if end_date < start_date:
         raise ValueError("end_date must be >= start_date")
@@ -34,11 +36,8 @@ def apply_leave(employee: User, leave_type: str, start_date: date, end_date: dat
 
     # check overlapping approved leaves
     overlapping = Leave.objects.filter(
-        employee=employee,
-        status=Leave.LEAVE_STATUS_APPROVED
-    ).filter(
-        Q(start_date__lte=end_date) & Q(end_date__gte=start_date)
-    )
+        employee=employee, status=Leave.LEAVE_STATUS_APPROVED
+    ).filter(Q(start_date__lte=end_date) & Q(end_date__gte=start_date))
     if overlapping.exists():
         raise ValueError("You have already approved leave in the selected date range.")
 
@@ -55,7 +54,9 @@ def apply_leave(employee: User, leave_type: str, start_date: date, end_date: dat
     return leave
 
 
-def _mark_attendance_pending_for_leave(employee: User, start_date: date, end_date: date) -> None:
+def _mark_attendance_pending_for_leave(
+    employee: User, start_date: date, end_date: date
+) -> None:
     """Mark attendance rows as pending_leave to avoid auto-absent logic clashing."""
     for day in daterange(start_date, end_date):
         Attendance.objects.update_or_create(
@@ -65,15 +66,17 @@ def _mark_attendance_pending_for_leave(employee: User, start_date: date, end_dat
                 "status": "pending_leave",
                 "check_in": None,
                 "check_out": None,
-                "work_hours": 0
-            }
+                "work_hours": 0,
+            },
         )
 
 
 @transaction.atomic
 def approve_leave(approver: User, leave_id: int) -> Tuple[Leave, dict]:
     """Approve leave: deduct from balance, mark attendance as leave, set approved_by/at, return resulting LOP if any."""
-    leave = Leave.objects.select_for_update().select_related("employee").get(id=leave_id)
+    leave = (
+        Leave.objects.select_for_update().select_related("employee").get(id=leave_id)
+    )
 
     if leave.status != Leave.LEAVE_STATUS_PENDING:
         raise ValueError("Only pending leaves can be approved.")
@@ -128,8 +131,8 @@ def update_attendance_for_leave(leave: Leave) -> None:
                 "status": "leave",
                 "check_in": None,
                 "check_out": None,
-                "work_hours": 0
-            }
+                "work_hours": 0,
+            },
         )
 
 
@@ -147,12 +150,14 @@ def auto_mark_absent_and_lop(process_date: date) -> None:
             employee=emp,
             status=Leave.LEAVE_STATUS_APPROVED,
             start_date__lte=process_date,
-            end_date__gte=process_date
+            end_date__gte=process_date,
         ).exists()
         if has_leave:
             continue
 
-        attendance, created = Attendance.objects.get_or_create(employee=emp, date=process_date)
+        attendance, created = Attendance.objects.get_or_create(
+            employee=emp, date=process_date
+        )
         if attendance.status in ("present", "leave"):
             continue
 
