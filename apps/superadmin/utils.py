@@ -1,12 +1,12 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 from typing import Tuple
-from django.db import transaction
-from django.utils import timezone
-from django.db.models import Q
-from apps.superadmin import models
-from apps.superadmin.models import Leave, LeaveBalance
-from apps.superadmin.models import Attendance
+
 from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from apps.superadmin.models import Attendance, Leave, LeaveBalance
 
 User = get_user_model()
 
@@ -28,7 +28,6 @@ def get_or_create_balance(employee: User, year: int | None = None) -> LeaveBalan
 def apply_leave(
     employee: User, leave_type: str, start_date: date, end_date: date, reason: str = ""
 ) -> Leave:
-    """Apply leave: create Leave record and calculate total_days (no balance deduction until approve)."""
     if end_date < start_date:
         raise ValueError("end_date must be >= start_date")
 
@@ -73,7 +72,6 @@ def _mark_attendance_pending_for_leave(
 
 @transaction.atomic
 def approve_leave(approver: User, leave_id: int) -> Tuple[Leave, dict]:
-    """Approve leave: deduct from balance, mark attendance as leave, set approved_by/at, return resulting LOP if any."""
     leave = (
         Leave.objects.select_for_update().select_related("employee").get(id=leave_id)
     )
@@ -137,12 +135,7 @@ def update_attendance_for_leave(leave: Leave) -> None:
 
 
 def auto_mark_absent_and_lop(process_date: date) -> None:
-    """
-    Run daily (cron) to mark absent employees and apply LOP if no leave and no attendance.
-    For each employee expected to work that day:
-      - If there's an approved leave -> skip
-      - If there's no check_in and no pending leave -> mark absent and increase lop
-    """
+
     employees = User.objects.filter(is_active=True).select_related("leave_balance")
     for emp in employees:
         # skip if approved leave exists for date

@@ -1,11 +1,12 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from apps.base.response import ApiResponse
-from apps.attendance.models import EmployeeAttendance, AttendanceBreakLogs
-from apps.attendance.serializers import AttendanceSerializer, BreakLogSerializer
-from apps.attendance.utils import check_in, pause_break, resume_break, check_out
-from apps.base.permissions import IsEmployee, IsAuthenticated
 from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.decorators import action
+
+from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
+from apps.attendance.serializers import AttendanceSerializer, BreakLogSerializer
+from apps.attendance.utils import check_in, check_out, pause_break, resume_break
+from apps.base.permissions import IsAuthenticated
+from apps.base.response import ApiResponse
 
 
 class AttendanceViewSet(viewsets.ViewSet):

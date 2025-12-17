@@ -1,12 +1,13 @@
 from django.db import models
+from django.utils import timezone
+
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
-from django.utils import timezone
 
 # Create your models here.
 
 
-class LeaveBalance(models.Model):
+class LeaveBalance(BaseModel):
     employee = models.OneToOneField(
         Users, on_delete=models.CASCADE, related_name="employee_leave_balance"
     )

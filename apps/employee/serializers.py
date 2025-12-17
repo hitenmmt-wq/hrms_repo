@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from apps.superadmin import models
-from apps.employee.models import LeaveBalance
+
 from apps.attendance.models import EmployeeAttendance
+from apps.employee.models import LeaveBalance
+from apps.superadmin import models
 
-
-#  ==================================== EMPLOYEE SERIALIZER ======================================================================
+#   ======= EMPLOYEE SERIALIZER   ============
 
 
 class EmployeeCreateSerializer(serializers.ModelSerializer):
@@ -95,7 +95,7 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-#  ==================================== LEAVE BALANCE SERIALIZER ======================================================================
+#   ======= LEAVE BALANCE SERIALIZER   ============
 
 
 class LeaveBalanceSerializer(serializers.ModelSerializer):
@@ -107,7 +107,7 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-#  ==================================== APPLY LEAVE SERIALIZER ======================================================================
+#   ======= APPLY LEAVE SERIALIZER   ============
 
 
 class ApplyLeaveSerializer(serializers.ModelSerializer):
@@ -137,7 +137,6 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
 
 class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
-    # approved_by = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
 
     class Meta:
         model = models.Leave
@@ -153,7 +152,7 @@ class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
         ]
 
 
-#  ==================================== DASHBOARD SERIALIZER ======================================================================
+#   ======= DASHBOARD SERIALIZER   ============
 
 
 class HolidayMiniSerializer(serializers.ModelSerializer):

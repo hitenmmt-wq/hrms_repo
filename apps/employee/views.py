@@ -1,26 +1,34 @@
-from django.shortcuts import render
-from django.utils import timezone
-from django_filters.rest_framework import DjangoFilterBackend
 from datetime import date
 
-from apps.base.viewset import BaseViewSet
-from apps.superadmin import models
-from apps.superadmin import serializers
-from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
-from apps.base.pagination import CustomPageNumberPagination
-from apps.employee.custom_filters import (
-    EmployeeFilter,
-    ApplyLeaveFilter,
-    LeaveBalanceFilter,
-)
-from apps.employee.models import LeaveBalance
-from apps.employee.serializers import *  # EmployeeListSerializer, LeaveBalanceSerializer, EmployeeUpdateSerializer, EmployeeCreateSerializer, ApplyLeaveCreateSerializer, ApplyLeaveSerializer
-from apps.base.response import ApiResponse
-from apps.attendance.models import EmployeeAttendance
-
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.views import APIView
+
+from apps.attendance.models import EmployeeAttendance
+from apps.base.pagination import CustomPageNumberPagination
+from apps.base.permissions import IsAdmin, IsAuthenticated
+from apps.base.response import ApiResponse
+from apps.base.viewset import BaseViewSet
+from apps.employee.custom_filters import (
+    ApplyLeaveFilter,
+    EmployeeFilter,
+    LeaveBalanceFilter,
+)
+from apps.employee.models import LeaveBalance
+from apps.employee.serializers import (
+    ApplyLeaveCreateSerializer,
+    ApplyLeaveSerializer,
+    EmployeeCreateSerializer,
+    EmployeeListSerializer,
+    EmployeeUpdateSerializer,
+    HolidayMiniSerializer,
+    LeaveBalanceSerializer,
+    LeaveMiniSerializer,
+    TodayAttendanceSerializer,
+)
+from apps.superadmin import models
 
 # Create your views here.
 
@@ -48,9 +56,9 @@ class EmployeeDashboardView(APIView):
             ).first()
 
             common_data = models.CommonData.objects.first()
-            last_month_salary = ""
+            # last_month_salary = ""
 
-            monthly_working_hours = ""
+            # monthly_working_hours = ""
 
             holiday_list = models.Holiday.objects.filter(
                 date__year=timezone.now().year
@@ -120,7 +128,7 @@ class EmployeeViewSet(BaseViewSet):
         return EmployeeListSerializer
 
 
-# ====================================================================== LEAVE-BALANCE CRUD API ===========================================================
+#   ============ LEAVE-BALANCE CRUD API   =
 
 
 class LeaveBalanceViewSet(BaseViewSet):
@@ -152,7 +160,7 @@ class LeaveBalanceViewSet(BaseViewSet):
     ordering = ["year"]
 
 
-# ====================================================================== LEAVE-BALANCE CRUD API ===========================================================
+#   ============ LEAVE-BALANCE CRUD API   =
 
 
 class ApplyLeaveViewSet(BaseViewSet):

@@ -1,7 +1,8 @@
 from celery import shared_task
 from django.utils import timezone
-from apps.superadmin import models
+
 from apps.employee.models import LeaveBalance
+from apps.superadmin import models
 
 
 @shared_task

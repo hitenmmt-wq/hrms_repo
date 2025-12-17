@@ -1,8 +1,9 @@
 from decimal import Decimal
-from datetime import timedelta
+
 from django.db import transaction
 from django.utils import timezone
-from apps.attendance.models import EmployeeAttendance, AttendanceBreakLogs
+
+from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
 from apps.superadmin.models import Users
 
 

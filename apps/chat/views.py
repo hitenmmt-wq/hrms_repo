@@ -1,14 +1,12 @@
-from django.shortcuts import render
-
-# Create your views here.
-
-
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
-from django.shortcuts import get_object_or_404
+
+# Create your views here.
 
 
 class CreateConversationView(generics.CreateAPIView):

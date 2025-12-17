@@ -1,5 +1,5 @@
-import json
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
 from apps.chat.serializers import MessageSerializer
 
 

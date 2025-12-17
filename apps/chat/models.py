@@ -1,6 +1,7 @@
 from django.db import models
-from apps.superadmin.models import Users
+
 from apps.base.models import BaseModel
+from apps.superadmin.models import Users
 
 # Create your models here.
 

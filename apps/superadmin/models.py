@@ -1,5 +1,6 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db import models
+
 from apps.base.models import BaseModel
 
 # Create your models here.
@@ -146,52 +147,3 @@ class Leave(BaseModel):
         else:
             self.total_days = (self.to_date - self.from_date).days + 1
         super().save(*args, **kwargs)
-
-
-# class Attendance(BaseModel):
-#     ATTENDANCE_TYPE = (
-#         ("present", "present"),
-#         ("unpaid_leave", "unpaid_leave"),
-#         ("paid_leave", "paid_leave"),
-#         ("half_day", "half_day"),
-#         ("incomplete_hours", "incomplete_hours"),
-#         ("pending", "pending"),
-#     )
-#     user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_attendance")
-#     date = models.DateField()
-#     check_in = models.TimeField(null=True, blank=True)
-#     check_out = models.TimeField(null=True, blank=True)
-#     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-#     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
-
-#     def __str__(self):
-#         return f"{self.user.email} - {self.date} - {self.status}"
-
-
-# class EmployeeSalary(BaseModel):
-#     user = models.ForeignKey("Users", on_delete=models.CASCADE, related_name="user_salary")
-#     status = models.CharField(max_length=50, default="pending")
-
-#     start_pay_period = models.DateField(null=True, blank=True)
-#     end_pay_period = models.DateField(null=True, blank=True)
-
-#     month = models.CharField(max_length=50)
-#     year = models.CharField(max_length=50)
-
-#     starting_salary = models.FloatField(default=0.0)
-#     previous_salary = models.FloatField(default=0.0)
-#     current_salary = models.FloatField(default=0.0)
-
-#     def __str__(self):
-#         return f"{self.user.email} - {self.month} - {self.year}"
-
-# class EmployeePayslip(BaseModel):
-#     employee_salary = models.ForeignKey("EmployeeSalary", on_delete=models.CASCADE, related_name="employee_payslip")
-#     basic_fee = models.FloatField(default=0.0)
-#     basic_fee = models.FloatField(default=0.0)
-#     basic_fee = models.FloatField(default=0.0)
-#     status = models.CharField(max_length=50, default="pending")
-
-
-#     def __str__(self):
-#         return f"{self.user.email} - {self.month} - {self.year}"

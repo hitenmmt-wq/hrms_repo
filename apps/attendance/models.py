@@ -1,4 +1,5 @@
 from django.db import models
+
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 

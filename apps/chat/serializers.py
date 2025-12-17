@@ -1,7 +1,7 @@
-from rest_framework import serializers
-from .models import Conversation, Message, MessageStatus
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
+from .models import Conversation, Message, MessageStatus
 
 User = get_user_model()
 

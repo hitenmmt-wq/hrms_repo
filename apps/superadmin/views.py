@@ -1,42 +1,30 @@
-from django.shortcuts import render, get_object_or_404
-from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
-from django_filters.rest_framework import DjangoFilterBackend
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
+from datetime import datetime, time
+
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-
-from apps.superadmin import models
-from apps.superadmin import serializers
-from apps.base.response import ApiResponse
-from apps.superadmin.custom_filters import HolidayFilter, AnnouncementFilter
-from apps.base.permissions import IsAdmin, IsEmployee, IsAuthenticated, IsHr
-from apps.base.pagination import CustomPageNumberPagination
-from apps.base.viewset import BaseViewSet
-from apps.superadmin.tasks import send_email_task
-from apps.base import constants
-from apps.attendance.models import EmployeeAttendance, AttendanceBreakLogs
-from apps.employee.models import LeaveBalance
-
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import APIView, action
 from rest_framework.response import Response
-from rest_framework import viewsets, filters, status
-from rest_framework.decorators import APIView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.decorators import action
 
-from datetime import time, datetime
-import jwt
-import json
-from django.contrib.auth import authenticate
+from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
+from apps.base.pagination import CustomPageNumberPagination
+from apps.base.permissions import IsAdmin, IsAuthenticated
+from apps.base.response import ApiResponse
+from apps.base.viewset import BaseViewSet
+from apps.superadmin import models, serializers
+from apps.superadmin.custom_filters import AnnouncementFilter, HolidayFilter
+from apps.superadmin.tasks import send_email_task
 
 # Create your views here.
 
-#  =============================================  CUSTOM SCRIPT  ==================================================================
+#   ================  CUSTOM SCRIPT    ========
 
 
 class CustomScriptView(APIView):
@@ -61,7 +49,7 @@ class CustomScriptView(APIView):
         return ApiResponse.success({"message": "script worked successfully"})
 
 
-#  =============================================  ADMIN DASHBOARD  ==================================================================
+#   ================  ADMIN DASHBOARD    ========
 
 
 class AdminDashboardView(APIView):
@@ -141,7 +129,7 @@ class AdminDashboardView(APIView):
             )
 
 
-#  =============================================  USER AUTHENTICATION ==================================================================
+#   ================  USER AUTHENTICATION   ========
 
 
 class ChangePassword(APIView):
@@ -183,9 +171,11 @@ class ResetPassword(APIView):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = PasswordResetTokenGenerator().make_token(user)
-        # token = jwt.encode({"user_id": user.id}, settings.SECRET_KEY, algorithm="HS256")
+        localhost = "http://127.0.0.1:8000/"
 
-        reset_link = f"http://127.0.0.1:8000/adminapp/auth/confirm_reset_password/?uid={uid}&?token={token}"
+        reset_link = (
+            f"{localhost}adminapp/auth/confirm_reset_password/?uid={uid}&?token={token}"
+        )
 
         send_email_task.delay(
             subject="Reset Password",
@@ -226,11 +216,9 @@ class AdminRegister(BaseViewSet):
     serializer_class = serializers.AdminRegisterSerializer
 
     def create(self, request):
-        data = request.data
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            token = RefreshToken.for_user(user).access_token
 
             activation_link = (
                 constants.ACCOUNT_ACTIVATION_URL
@@ -263,7 +251,7 @@ class ActivateUser(APIView):
             else:
                 return Response({"message": "Account already activated."})
 
-        except Exception as e:
+        except Exception:
             return Response({"error": "Invalid or expired token"}, status=400)
 
 
@@ -279,7 +267,7 @@ class UserViewSet(APIView):
         return Response(serializer.data)
 
 
-#  =============================================  COMMON_DATA CRUD API ==================================================================
+#   ================  COMMON_DATA CRUD API   ========
 
 
 class CommonDataViewSet(BaseViewSet):
@@ -342,7 +330,7 @@ class CommonDataViewSet(BaseViewSet):
             return ApiResponse.success(message="Common Data deleted successfully")
 
 
-#  =============================================  SETTING_DATA CRUD API ==================================================================
+#   ================  SETTING_DATA CRUD API   ========
 
 
 class SettingDataViewSet(BaseViewSet):
@@ -409,7 +397,7 @@ class SettingDataViewSet(BaseViewSet):
             )
 
 
-#  =============================================  HOLIDAY CRUD API ==================================================================
+#   ================  HOLIDAY CRUD API   ========
 
 
 class HolidayViewSet(BaseViewSet):
@@ -438,7 +426,7 @@ class HolidayViewSet(BaseViewSet):
         return queryset.filter(date__year=year)
 
 
-#  =============================================  DEPARTMENT CRUD API ==================================================================
+#   ================  DEPARTMENT CRUD API   ========
 
 
 class DepartmentViewSet(BaseViewSet):
@@ -458,7 +446,7 @@ class DepartmentViewSet(BaseViewSet):
         return serializers.DepartmentSerializer
 
 
-#  =============================================  ANNOUNCEMENT CRUD API ==================================================================
+#   ================  ANNOUNCEMENT CRUD API   ========
 
 
 class AnnouncementViewSet(BaseViewSet):
@@ -478,7 +466,7 @@ class AnnouncementViewSet(BaseViewSet):
         return serializers.AnnouncementSerializer
 
 
-#  =============================================  POSITION CRUD API ==================================================================
+#   ================  POSITION CRUD API   ========
 
 
 class PositionViewSet(BaseViewSet):
@@ -498,7 +486,7 @@ class PositionViewSet(BaseViewSet):
         return serializers.PositionSerializer
 
 
-#  =============================================  PROFILE CRUD API ==================================================================
+#   ================  PROFILE CRUD API   ========
 
 
 class ProfileViewSet(BaseViewSet):
@@ -516,7 +504,7 @@ class ProfileViewSet(BaseViewSet):
         return serializers.ProfileSerializer
 
 
-#  =============================================  LEAVES CRUD API ==================================================================
+#  ==============  LEAVES CRUD API ====================
 
 
 class LeaveViewSet(viewsets.ModelViewSet):
@@ -545,7 +533,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         leave = serializer.save()
         return ApiResponse.success(
             message="Leave applied successfully",
-            data=LeaveSerializer(leave).data,
+            data=serializers.LeaveSerializer(leave).data,
             status=status.HTTP_201_CREATED,
         )
 

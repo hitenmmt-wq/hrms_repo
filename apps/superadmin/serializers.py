@@ -1,9 +1,10 @@
-from rest_framework import serializers
-from apps.superadmin import models
-from apps.employee.models import LeaveBalance
-from apps.attendance.models import EmployeeAttendance
 from django.contrib.auth.hashers import make_password
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from apps.attendance.models import EmployeeAttendance
+from apps.employee.models import LeaveBalance
+from apps.superadmin import models
 
 
 class CommonDataSerializer(serializers.ModelSerializer):
@@ -66,7 +67,7 @@ class HolidayListSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# =============================================  DASHBOARD SERIALIZERS ================================================
+#  ================  DASHBOARD SERIALIZERS  ===================
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
@@ -151,7 +152,7 @@ class EmployeeAttendanceMiniSerializer(serializers.ModelSerializer):
         }
 
 
-#  ====================================================================================================================================================
+#       ===
 class AdminRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Users

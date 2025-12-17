@@ -1,6 +1,7 @@
 import django_filters
-from apps.superadmin import models
+
 from apps.employee.models import LeaveBalance
+from apps.superadmin import models
 
 
 class EmployeeFilter(django_filters.FilterSet):
