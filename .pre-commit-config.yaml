@@ -1,0 +1,66 @@
+repos:
+  # ----------------------------
+  # General hygiene hooks
+  # ----------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: debug-statements
+
+  # ----------------------------
+  # Python formatting (Black)
+  # ----------------------------
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3
+
+  # ----------------------------
+  # Import sorting (isort)
+  # ----------------------------
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  # ----------------------------
+  # Linting (flake8)
+  # ----------------------------
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args:
+          - --max-line-length=120
+          - --extend-ignore=E203,W503
+        exclude: migrations/
+
+  # ----------------------------
+  # Django checks
+  # ----------------------------
+  - repo: local
+    hooks:
+      - id: django-check
+        name: Django system check
+        entry: python manage.py check
+        language: system
+        pass_filenames: false
+
+
+  # ----------------------------
+  # Security: bandit
+  # ----------------------------
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.8
+    hooks:
+      - id: bandit
+        args: ["-r", "."]
+        exclude: migrations/

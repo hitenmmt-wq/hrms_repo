@@ -1,9 +1,11 @@
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
+
 from apps.base.response import ApiResponse
+
 
 class BaseViewSet(viewsets.ModelViewSet):
 
-    entity_name: str = None  
+    entity_name: str = None
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -13,7 +15,7 @@ class BaseViewSet(viewsets.ModelViewSet):
         return ApiResponse.success(
             message=f"{self.entity_name} created successfully",
             data=serializer.data,
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
 
     def update(self, request, *args, **kwargs):
@@ -27,7 +29,7 @@ class BaseViewSet(viewsets.ModelViewSet):
         return ApiResponse.success(
             message=f"{self.entity_name} updated successfully",
             data=serializer.data,
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     def destroy(self, request, *args, **kwargs):
@@ -37,5 +39,5 @@ class BaseViewSet(viewsets.ModelViewSet):
         return ApiResponse.success(
             message=f"{self.entity_name} deleted successfully",
             data=None,
-            status=status.HTTP_200_OK
-        ) 
+            status=status.HTTP_200_OK,
+        )

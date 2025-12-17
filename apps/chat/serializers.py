@@ -1,7 +1,7 @@
-from rest_framework import serializers
-from .models import Conversation, Message, MessageStatus
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
+from .models import Conversation, Message, MessageStatus
 
 User = get_user_model()
 
@@ -9,7 +9,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name')
+        fields = ("id", "username", "first_name", "last_name")
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -18,12 +18,21 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ('id', 'conversation', 'sender', 'text', 'media', 'media_url', 'msg_type', 'reply_to', 'created_at')
-        read_only_fields = ('sender', 'created_at')
-
+        fields = (
+            "id",
+            "conversation",
+            "sender",
+            "text",
+            "media",
+            "media_url",
+            "msg_type",
+            "reply_to",
+            "created_at",
+        )
+        read_only_fields = ("sender", "created_at")
 
     def get_media_url(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request")
         if obj.media and request:
             return request.build_absolute_uri(obj.media.url)
         if obj.media:
@@ -37,10 +46,18 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conversation
-        fields = ('id', 'type', 'name', 'participants', 'admins', 'created_at', 'messages')
+        fields = (
+            "id",
+            "type",
+            "name",
+            "participants",
+            "admins",
+            "created_at",
+            "messages",
+        )
 
 
 class MessageStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = MessageStatus
-        fields = ('id', 'message', 'user', 'status', 'updated_at')
+        fields = ("id", "message", "user", "status", "updated_at")
