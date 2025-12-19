@@ -16,11 +16,6 @@ jobs:
           POSTGRES_DB: test_db
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_pass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
       redis:
         image: redis:alpine
 
@@ -58,7 +53,8 @@ jobs:
 
       - name: Wait for PostgreSQL
         run: |
-          until pg_isready -h localhost -p 5432 -U test_user; do
+          export PGPASSWORD=test_pass
+          until pg_isready -h localhost -p 5432 -U test_user -d test_db; do
             echo "Waiting for PostgreSQL..."
             sleep 2
           done
