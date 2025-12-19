@@ -15,8 +15,9 @@ from apps.employee.custom_filters import (
     ApplyLeaveFilter,
     EmployeeFilter,
     LeaveBalanceFilter,
+    PaySlipFilter,
 )
-from apps.employee.models import LeaveBalance
+from apps.employee.models import LeaveBalance, PaySlip
 from apps.employee.serializers import (
     ApplyLeaveCreateSerializer,
     ApplyLeaveSerializer,
@@ -26,6 +27,8 @@ from apps.employee.serializers import (
     HolidayMiniSerializer,
     LeaveBalanceSerializer,
     LeaveMiniSerializer,
+    PaySlipCreateSerializer,
+    PaySlipSerializer,
     TodayAttendanceSerializer,
 )
 from apps.superadmin import models
@@ -202,8 +205,38 @@ class ApplyLeaveViewSet(BaseViewSet):
     def employee_leave_list(self, request):
         employee = request.user
         leaves = models.Leave.objects.filter(employee=employee).order_by("-id")
-        print(f"==>> leaves: {leaves}")
         data = ApplyLeaveSerializer(leaves, many=True).data
         return ApiResponse.success(
             data=data, message="Employee leave list fetched successfully"
         )
+
+
+# ======== EMPLOYEE PAYSLIP VIEWSET ============
+
+
+class PaySlipViewSet(BaseViewSet):
+    queryset = PaySlip.objects.all().order_by("-id")
+    serializer_class = PaySlipSerializer
+    entity_name = "Pay Slip"
+    permission_classes = [IsAdmin]
+    pagination_class = CustomPageNumberPagination
+    filterset_class = PaySlipFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = [
+        "employee__email",
+        "month",
+    ]
+    ordering_fields = [
+        "employee__email",
+        "month",
+    ]
+    ordering = ["-id"]
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return PaySlipCreateSerializer
+        return PaySlipSerializer

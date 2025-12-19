@@ -21,6 +21,7 @@ from apps.base.viewset import BaseViewSet
 from apps.superadmin import models, serializers
 from apps.superadmin.custom_filters import AnnouncementFilter, HolidayFilter
 from apps.superadmin.tasks import send_email_task
+from apps.superadmin.utils import update_leave_balance
 
 # Create your views here.
 
@@ -29,21 +30,33 @@ from apps.superadmin.tasks import send_email_task
 
 class CustomScriptView(APIView):
     def get(self, request):
-        # users = models.Users.objects.all()
-        # for  ab in users:
-        #     data = LeaveBalance.objects.create(
-        #         employee = ab,
-        #         pl = 12,
-        #         sl = 4,
-        #         lop = 0,
-        #         year = timezone.now().year
-        #     )
-        #     print("done")
-        # data  = models.Users.objects.get(email="harpesh.mmt@gmail.com")
-        # temp_pass = "harpesh"
-        # data.set_password(temp_pass)
-        # data.save()
-        # print(data.password)
+        from apps.employee.models import LeaveBalance
+
+        employee = request.user
+        print(f"==>> employee: {employee}")
+        # today = timezone.now()
+        year = timezone.now().year
+        current_month = 1
+
+        # Will change this to filter().first() once whole flow is ready.
+        leave_balance = LeaveBalance.objects.filter(
+            employee=employee,
+            year=year,
+        ).first()
+
+        approved_pl = min(current_month, leave_balance.pl) if leave_balance else 0
+        print(f"==>> approved_pl: {approved_pl}")
+        used_pl = leave_balance.used_pl or 0
+        print(f"==>> used_pl: {used_pl}")
+        available_pl = max(approved_pl - used_pl, 0)
+        print(f"==>> available_pl: {available_pl}")
+
+        total_sl = leave_balance.sl or 0
+        print(f"==>> total_sl: {total_sl}")
+        used_sl = leave_balance.used_sl or 0
+        print(f"==>> used_sl: {used_sl}")
+        available_sl = max(total_sl - used_sl, 0)
+        print(f"==>> available_sl: {available_sl}")
 
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -565,6 +578,9 @@ class LeaveApprovalViewSet(BaseViewSet):
             leave_data.save(
                 update_fields=["status", "approved_by", "approved_at", "response_text"]
             )
+            update_leave_balance(
+                user, leave_data.leave_type, leave_data.status, leave_data.total_days
+            )
 
             serialize = serializers.LeaveSerializer(leave_data)
             return ApiResponse.success(
@@ -587,6 +603,8 @@ class LeaveApprovalViewSet(BaseViewSet):
             leave.save(
                 update_fields=["status", "approved_by", "approved_at", "response_text"]
             )
+
+            update_leave_balance(user, leave.leave_type, leave.status, leave.total_days)
 
             serialize = serializers.LeaveSerializer(leave)
             return ApiResponse.success(

@@ -109,7 +109,7 @@ class Leave(BaseModel):
         ("casual", "casual"),
         ("sick", "sick"),
         ("maternity", "maternity"),
-        ("privilege ", "privilege "),
+        ("privilege", "privilege"),
         ("other", "other"),
     )
     employee = models.ForeignKey(

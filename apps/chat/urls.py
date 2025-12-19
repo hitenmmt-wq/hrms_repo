@@ -1,9 +1,13 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-router = DefaultRouter()
-
+from apps.chat.views import ConversationListView, CreateConversationView, FileUploadView
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("conversations/", ConversationListView.as_view(), name="conversation-list"),
+    path(
+        "conversations/create/",
+        CreateConversationView.as_view(),
+        name="conversation-create",
+    ),
+    path("upload/", FileUploadView.as_view(), name="chat-file-upload"),
 ]
