@@ -41,9 +41,9 @@ jobs:
         run: |
           echo "SECRET_KEY=django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_" >> $GITHUB_ENV
           echo "DEBUG=False" >> $GITHUB_ENV
-          echo "DATABASE_NAME=test_db" >> $GITHUB_ENV
-          echo "DATABASE_USER=test_user" >> $GITHUB_ENV
-          echo "DATABASE_PASSWORD=test_pass" >> $GITHUB_ENV
+          echo "DATABASE_NAME=hrms_db" >> $GITHUB_ENV
+          echo "DATABASE_USER=postgres" >> $GITHUB_ENV
+          echo "DATABASE_PASSWORD=postgres" >> $GITHUB_ENV
           echo "DATABASE_HOST=localhost" >> $GITHUB_ENV
           echo "DATABASE_PORT=5432" >> $GITHUB_ENV
           echo "CELERY_BROKER_URL=redis://localhost:6379/0" >> $GITHUB_ENV
