@@ -9,6 +9,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:alpine
 
     steps:
       - uses: actions/checkout@v4
@@ -21,14 +35,40 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Set environment variables
         run: |
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+          echo "SECRET_KEY=django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_" >> $GITHUB_ENV
           echo "DEBUG=False" >> $GITHUB_ENV
+          echo "DATABASE_NAME=test_db" >> $GITHUB_ENV
+          echo "DATABASE_USER=test_user" >> $GITHUB_ENV
+          echo "DATABASE_PASSWORD=test_pass" >> $GITHUB_ENV
+          echo "DATABASE_HOST=localhost" >> $GITHUB_ENV
+          echo "DATABASE_PORT=5432" >> $GITHUB_ENV
+          echo "CELERY_BROKER_URL=redis://localhost:6379/0" >> $GITHUB_ENV
+          echo "CELERY_RESULT_BACKEND=redis://localhost:6379/0" >> $GITHUB_ENV
+          echo "REDIS_HOST=localhost" >> $GITHUB_ENV
+          echo "REDIS_PORT=6379" >> $GITHUB_ENV
+          echo "EMAIL_HOST=smtp.example.com" >> $GITHUB_ENV
+          echo "EMAIL_PORT=587" >> $GITHUB_ENV
+          echo "EMAIL_USE_TLS=True" >> $GITHUB_ENV
+          echo "EMAIL_HOST_USER=test@example.com" >> $GITHUB_ENV
+          echo "EMAIL_HOST_PASSWORD=testpass" >> $GITHUB_ENV
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U test_user; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
 
       - name: Run Django checks
         run: python manage.py check
+
+      - name: Run migrations
+        run: python manage.py migrate
 
       - name: Check migrations
         run: python manage.py makemigrations --check --dry-run
