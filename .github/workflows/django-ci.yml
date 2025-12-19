@@ -13,9 +13,9 @@ jobs:
       postgres:
         image: postgres:13
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: hrms_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
       redis:
         image: redis:alpine
 
