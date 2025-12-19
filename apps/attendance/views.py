@@ -64,6 +64,7 @@ class AttendanceViewSet(viewsets.ViewSet):
         attendance = EmployeeAttendance.objects.filter(
             id=pk, employee=request.user
         ).first()
+        print(f"==>> attendance: {attendance}")
         attendance = check_out(attendance)
         return ApiResponse.success(
             "Logged out successfully", AttendanceSerializer(attendance).data
