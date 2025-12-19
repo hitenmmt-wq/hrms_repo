@@ -16,8 +16,11 @@ jobs:
           POSTGRES_DB: hrms_db
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hrms_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:alpine
 
@@ -41,7 +44,7 @@ jobs:
           echo "DATABASE_NAME=hrms_db" >> $GITHUB_ENV
           echo "DATABASE_USER=postgres" >> $GITHUB_ENV
           echo "DATABASE_PASSWORD=postgres" >> $GITHUB_ENV
-          echo "DATABASE_HOST=postgres" >> $GITHUB_ENV
+          echo "DATABASE_HOST=localhost" >> $GITHUB_ENV
           echo "DATABASE_PORT=5432" >> $GITHUB_ENV
           echo "CELERY_BROKER_URL=redis://redis:6379/0" >> $GITHUB_ENV
           echo "CELERY_RESULT_BACKEND=redis://redis:6379/0" >> $GITHUB_ENV

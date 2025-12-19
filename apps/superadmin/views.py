@@ -30,33 +30,7 @@ from apps.superadmin.utils import update_leave_balance
 
 class CustomScriptView(APIView):
     def get(self, request):
-        from apps.employee.models import LeaveBalance
-
-        employee = request.user
-        print(f"==>> employee: {employee}")
-        # today = timezone.now()
-        year = timezone.now().year
-        current_month = 1
-
-        # Will change this to filter().first() once whole flow is ready.
-        leave_balance = LeaveBalance.objects.filter(
-            employee=employee,
-            year=year,
-        ).first()
-
-        approved_pl = min(current_month, leave_balance.pl) if leave_balance else 0
-        print(f"==>> approved_pl: {approved_pl}")
-        used_pl = leave_balance.used_pl or 0
-        print(f"==>> used_pl: {used_pl}")
-        available_pl = max(approved_pl - used_pl, 0)
-        print(f"==>> available_pl: {available_pl}")
-
-        total_sl = leave_balance.sl or 0
-        print(f"==>> total_sl: {total_sl}")
-        used_sl = leave_balance.used_sl or 0
-        print(f"==>> used_sl: {used_sl}")
-        available_sl = max(total_sl - used_sl, 0)
-        print(f"==>> available_sl: {available_sl}")
+        print(f"==>> request: {request}")
 
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
