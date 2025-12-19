@@ -240,3 +240,12 @@ class PaySlipViewSet(BaseViewSet):
         if self.action in ["create", "update", "partial_update"]:
             return PaySlipCreateSerializer
         return PaySlipSerializer
+
+    @action(detail=False, methods=["get"], url_path="employee_payslips")
+    def employee_payslips(self, request):
+        employee = request.user
+        payslip = PaySlip.objects.filter(employee=employee)
+        data = PaySlipSerializer(payslip, many=True).data
+        return ApiResponse.success(
+            data=data, message="Employee payslip fetched successfully"
+        )
