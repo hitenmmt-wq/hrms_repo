@@ -9,7 +9,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "first_name", "last_name")
+        fields = ("id", "email", "first_name", "last_name")
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -26,7 +26,6 @@ class MessageSerializer(serializers.ModelSerializer):
             "media",
             "media_url",
             "msg_type",
-            "reply_to",
             "created_at",
         )
         read_only_fields = ("sender", "created_at")
@@ -51,7 +50,6 @@ class ConversationSerializer(serializers.ModelSerializer):
             "type",
             "name",
             "participants",
-            "admins",
             "created_at",
             "messages",
         )

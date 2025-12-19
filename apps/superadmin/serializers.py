@@ -233,7 +233,6 @@ class LeaveApplySerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs["end_date"] < attrs["start_date"]:
             raise serializers.ValidationError("end_date cannot be before start_date")
-        # optionally check for future dates, max days, etc.
         return attrs
 
     def create(self, validated_data):

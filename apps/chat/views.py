@@ -36,8 +36,8 @@ class FileUploadView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         conv_id = request.data.get("conversation")
         conv = get_object_or_404(Conversation, id=conv_id)
-        f = request.data.get("media")
-        msg_type = request.data.get("msg_type", "file")
+        f = request.data.get("media", "file")
+        msg_type = request.data.get("msg_type")
 
         msg = Message.objects.create(
             conversation=conv, sender=request.user, media=f, msg_type=msg_type

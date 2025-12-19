@@ -1,6 +1,6 @@
 import django_filters
 
-from apps.employee.models import LeaveBalance
+from apps.employee.models import LeaveBalance, PaySlip
 from apps.superadmin import models
 
 
@@ -70,3 +70,12 @@ class ApplyLeaveFilter(django_filters.FilterSet):
             "reason",
             "status",
         ]
+
+
+class PaySlipFilter(django_filters.FilterSet):
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    month = django_filters.CharFilter(field_name="month", lookup_expr="icontains")
+
+    class Meta:
+        model = PaySlip
+        fields = ["employee", "month"]

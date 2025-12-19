@@ -8,6 +8,7 @@ router = DefaultRouter()
 router.register(r"employee", views.EmployeeViewSet, basename="employee")
 router.register(r"leave_balance", views.LeaveBalanceViewSet, basename="leave_balance")
 router.register(r"apply_leave", views.ApplyLeaveViewSet, basename="apply_leave")
+router.register(r"pay_slip", views.PaySlipViewSet, basename="pay_slip")
 
 urlpatterns = [
     path("", include(router.urls)),
