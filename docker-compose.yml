@@ -102,8 +102,8 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
       DATABASE_NAME: hrms_db
-      DATABASE_USER: user
-      DATABASE_PASSWORD: password
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
       DATABASE_HOST: db
       DATABASE_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -118,8 +118,8 @@ services:
     image: postgres:13
     environment:
       POSTGRES_DB: hrms_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -149,9 +149,9 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
       DATABASE_NAME: hrms_db
-      DATABASE_USER: user
-      DATABASE_PASSWORD: password
-      DATABASE_HOST: db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: localhost
       DATABASE_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
