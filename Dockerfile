@@ -11,16 +11,19 @@ WORKDIR /app
 # -----------------------------
 # System dependencies (IMPORTANT)
 # -----------------------------
-# These are REQUIRED for WeasyPrint (PDF generation)
+# These are REQUIRED for WeasyPrint (PDF generation) and pycairo (for svglib)
 RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
+    libcairo2-dev \
     libgdk-pixbuf-2.0-0 \
     libffi-dev \
     shared-mime-info \
+    build-essential \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------
