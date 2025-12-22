@@ -63,6 +63,7 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    "storages",
 ]
 
 INSTALLED_APPS = LOCAL_APPS + THIRD_PARTY_APPS + DJANGO_APPS
@@ -172,7 +173,6 @@ STATIC_URL = "static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # For Bcrypt Password hashing
 PASSWORD_HASHERS = [
@@ -260,3 +260,15 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+# AWS S3 configuration
+
+# DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+# AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+# AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+# AWS_S3_SIGNATURE_VERSION = os.environ.get("AWS_S3_SIGNATURE_VERSION")
+# AWS_QUERYSTRING_AUTH = False
+# AWS_DEFAULT_ACL = None
