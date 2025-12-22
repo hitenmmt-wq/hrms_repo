@@ -65,6 +65,7 @@ class PaySlip(BaseModel):
     net_salary = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
+    pdf_file = models.FileField(upload_to="payslips/", null=True, blank=True)
 
     def __str__(self):
         return f"{self.employee.email} - {self.month} Payslip"

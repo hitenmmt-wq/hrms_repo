@@ -1,11 +1,17 @@
 from datetime import timedelta
 from decimal import Decimal
 
+# from weasyprint import HTML
+from io import BytesIO
+
 from django.db.models import Q
+from django.http import HttpResponse
+from django.template.loader import get_template
 from django.utils import timezone
+from xhtml2pdf import pisa
 
 from apps.employee.models import LeaveBalance
-from apps.superadmin.models import Leave
+from apps.superadmin.models import CommonData, Leave
 
 
 def weekdays_count(start_date, end_date):
@@ -98,3 +104,29 @@ def calculate_leave_deduction(
     leave_deduction = per_day_salary * Decimal(extra_leave_days)
     print(f"==>> leave_deduction: {leave_deduction}")
     return leave_deduction
+
+
+def generate_payslip_pdf(payslip):
+    print(f"==>> payslip: {payslip}")
+    template = get_template("payslip.html")
+    company = CommonData.objects.first()
+    context = {
+        "payslip": payslip,
+        "employee": payslip.employee,
+        "company_logo": company.company_logo if company.company_logo else None,
+        "company_name": "MultiMinds Technology Pvt Ltd",
+    }
+    html = template.render(context)
+    result = BytesIO()
+    pdf = pisa.CreatePDF(src=html, dest=result, encoding="utf-8")
+
+    if pdf.err:
+        return None
+
+    response = HttpResponse(result.getvalue(), content_type="application/pdf")
+    # pdf = HTML(string=html_string).write_pdf()
+
+    # response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="payslip_{payslip.id}.pdf"'
+
+    return response

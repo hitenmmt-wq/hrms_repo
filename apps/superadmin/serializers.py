@@ -4,6 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance
+from apps.employee.serializers import EmployeeListSerializer
 from apps.superadmin import models
 
 
@@ -92,67 +93,35 @@ class HolidayMiniSerializer(serializers.ModelSerializer):
 
 
 class LeaveMiniSerializer(serializers.ModelSerializer):
+    employee = EmployeeListSerializer()
+
     class Meta:
         model = models.Leave
         fields = [
             "id",
-            "employee__first_name",
-            "employee__last_name",
-            "employee__email",
-            "start_date",
-            "end_date",
+            "employee",
+            "from_date",
+            "to_date",
         ]
 
 
 class LateLoginMiniSerializer(serializers.ModelSerializer):
-    employee = serializers.SerializerMethodField()
+    employee = EmployeeListSerializer()
 
     class Meta:
         model = EmployeeAttendance
         fields = ["id", "employee", "day", "check_in"]
 
-    def get_employee(self, obj):
-        employee = obj.employee
-        if not employee:
-            return None
-        return {
-            "id": employee.id,
-            "first_name": employee.first_name,
-            "last_name": employee.last_name,
-            "email": employee.email,
-            "role": employee.role,
-            "employee_id": employee.employee_id,
-            "birthdate": employee.birthdate,
-            "department": employee.department.name if employee.department else None,
-            "position": employee.position.name if employee.position else None,
-        }
-
 
 class EmployeeAttendanceMiniSerializer(serializers.ModelSerializer):
-    employee = serializers.SerializerMethodField()
+    employee = EmployeeListSerializer()
 
     class Meta:
         model = EmployeeAttendance
         fields = ["id", "employee", "check_in", "check_out"]
 
-    def get_employee(self, obj):
-        employee = obj.employee
-        if not employee:
-            return None
-        return {
-            "id": employee.id,
-            "first_name": employee.first_name,
-            "last_name": employee.last_name,
-            "email": employee.email,
-            "role": employee.role,
-            "employee_id": employee.employee_id,
-            "birthdate": employee.birthdate,
-            "department": employee.department.name if employee.department else None,
-            "position": employee.position.name if employee.position else None,
-        }
 
-
-#       ===
+#       ====================
 class AdminRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Users
@@ -228,10 +197,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LeaveApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Leave
-        fields = ["id", "leave_type", "start_date", "end_date", "reason"]
+        fields = ["id", "leave_type", "from_date", "to_date", "reason"]
 
     def validate(self, attrs):
-        if attrs["end_date"] < attrs["start_date"]:
+        if attrs["to_date"] < attrs["from_date"]:
             raise serializers.ValidationError("end_date cannot be before start_date")
         return attrs
 
@@ -242,7 +211,7 @@ class LeaveApplySerializer(serializers.ModelSerializer):
 
 
 class LeaveSerializer(serializers.ModelSerializer):
-    employee = serializers.SerializerMethodField()
+    employee = EmployeeListSerializer()
 
     class Meta:
         model = models.Leave
@@ -260,14 +229,6 @@ class LeaveSerializer(serializers.ModelSerializer):
             "response_text",
         ]
         read_only_fields = ["total_days", "status", "approved_at", "approved_by"]
-
-    def get_employee(self, obj):
-        return {
-            "id": obj.employee.id,
-            "email": obj.employee.email,
-            "first_name": getattr(obj.employee, "first_name", ""),
-            "last_name": getattr(obj.employee, "last_name", ""),
-        }
 
 
 class LeaveBalanceSerializer(serializers.ModelSerializer):

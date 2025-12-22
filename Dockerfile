@@ -1,34 +1,48 @@
-# Use the official Python image from the Docker Hub
+# Use the official Python image
 FROM python:3.11-slim
 
+# Prevent Python from writing pyc files and enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file into the container
+# -----------------------------
+# System dependencies (IMPORTANT)
+# -----------------------------
+# These are REQUIRED for WeasyPrint (PDF generation)
+RUN apt-get update && apt-get install -y \
+    netcat-openbsd \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------
+# Python dependencies
+# -----------------------------
 COPY requirements.txt .
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Install the dependencies
-# RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Install netcat for entrypoint
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
-
-# Copy the rest of the application code into the container
+# -----------------------------
+# Copy project code
+# -----------------------------
 COPY . .
 
-# Copy entrypoint script
+# -----------------------------
+# Entrypoint
+# -----------------------------
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose the port that the Django app runs on
 EXPOSE 8000
 
-# Set entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
 
-# Command to run the application
+# Daphne for ASGI (Channels/WebSockets)
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "hrms.asgi:application"]

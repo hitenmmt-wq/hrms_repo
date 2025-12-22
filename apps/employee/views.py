@@ -31,6 +31,7 @@ from apps.employee.serializers import (
     PaySlipSerializer,
     TodayAttendanceSerializer,
 )
+from apps.employee.utils import generate_payslip_pdf
 from apps.superadmin import models
 
 # Create your views here.
@@ -40,9 +41,13 @@ class EmployeeDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        print(f"==>> request: {request.user}")
         try:
             today = timezone.now().date()
             year = timezone.now().year
+            current_month = timezone.now().month
+            previous_month = current_month - 1
+
             year_start = date(year, 1, 1)
             print(f"==>> year_start: {year_start}")
             year_end = date(year, 12, 31)
@@ -59,7 +64,10 @@ class EmployeeDashboardView(APIView):
             ).first()
 
             common_data = models.CommonData.objects.first()
-            # last_month_salary = ""
+            last_month_salary = PaySlip.objects.filter(
+                employee=request.user, month=previous_month
+            ).first()
+            print(f"==>> last_month_salary: {last_month_salary}")
 
             # monthly_working_hours = ""
 
@@ -83,6 +91,19 @@ class EmployeeDashboardView(APIView):
                         "total_sl": common_data.sl_leave if common_data else "",
                         "available_pl": employee_leave.pl if employee_leave else "",
                         "available_sl": employee_leave.sl if employee_leave else "",
+                    },
+                    "last_month_salary": {
+                        "total_earning": (
+                            last_month_salary.total_earnings
+                            if last_month_salary
+                            else None
+                        ),
+                        "total_deduction": (
+                            last_month_salary.total_deductions
+                            if last_month_salary
+                            else None
+                        ),
+                        "download_payslip": "",
                     },
                     "salary": " ",
                     "holiday_list": HolidayMiniSerializer(holiday_list, many=True).data,
@@ -249,3 +270,17 @@ class PaySlipViewSet(BaseViewSet):
         return ApiResponse.success(
             data=data, message="Employee payslip fetched successfully"
         )
+
+
+class PaySlipDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            payslip = PaySlip.objects.filter(pk=pk, employee=request.user).first()
+            print(f"==>> payslip: {payslip}")
+            if not payslip:
+                return ApiResponse.error(message="Payslip not found", status=404)
+            return generate_payslip_pdf(payslip)
+        except Exception as e:
+            return ApiResponse.error(message=str(e), status=400)
