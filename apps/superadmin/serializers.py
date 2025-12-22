@@ -228,10 +228,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LeaveApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Leave
-        fields = ["id", "leave_type", "start_date", "end_date", "reason"]
+        fields = ["id", "leave_type", "from_date", "to_date", "reason"]
 
     def validate(self, attrs):
-        if attrs["end_date"] < attrs["start_date"]:
+        if attrs["to_date"] < attrs["from_date"]:
             raise serializers.ValidationError("end_date cannot be before start_date")
         return attrs
 
