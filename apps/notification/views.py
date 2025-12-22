@@ -2,7 +2,6 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.base.viewset import BaseViewSet
 from apps.notification.models import Notification, NotificationType
@@ -10,6 +9,9 @@ from apps.notification.serializers import (
     NotificationSerializer,
     NotificationTypeSerializer,
 )
+
+# from rest_framework.viewsets import ReadOnlyModelViewSet
+
 
 # Create your views here.
 
@@ -20,7 +22,7 @@ class NotificationTypeViewSet(BaseViewSet):
     serializer_class = NotificationTypeSerializer
 
 
-class NotificationViewSet(ReadOnlyModelViewSet):
+class NotificationViewSet(BaseViewSet):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 

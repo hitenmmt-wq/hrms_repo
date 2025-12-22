@@ -17,4 +17,9 @@ urlpatterns = [
         views.EmployeeDashboardView.as_view(),
         name="employee_dashboard",
     ),
+    path(
+        "payslip_download/<int:pk>/",
+        views.PaySlipDownloadView.as_view(),
+        name="payslip_download",
+    ),
 ]

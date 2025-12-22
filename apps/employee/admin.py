@@ -6,3 +6,4 @@ from apps.employee import models
 
 
 admin.site.register(models.LeaveBalance)
+admin.site.register(models.PaySlip)

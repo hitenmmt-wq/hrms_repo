@@ -1,7 +1,11 @@
 from datetime import timedelta
 from decimal import Decimal
 
+# from weasyprint import HTML
+import xhtml2pdf
 from django.db.models import Q
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.employee.models import LeaveBalance
@@ -98,3 +102,22 @@ def calculate_leave_deduction(
     leave_deduction = per_day_salary * Decimal(extra_leave_days)
     print(f"==>> leave_deduction: {leave_deduction}")
     return leave_deduction
+
+
+def generate_payslip_pdf(payslip):
+    html_string = render_to_string(
+        "payslip.html",
+        {
+            "payslip": payslip,
+            "company_name": "MultiMinds Technology Pvt Ltd",
+        },
+    )
+    print(f"==>> html_string: {html_string}")
+
+    # pdf = HTML(string=html_string).write_pdf()
+    pdf = xhtml2pdf
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="payslip_{payslip.id}.pdf"'
+
+    return response
