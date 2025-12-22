@@ -9,6 +9,7 @@ from apps.base.models import BaseModel
 class CommonData(BaseModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     company_link = models.CharField(max_length=255, null=True, blank=True)
+    company_logo = models.ImageField(upload_to="company_logo", null=True, blank=True)
     pl_leave = models.IntegerField(default=12, null=True, blank=True)
     sl_leave = models.IntegerField(default=4, null=True, blank=True)
     lop_leave = models.IntegerField(default=0, null=True, blank=True)

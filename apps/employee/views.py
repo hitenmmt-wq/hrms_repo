@@ -279,6 +279,8 @@ class PaySlipDownloadView(APIView):
         try:
             payslip = PaySlip.objects.filter(pk=pk, employee=request.user).first()
             print(f"==>> payslip: {payslip}")
+            if not payslip:
+                return ApiResponse.error(message="Payslip not found", status=404)
             return generate_payslip_pdf(payslip)
         except Exception as e:
             return ApiResponse.error(message=str(e), status=400)
