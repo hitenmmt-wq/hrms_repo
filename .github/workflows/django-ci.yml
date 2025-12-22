@@ -80,18 +80,13 @@ jobs:
           echo "Waiting for PostgreSQL to be ready..."
           export PGPASSWORD=postgres
           for i in {1..60}; do
-            echo "Attempt $i: Checking PostgreSQL connection..."
-            if pg_isready -h localhost -p 5432 -U postgres -d hrms_db 2>/dev/null; then
-              echo "✅ PostgreSQL is ready!"
+            if pg_isready -h localhost -p 5432 -U postgres -d hrms_db >/dev/null 2>&1; then
+              echo "PostgreSQL is ready!"
               break
-            else
-              echo "❌ PostgreSQL not ready yet (attempt $i/60)"
-              sleep 3
             fi
+            sleep 3
             if [ $i -eq 60 ]; then
-              echo "💥 PostgreSQL failed to start after 180 seconds"
-              echo "Checking service status..."
-              docker ps | grep postgres || echo "PostgreSQL container not found"
+              echo "PostgreSQL failed to start after 180 seconds"
               exit 1
             fi
           done

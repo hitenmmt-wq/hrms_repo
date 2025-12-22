@@ -1,9 +1,12 @@
 from rest_framework import serializers
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
+from apps.employee.serializers import EmployeeListSerializer
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
+    employee = EmployeeListSerializer()
+
     class Meta:
         model = EmployeeAttendance
         fields = "__all__"

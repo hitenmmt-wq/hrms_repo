@@ -1,3 +1,4 @@
+import base64
 from datetime import timedelta
 from decimal import Decimal
 
@@ -106,14 +107,30 @@ def calculate_leave_deduction(
     return leave_deduction
 
 
+def imagefield_to_base64(image_field):
+    if not image_field:
+        return None
+
+    try:
+        with image_field.open("rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    except Exception as e:
+        print("Image base64 error:", e)
+        return None
+
+
 def generate_payslip_pdf(payslip):
-    print(f"==>> payslip: {payslip}")
+    # print(f"==>> payslip: {payslip}")
     template = get_template("payslip.html")
     company = CommonData.objects.first()
+    # print(f"==>> company: {company.company_logo.url}")
+    company_logo_base64 = imagefield_to_base64(
+        company.company_logo if company else None
+    )
     context = {
         "payslip": payslip,
         "employee": payslip.employee,
-        "company_logo": company.company_logo if company.company_logo else None,
+        "company_logo": company_logo_base64,
         "company_name": "MultiMinds Technology Pvt Ltd",
     }
     html = template.render(context)
