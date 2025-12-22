@@ -7,6 +7,7 @@ from apps.attendance.serializers import AttendanceSerializer, BreakLogSerializer
 from apps.attendance.utils import check_in, check_out, pause_break, resume_break
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
+from apps.superadmin.models import Users
 
 
 class AttendanceViewSet(viewsets.ViewSet):
@@ -16,6 +17,15 @@ class AttendanceViewSet(viewsets.ViewSet):
         attendance = EmployeeAttendance.objects.filter(employee=request.user)
         return ApiResponse.success(
             "Attendance list", AttendanceSerializer(attendance, many=True).data
+        )
+
+    @action(detail=True, methods=["get"])
+    def employee_attendance_list(self, request, pk=None):
+        employee = Users.objects.filter(id=pk).first()
+        attendance = EmployeeAttendance.objects.filter(employee=employee)
+        return ApiResponse.success(
+            "Employee's Attendance list",
+            AttendanceSerializer(attendance, many=True).data,
         )
 
     @action(detail=False, methods=["get"])
