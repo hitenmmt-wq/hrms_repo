@@ -16,5 +16,13 @@ CELERY_BEAT_SCHEDULE = {
     "credit-leave-balances-yearly": {
         "task": "apps.employee.tasks.credit_new_year_employee_leaves",
         "schedule": crontab(minute=10, hour=10, day_of_month=17, month_of_year=12),
-    }
+    },
+    "add-absent-employees-attendance": {
+        "task": "apps.employee.tasks.update_employee_absent_leaves",
+        "schedule": crontab(minute=48, hour=17),
+    },
+    "employee-birthday-update": {
+        "task": "apps.employee.tasks.notify_employee_birthday",
+        "schedule": crontab(minute=0, hour=9),
+    },
 }
