@@ -41,13 +41,23 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             self.conversation_id, self.user.id, text, msg_type, reply_to
         )
         serializer = MessageSerializer(message, context={"request": None})
+        print(f"==>> serializer: {serializer}")
 
-        payload = {
-            "type": "new_message",
-            "message": serializer.data,
+        # payload = {
+        #     "type": "new_message",
+        #     "message": serializer.data,
+        # }
+        notification_payload = {
+            "type": "new_notification",
+            "notification": {
+                "title": f"New message from {self.user.email}",
+                "message": text[:100],
+                "type": "chat_message",
+            },
         }
         await self.channel_layer.group_send(
-            self.room_group_name, {"type": "chat.message", "payload": payload}
+            self.room_group_name,
+            {"type": "notification.message", "payload": notification_payload},
         )
 
     async def handle_typing(self, content):
