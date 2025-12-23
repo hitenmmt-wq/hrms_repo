@@ -6,3 +6,7 @@ myenv/
 # Django
 *.sqlite3
 .env
+
+# Python
+__pycache__/
+*.py[cod]
