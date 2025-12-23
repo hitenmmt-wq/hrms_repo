@@ -149,6 +149,7 @@ class ChangePassword(APIView):
 class ResetPassword(APIView):
     def post(self, request):
         email = request.data.get("email")
+        print(f"==>> email: {email}")
         try:
             user = models.Users.objects.filter(email=email).first()
         except models.Users.DoesNotExist:
