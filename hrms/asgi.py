@@ -10,10 +10,11 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 import os
 
 import django
-from channels.routing import get_default_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project_name.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hrms.settings")
+
 django.setup()
 
+from apps.notification import routing  # noqa
 
-application = get_default_application()
+application = routing.application
