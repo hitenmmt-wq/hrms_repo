@@ -1,4 +1,4 @@
-from datetime import date
+# from datetime import date
 
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -31,7 +31,7 @@ from apps.employee.serializers import (
     PaySlipSerializer,
     TodayAttendanceSerializer,
 )
-from apps.employee.utils import generate_payslip_pdf
+from apps.employee.utils import employee_monthly_working_hours, generate_payslip_pdf
 from apps.superadmin import models
 
 # Create your views here.
@@ -46,16 +46,12 @@ class EmployeeDashboardView(APIView):
             year = timezone.now().year
             current_month = timezone.now().month
             previous_month = current_month - 1
-
-            year_start = date(year, 1, 1)
-            print(f"==>> year_start: {year_start}")
-            year_end = date(year, 12, 31)
-            print(f"==>> year_end: {year_end}")
+            # year_start = date(year, 1, 1)
+            # year_end = date(year, 12, 31)
 
             todays_attendance = EmployeeAttendance.objects.filter(
                 employee=request.user, day=today
             ).first()
-            print(f"==>> todays_attendance: {todays_attendance}")
 
             employee_leave = LeaveBalance.objects.filter(
                 employee=request.user, year=year
@@ -67,8 +63,6 @@ class EmployeeDashboardView(APIView):
             ).first()
             print(f"==>> last_month_salary: {last_month_salary}")
 
-            # monthly_working_hours = ""
-
             holiday_list = models.Holiday.objects.filter(
                 date__year=timezone.now().year
             ).order_by("date")
@@ -78,6 +72,8 @@ class EmployeeDashboardView(APIView):
             leave_history = models.Leave.objects.filter(employee=request.user).order_by(
                 "-id"
             )[:5]
+
+            monthly_working_hours_data = employee_monthly_working_hours(request.user)
 
             return ApiResponse.success(
                 data={
@@ -103,15 +99,7 @@ class EmployeeDashboardView(APIView):
                         ),
                         "download_payslip": "",
                     },
-                    # Add this logic
-                    "monthly_working_hours": {
-                        "total_working_hours": "",
-                        "worked_hours": "",
-                        "total_working_days": "",
-                        "remaining_working_days": "",
-                        "daily_average_hours": "",
-                        "progress_percentage": "",
-                    },
+                    "monthly_working_hours": monthly_working_hours_data,
                     "holiday_list": HolidayMiniSerializer(holiday_list, many=True).data,
                     "upcoming_approved_leaves": LeaveMiniSerializer(
                         upcoming_approved_leaves, many=True
