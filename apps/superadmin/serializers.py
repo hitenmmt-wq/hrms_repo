@@ -140,7 +140,6 @@ class AdminRegisterSerializer(serializers.ModelSerializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
-        print(f"==>> user: {user}")
         token = super().get_token(user)
         token["role"] = user.role
         return token

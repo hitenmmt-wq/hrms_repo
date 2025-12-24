@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from apps.base import constants
 from apps.chat.models import Message
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
@@ -10,7 +11,7 @@ from apps.notification.services import create_notification
 def notify_on_message(sender, instance, created, **kwargs):
     if not created:
         return
-    notification_type = NotificationType.objects.get(code="chat_message")
+    notification_type = NotificationType.objects.get(code=constants.CHAT_NOTIFY)
     conversation = instance.conversation
     for participant in conversation.participants.exclude(id=instance.sender.id):
         create_notification(

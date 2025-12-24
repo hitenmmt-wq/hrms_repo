@@ -34,21 +34,6 @@ class EmployeeAttendance(BaseModel):
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"
 
-    # def save(self, *args, **kwargs):
-    #     if self.check_in and self.check_out:
-    #         self.work_hours = (self.check_out - self.check_in).total_seconds() / 3600
-
-    #         if self.work_hours >= 8:
-    #             self.status = "present"
-    #         elif self.work_hours < 8 and self.work_hours > 4:
-    #             self.status = "half_day"
-    #         elif self.work_hours < 4:
-    #             self.status = "incomplete_hours"
-    #         elif self.work_hours == 0:
-    #             self.status = "unpaid_leave"
-
-    #         self.save()
-
 
 class AttendanceBreakLogs(BaseModel):
     attendance = models.ForeignKey(
