@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 User = get_user_model()
 
 
+# Logocal Issue exist here
 class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
@@ -13,11 +14,9 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         # If not authenticated via middleware, try query param
         if not user or not user.is_authenticated:
             query_string = self.scope.get("query_string", b"").decode()
-            print(f"==>> query_string: {query_string}")
             token = None
             if "token=" in query_string:
                 token = query_string.split("token=")[1].split("&")[0]
-                print(f"==>> token: {token}")
             if token:
                 try:
                     access_token = AccessToken(token)
@@ -35,7 +34,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         self.user = user
         self.room_group_name = f"notifications_{self.user.id}"
-        print(f"==>> self.room_group_name: {self.room_group_name}")
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 

@@ -1,12 +1,10 @@
 from django.utils import timezone
 
+from apps.base import constants
 from apps.employee.models import LeaveBalance
 
 
 def update_leave_balance(employee, leave_type=None, status=None, count=0):
-    print(f"==>> count: {count}")
-    print(f"==>> leave_type: {leave_type}")
-    print(f"==>> status: {status}")
     print("update_leave_balance this fucntion called.....")
     today = timezone.now()
     year = today.year
@@ -16,15 +14,15 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
     if not leave_balance:
         return None
 
-    if status == "rejected":
+    if status == constants.REJECTED:
         return
-    elif status == "approved":
-        if leave_type == "privilege":
-            leave_balance.used_pl += count
-        elif leave_type == "sick":
-            leave_balance.used_sl += count
-        elif leave_type == "other":
 
+    elif status == constants.APPROVED:
+        if leave_type == constants.PRIVILEGE_LEAVE:
+            leave_balance.used_pl += count
+        elif leave_type == constants.SICK_LEAVE:
+            leave_balance.used_sl += count
+        elif leave_type == constants.OTHER_LEAVE:
             leave_balance.used_lop += count
     else:
         return

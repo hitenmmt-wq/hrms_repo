@@ -2,6 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
 from apps.employee.models import LeaveBalance
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
@@ -11,13 +12,6 @@ from apps.superadmin.models import CommonData
 @receiver(post_save, sender=LeaveBalance)
 def leave_balance_post_save(sender, instance, **kwargs):
     print("this signal called.....leave_balance_post_save.........")
-    # if created:
-    #     common_data = CommonData.objects.first()
-    #     print(f"==>> common_data: {common_data}")
-    #     instance.pl = common_data.pl_leaves if common_data else 12
-    #     instance.sl = common_data.sl_leaves if common_data else 4
-    #     instance.lop = common_data.lop_leaves if common_data else 0
-    #     instance.save()
     if instance.pk:
         return
 
@@ -32,8 +26,8 @@ def leave_balance_post_save(sender, instance, **kwargs):
 def notify_on_attendance(sender, instance, created, **kwargs):
     print("this signal called.....notify_on_attendance.........")
     print(f"==>> instance.status: {instance.status}")
-    if instance.status == "pending":
-        notification_type = NotificationType.objects.get(code="pending")
+    if instance.status == constants.PENDING:
+        notification_type = NotificationType.objects.get(code=constants.PENDING)
         print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,
@@ -43,8 +37,8 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             related_object=instance,
         )
 
-    if instance.status == "present":
-        notification_type = NotificationType.objects.get(code="approved")
+    if instance.status == constants.PRESENT:
+        notification_type = NotificationType.objects.get(code=constants.APPROVED)
         print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,
@@ -54,8 +48,10 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             related_object=instance,
         )
 
-    if instance.status == "rejected":
-        notification_type = NotificationType.objects.get(code="attendance_rejected")
+    if instance.status == constants.REJECTED:
+        notification_type = NotificationType.objects.get(
+            code=constants.ATTENDANCE_REJECTED
+        )
         create_notification(
             recipient=instance.employee,
             notification_type=notification_type,
@@ -64,8 +60,10 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             related_object=instance,
         )
 
-    if instance.status == "incomplete_hours":
-        notification_type = NotificationType.objects.get(code="attendance_reminder")
+    if instance.status == constants.INCOMPLETE_HOURS:
+        notification_type = NotificationType.objects.get(
+            code=constants.ATTENDANCE_REMINDER
+        )
         print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,

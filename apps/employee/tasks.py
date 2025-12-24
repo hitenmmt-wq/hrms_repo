@@ -2,6 +2,7 @@ from celery import shared_task
 from django.utils import timezone
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
 from apps.employee.models import LeaveBalance
 from apps.notification.services import create_notification
 from apps.superadmin import models
@@ -37,7 +38,7 @@ def update_employee_absent_leaves():
         id__in=present_employee_ids
     )
     attendance_objects = [
-        EmployeeAttendance(employee=employee, day=today, status="unpaid_leave")
+        EmployeeAttendance(employee=employee, day=today, status=constants.UNPAID_LEAVE)
         for employee in employees_left
     ]
     EmployeeAttendance.objects.bulk_create(attendance_objects)
@@ -52,12 +53,10 @@ def notify_employee_birthday():
     employee_birthday_today = models.Users.objects.filter(
         is_active=True, birthdate__day=today.day, birthdate__month=today.month
     )
-    print(f"==>> employee_birthday_today: {employee_birthday_today}")
     if not employee_birthday_today.exists():
         return "No birthdays today"
 
     recipients = models.Users.objects.filter(is_active=True)
-    print(f"==>> recipients: {recipients}")
     for birthday_employee in employee_birthday_today:
         for recipient in recipients.exclude(id=birthday_employee.id):
             create_notification(

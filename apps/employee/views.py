@@ -41,7 +41,6 @@ class EmployeeDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        print(f"==>> request: {request.user}")
         try:
             today = timezone.now().date()
             year = timezone.now().year
@@ -56,7 +55,6 @@ class EmployeeDashboardView(APIView):
             todays_attendance = EmployeeAttendance.objects.filter(
                 employee=request.user, day=today
             ).first()
-            print(f"==>> request.user: {request.user}")
             print(f"==>> todays_attendance: {todays_attendance}")
 
             employee_leave = LeaveBalance.objects.filter(
@@ -105,7 +103,15 @@ class EmployeeDashboardView(APIView):
                         ),
                         "download_payslip": "",
                     },
-                    "salary": " ",
+                    # Add this logic
+                    "monthly_working_hours": {
+                        "total_working_hours": "",
+                        "worked_hours": "",
+                        "total_working_days": "",
+                        "remaining_working_days": "",
+                        "daily_average_hours": "",
+                        "progress_percentage": "",
+                    },
                     "holiday_list": HolidayMiniSerializer(holiday_list, many=True).data,
                     "upcoming_approved_leaves": LeaveMiniSerializer(
                         upcoming_approved_leaves, many=True
@@ -278,7 +284,6 @@ class PaySlipDownloadView(APIView):
     def get(self, request, pk):
         try:
             payslip = PaySlip.objects.filter(pk=pk, employee=request.user).first()
-            print(f"==>> payslip: {payslip}")
             if not payslip:
                 return ApiResponse.error(message="Payslip not found", status=404)
             return generate_payslip_pdf(payslip)

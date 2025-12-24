@@ -23,3 +23,35 @@ class AnnouncementFilter(django_filters.FilterSet):
     class Meta:
         model = models.Announcement
         fields = ["title", "date"]
+
+
+class DepartmentFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+
+    class Meta:
+        model = models.Department
+        fields = ["name"]
+
+
+class PositionFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+
+    class Meta:
+        model = models.Position
+        fields = ["name"]
+
+
+class LeaveFilter(django_filters.FilterSet):
+    employee = django_filters.CharFilter(
+        field_name="employee__email", lookup_expr="icontains"
+    )
+    leave_type = django_filters.CharFilter(
+        field_name="leave_type", lookup_expr="icontains"
+    )
+    status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+    from_date = django_filters.DateFilter(field_name="from_date", lookup_expr="gte")
+    to_date = django_filters.DateFilter(field_name="to_date", lookup_expr="lte")
+
+    class Meta:
+        model = models.Leave
+        fields = ["employee", "leave_type", "status", "from_date", "to_date"]

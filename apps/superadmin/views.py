@@ -19,7 +19,13 @@ from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.superadmin import models, serializers
-from apps.superadmin.custom_filters import AnnouncementFilter, HolidayFilter
+from apps.superadmin.custom_filters import (
+    AnnouncementFilter,
+    DepartmentFilter,
+    HolidayFilter,
+    LeaveFilter,
+    PositionFilter,
+)
 from apps.superadmin.tasks import send_email_task
 from apps.superadmin.utils import update_leave_balance
 
@@ -48,7 +54,6 @@ class AdminDashboardView(APIView):
         try:
             today = timezone.now().date()
             late_time = timezone.make_aware(datetime.combine(today, time(10, 5)))
-            print(f"==>> late_time: {late_time}")
             total_employees = models.Users.objects.filter(is_active=True)
             pending_approval_count = models.Leave.objects.filter(
                 status="pending", from_date__gte=today
@@ -70,8 +75,6 @@ class AdminDashboardView(APIView):
             late_logins = EmployeeAttendance.objects.filter(
                 day=today, check_in__gt=late_time
             )
-            print(f"==>> late_logins: {late_logins}")
-
             recent_joiners = models.Users.objects.filter(is_active=True).order_by(
                 "-id"
             )[:3]
@@ -425,6 +428,7 @@ class DepartmentViewSet(BaseViewSet):
     queryset = models.Department.objects.all()
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = DepartmentFilter
     filterset_fields = ["name"]
     search_fields = ["name"]
     ordering_fields = ["name"]
@@ -446,9 +450,9 @@ class AnnouncementViewSet(BaseViewSet):
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_class = AnnouncementFilter
-    search_fields = ["title"]
-    ordering_fields = ["title"]
-    ordering = ["title"]
+    search_fields = ["title", "date"]
+    ordering_fields = ["date"]
+    ordering = ["date"]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -465,6 +469,7 @@ class PositionViewSet(BaseViewSet):
     queryset = models.Position.objects.all()
     pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = PositionFilter
     filterset_fields = ["name"]
     search_fields = ["name"]
     ordering_fields = ["name"]
@@ -499,14 +504,19 @@ class ProfileViewSet(BaseViewSet):
 
 class LeaveViewSet(viewsets.ModelViewSet):
 
-    queryset = models.Leave.objects.select_related("employee", "approved_by").all()
+    queryset = (
+        models.Leave.objects.select_related("employee", "approved_by")
+        .all()
+        .order_by("-from_date")
+    )
     serializer_class = serializers.LeaveSerializer
     permission_classes = [IsAuthenticated]
+    filterset_class = LeaveFilter
     pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == "admin":
+        if user.role == constants.ADMIN_USER:
             return super().get_queryset()
         return super().get_queryset().filter(employee=user)
 
@@ -543,12 +553,12 @@ class LeaveApprovalViewSet(BaseViewSet):
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         user = request.user
-        if user.role != "admin":
+        if user.role != constants.ADMIN_USER:
             return ApiResponse.error("Permission denied", status=403)
 
         try:
             leave_data = models.Leave.objects.filter(id=pk).first()
-            leave_data.status = "approved"
+            leave_data.status = constants.APPROVED
             leave_data.approved_at = datetime.now()
             leave_data.approved_by = user
             leave_data.response_text = request.data.get("response_text", "")
@@ -577,11 +587,11 @@ class LeaveApprovalViewSet(BaseViewSet):
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         user = request.user
-        if user.role != "admin":
+        if user.role != constants.ADMIN_USER:
             return ApiResponse.error("Permission denied", status=403)
         try:
             leave = models.Leave.objects.filter(id=pk).first()
-            leave.status = "rejected"
+            leave.status = constants.REJECTED
             leave.approved_by = user
             leave.approved_at = datetime.now()
             leave.response_text = request.data.get("response_text", "")
