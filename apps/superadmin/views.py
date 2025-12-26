@@ -70,7 +70,7 @@ class AdminDashboardView(APIView):
                 status="approved", from_date__gte=today
             )[:10]
             upcoming_holidays = models.Holiday.objects.filter(
-                date__year=timezone.now().year
+                date__year=timezone.now().year, date__gte=today
             ).order_by("date")
             late_logins = EmployeeAttendance.objects.filter(
                 day=today, check_in__gt=late_time
@@ -79,6 +79,7 @@ class AdminDashboardView(APIView):
                 "-id"
             )[:3]
 
+            announcement = models.Announcement.objects.all().order_by("-id")[:5]
             data = {
                 "counts": {
                     "total_employees": total_employees.count(),
@@ -106,6 +107,9 @@ class AdminDashboardView(APIView):
                 ).data,
                 "late_logins": serializers.LateLoginMiniSerializer(
                     late_logins, many=True
+                ).data,
+                "announcement": serializers.AnnouncementListSerializer(
+                    announcement, many=True
                 ).data,
             }
 

@@ -13,7 +13,6 @@ def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:
 
     for br in attendance.attendance_break_logs.all():
         if br.restart_time:
-            print(f"==>> br.restart_time: {br.restart_time}")
             diff = br.restart_time - br.pause_time
             total += Decimal(diff.total_seconds() / 3600)
             print(f"==>> total: {total}")
@@ -47,6 +46,7 @@ def check_in(employee: Users) -> EmployeeAttendance:
 
     attendance.check_in = timezone.now()
     attendance.save(update_fields=["check_in"])
+    update_attendance_hours(attendance)
 
     return attendance
 
@@ -57,6 +57,7 @@ def pause_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
         attendance=attendance, restart_time__isnull=True
     ).exists():
         raise ValueError("Break already paused")
+    update_attendance_hours(attendance)
 
     return AttendanceBreakLogs.objects.create(
         attendance=attendance, pause_time=timezone.now()
@@ -75,8 +76,32 @@ def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
 
     br.restart_time = timezone.now()
     br.save(update_fields=["restart_time"])
-
+    update_attendance_hours(attendance)
     return br
+
+
+@transaction.atomic
+def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendance:
+    if attendance.check_out:
+        total_hours = Decimal(
+            (attendance.check_out - attendance.check_in).total_seconds() / 3600
+        )
+    else:
+        total_hours = Decimal(
+            (timezone.now() - attendance.check_in).total_seconds() / 3600
+        )
+    break_hours = _calculate_break_hours(attendance)
+    print(f"==>> break_hours: {break_hours}")
+    work_hours = max(Decimal("0.0"), total_hours - break_hours)
+    print(f"==>> work_hours: {work_hours}")
+
+    attendance.work_hours = work_hours - break_hours
+    attendance.break_hours = break_hours
+    attendance.status = _calculate_status(work_hours)
+
+    attendance.save(update_fields=["work_hours", "break_hours", "status"])
+    print(f"==>> attendance: {attendance}")
+    return attendance
 
 
 @transaction.atomic

@@ -1,5 +1,7 @@
 # from datetime import date
 
+import calendar
+
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -45,7 +47,7 @@ class EmployeeDashboardView(APIView):
             today = timezone.now().date()
             year = timezone.now().year
             current_month = timezone.now().month
-            previous_month = current_month - 1
+            previous_month = calendar.month_name[current_month - 1]
             # year_start = date(year, 1, 1)
             # year_end = date(year, 12, 31)
 
@@ -64,7 +66,7 @@ class EmployeeDashboardView(APIView):
             print(f"==>> last_month_salary: {last_month_salary}")
 
             holiday_list = models.Holiday.objects.filter(
-                date__year=timezone.now().year
+                date__year=timezone.now().year, date__gte=today
             ).order_by("date")
             upcoming_approved_leaves = models.Leave.objects.filter(
                 status="approved", employee=request.user, from_date__gte=today
