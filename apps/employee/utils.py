@@ -195,7 +195,6 @@ def generate_payslip_pdf(payslip):
 
     html = render_to_string("payslip.html", context)
 
-    # Configure pdfkit options for better rendering
     options = {
         "page-size": "A4",
         "margin-top": "20mm",
@@ -208,7 +207,6 @@ def generate_payslip_pdf(payslip):
         "print-media-type": None,
     }
 
-    # Try to find wkhtmltopdf path on Windows
     config = None
     possible_paths = [
         r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe",
@@ -230,5 +228,4 @@ def generate_payslip_pdf(payslip):
 
     except Exception as e:
         print(f"PDF generation error: {e}")
-        # Fallback to simple HTML response for debugging
         return HttpResponse(html, content_type="text/html")
