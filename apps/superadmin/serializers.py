@@ -84,6 +84,7 @@ class UserMiniSerializer(serializers.ModelSerializer):
             "last_name",
             "department",
         ]
+        depth = 1
 
 
 class HolidayMiniSerializer(serializers.ModelSerializer):

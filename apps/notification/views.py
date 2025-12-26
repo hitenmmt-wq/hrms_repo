@@ -33,8 +33,8 @@ class NotificationTypeViewSet(BaseViewSet):
     ]
     filterset_class = NotificationTypeFilter
     search_fields = ["name"]
-    ordering_fields = ["date", "name"]
-    ordering = ["date"]
+    ordering_fields = ["name"]
+    ordering = ["name"]
 
 
 class NotificationViewSet(BaseViewSet):
