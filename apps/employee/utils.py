@@ -120,44 +120,34 @@ def employee_monthly_working_hours(employee):
     ).count()
 
     total_working_days = working_days - (monthly_holiday_list + employees_leave)
-    print(f"==>> total_working_days: {total_working_days}")
     total_working_hours = total_working_days * 8
-    print(f"==>> total_working_hours: {total_working_hours}")
 
     # WORKED HOURS CALCULATIONS
 
     working_days_currently = weekdays_count(date.today().replace(day=1), today) - 1
-    print(f"==>> working_days_currently: {working_days_currently}")
     monthly_holiday_currently = Holiday.objects.filter(
         date__lt=today, date__year=year
     ).count()
-    print(f"==>> monthly_holiday_currently: {monthly_holiday_currently}")
     employees_leave_currently = Leave.objects.filter(
         employee=employee,
         status="approved",
         from_date__lt=today,
     ).count()
-    print(f"==>> employees_leave_currently: {employees_leave_currently}")
 
     total_working_days_till_date = working_days_currently - (
         monthly_holiday_currently + employees_leave_currently
     )
-    print(f"==>> total_working_days_till_date: {total_working_days_till_date}")
     total_working_hours_till_date = total_working_days_till_date * 8
-    print(f"==>> total_working_hours_till_date: {total_working_hours_till_date}")
 
     remaining_working_days = total_working_days - total_working_days_till_date
-    print(f"==>> remaining_working_days: {remaining_working_days}")
 
     daily_average_hours = (
         total_working_hours_till_date / total_working_days_till_date
         if total_working_days_till_date > 0
         else 0
     )
-    print(f"==>> daily_average_hours: {daily_average_hours}")
 
     progress_percentage = (total_working_hours_till_date / total_working_hours) * 100
-    print(f"==>> progress_percentage: {progress_percentage}")
 
     monthly_working_hours_data = {
         "total_working_hours": total_working_hours,
