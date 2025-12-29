@@ -3,6 +3,7 @@
 services:
   web:
     build: .
+    command: gunicorn hrms.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
       - ./media:/app/media
@@ -29,7 +30,7 @@ services:
       - .env
 
   db:
-    image: postgres:13
+    image: postgres:14
     environment:
       POSTGRES_DB: hrms_db
       POSTGRES_USER: postgres
@@ -52,7 +53,8 @@ services:
 
   celery:
     build: .
-    command: celery -A hrms worker --loglevel=info
+    entrypoint: []
+    command: ["/bin/bash", "-c", "celery -A hrms worker --loglevel=info"]
     volumes:
       - .:/app
     depends_on:
@@ -65,7 +67,33 @@ services:
       DATABASE_NAME: hrms_db
       DATABASE_USER: postgres
       DATABASE_PASSWORD: postgres
-      DATABASE_HOST: localhost
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
+    env_file:
+      - .env
+
+  celery-beat:
+    build: .
+    entrypoint: []
+    command: ["/bin/bash", "-c", "celery -A hrms beat --loglevel=info"]
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: hrms.settings
+      DATABASE_NAME: hrms_db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: db
       DATABASE_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

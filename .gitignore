@@ -7,6 +7,12 @@ myworld/
 # Django
 *.sqlite3
 .env
+.env.staging
+.env.production
+
+# Deployment
+backups/
+*.log
 
 # Python
 __pycache__/
