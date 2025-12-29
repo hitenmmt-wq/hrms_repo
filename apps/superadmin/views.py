@@ -37,8 +37,6 @@ from apps.superadmin.utils import update_leave_balance
 class CustomScriptView(APIView):
     def get(self, request):
 
-        print(f"==>> request: {request}")
-
         # employee_attendance = EmployeeAttendance.objects.create
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -158,7 +156,6 @@ class ChangePassword(APIView):
 class ResetPassword(APIView):
     def post(self, request):
         email = request.data.get("email")
-        print(f"==>> email: {email}")
         try:
             user = models.Users.objects.filter(email=email).first()
         except models.Users.DoesNotExist:
@@ -572,14 +569,13 @@ class LeaveApprovalViewSet(BaseViewSet):
             update_leave_balance(
                 user, leave_data.leave_type, leave_data.status, leave_data.total_days
             )
-            attendance = EmployeeAttendance.objects.create(
+            EmployeeAttendance.objects.create(
                 employee=leave_data.employee,
                 check_in=leave_data.from_date,
                 check_out=leave_data.to_date,
                 day=leave_data.from_date,
                 status="paid_leave",
             )
-            print(f"==>> attendance: {attendance}")
 
             serialize = serializers.LeaveSerializer(leave_data)
             return ApiResponse.success(

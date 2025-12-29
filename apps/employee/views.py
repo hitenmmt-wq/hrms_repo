@@ -63,7 +63,6 @@ class EmployeeDashboardView(APIView):
             last_month_salary = PaySlip.objects.filter(
                 employee=request.user, month=previous_month
             ).first()
-            print(f"==>> last_month_salary: {last_month_salary}")
 
             holiday_list = models.Holiday.objects.filter(
                 date__year=timezone.now().year, date__gte=today

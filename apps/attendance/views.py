@@ -43,7 +43,6 @@ class AttendanceViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def delete(self, request, pk=None):
-        print(f"==>> pk: {pk}")
         EmployeeAttendance.objects.filter(id=pk).delete()
         return ApiResponse.success("Attendance deleted successfully")
 
@@ -75,7 +74,6 @@ class AttendanceViewSet(viewsets.ViewSet):
         attendance = EmployeeAttendance.objects.filter(
             id=pk, employee=request.user
         ).first()
-        print(f"==>> attendance: {attendance}")
         attendance = check_out(attendance)
         return ApiResponse.success(
             "Logged out successfully", AttendanceSerializer(attendance).data

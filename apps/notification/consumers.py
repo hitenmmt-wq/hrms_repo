@@ -9,7 +9,6 @@ User = get_user_model()
 class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
-        print(f"==>> user: {user}")
 
         # If not authenticated via middleware, try query param
         if not user or not user.is_authenticated:
@@ -20,7 +19,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             if token:
                 try:
                     access_token = AccessToken(token)
-                    print(f"==>> access_token: {access_token}")
                     user_id = access_token.payload.get("user_id")
                     user = await User.objects.aget(id=user_id)
                     self.scope["user"] = user

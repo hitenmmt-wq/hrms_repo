@@ -15,13 +15,11 @@ def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:
         if br.restart_time:
             diff = br.restart_time - br.pause_time
             total += Decimal(diff.total_seconds() / 3600)
-            print(f"==>> total: {total}")
 
     return total
 
 
 def _calculate_status(work_hours: Decimal) -> str:
-    print(f"==>> work_hours: {work_hours}")
     if work_hours >= 8:
         return "present"
     if work_hours >= 4:
@@ -39,8 +37,6 @@ def check_in(employee: Users) -> EmployeeAttendance:
         employee=employee, day=today, defaults={"check_in": timezone.now()}
     )
 
-    print(f"==>> created: {created}")
-    print(f"==>> attendance: {attendance}")
     if not created and attendance.check_in:
         raise ValueError("Already checked in")
 
@@ -69,7 +65,6 @@ def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
     br = AttendanceBreakLogs.objects.filter(
         attendance=attendance, restart_time__isnull=True
     ).first()
-    print(f"==>> br: {br}")
 
     if not br:
         raise ValueError("No active break found")
@@ -91,16 +86,13 @@ def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendanc
             (timezone.now() - attendance.check_in).total_seconds() / 3600
         )
     break_hours = _calculate_break_hours(attendance)
-    print(f"==>> break_hours: {break_hours}")
     work_hours = max(Decimal("0.0"), total_hours - break_hours)
-    print(f"==>> work_hours: {work_hours}")
 
     attendance.work_hours = work_hours - break_hours
     attendance.break_hours = break_hours
     attendance.status = _calculate_status(work_hours)
 
     attendance.save(update_fields=["work_hours", "break_hours", "status"])
-    print(f"==>> attendance: {attendance}")
     return attendance
 
 
@@ -116,15 +108,12 @@ def check_out(attendance: EmployeeAttendance) -> EmployeeAttendance:
     )
 
     break_hours = _calculate_break_hours(attendance)
-    print(f"==>> break_hours: {break_hours}")
     work_hours = max(Decimal("0.0"), total_hours - break_hours)
-    print(f"==>> work_hours: {work_hours}")
 
     attendance.work_hours = work_hours - break_hours
     attendance.break_hours = break_hours
     attendance.status = _calculate_status(work_hours)
 
     attendance.save(update_fields=["check_out", "work_hours", "break_hours", "status"])
-    print(f"==>> attendance: {attendance}")
 
     return attendance

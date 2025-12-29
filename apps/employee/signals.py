@@ -25,10 +25,8 @@ def leave_balance_post_save(sender, instance, **kwargs):
 @receiver(post_save, sender=EmployeeAttendance)
 def notify_on_attendance(sender, instance, created, **kwargs):
     print("this signal called.....notify_on_attendance.........")
-    print(f"==>> instance.status: {instance.status}")
     if instance.status == constants.PENDING:
         notification_type = NotificationType.objects.get(code=constants.PENDING)
-        print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,
             notification_type=notification_type,
@@ -39,7 +37,6 @@ def notify_on_attendance(sender, instance, created, **kwargs):
 
     if instance.status == constants.PRESENT:
         notification_type = NotificationType.objects.get(code=constants.APPROVED)
-        print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,
             notification_type=notification_type,
@@ -64,7 +61,6 @@ def notify_on_attendance(sender, instance, created, **kwargs):
         notification_type = NotificationType.objects.get(
             code=constants.ATTENDANCE_REMINDER
         )
-        print(f"==>> notification_type: {notification_type}")
         create_notification(
             recipient=instance.employee,
             notification_type=notification_type,
