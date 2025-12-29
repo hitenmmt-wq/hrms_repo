@@ -28,5 +28,4 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
         return
 
     leave_balance.save()
-    print(f"==>> leave_balance: {leave_balance.used_pl}")
     return leave_balance

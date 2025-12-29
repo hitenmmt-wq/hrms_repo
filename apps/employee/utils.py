@@ -173,7 +173,6 @@ def imagefield_to_base64(image_field):
 
 
 def generate_payslip_pdf(payslip):
-    print(f"==>> payslip: {payslip}")
     company = CommonData.objects.first()
     company_logo_base64 = imagefield_to_base64(
         company.company_logo if company else None

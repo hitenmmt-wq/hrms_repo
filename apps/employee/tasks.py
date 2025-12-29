@@ -12,9 +12,7 @@ from apps.superadmin import models
 def credit_new_year_employee_leaves():
     print("🔥 CELERY BEAT TRIGGERED 🔥")
     current_year = timezone.now().year
-    print(f"==>> current_year: {current_year}")
     new_year = current_year + 1
-    print(f"==>> new_year: {new_year}")
 
     employees = models.Users.objects.filter(is_active=True)
     for employee in employees:
