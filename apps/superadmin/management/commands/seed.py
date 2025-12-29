@@ -36,14 +36,15 @@ class Command(BaseCommand):
         email = "admin@example.com"
 
         if not Users.objects.filter(email=email).exists():
-            Users.objects.create(
+            user = Users.objects.create(
                 email=email,
-                password=password,
                 is_superuser=True,
                 is_staff=True,
                 is_active=True,
                 role="admin",
             )
+            user.set_password(password)
+            user.save()
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Superuser created → email: {email}, password: {password}"

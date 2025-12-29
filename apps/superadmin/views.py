@@ -18,6 +18,7 @@ from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
+from apps.employee.utils import employee_monthly_working_hours
 from apps.superadmin import models, serializers
 from apps.superadmin.custom_filters import (
     AnnouncementFilter,
@@ -25,6 +26,7 @@ from apps.superadmin.custom_filters import (
     HolidayFilter,
     LeaveFilter,
     PositionFilter,
+    SuperAdminFilter,
 )
 from apps.superadmin.tasks import send_email_task
 from apps.superadmin.utils import update_leave_balance
@@ -78,6 +80,16 @@ class AdminDashboardView(APIView):
             )[:3]
 
             announcement = models.Announcement.objects.all().order_by("-id")[:5]
+
+            total_employees_active = total_employees.filter(
+                role=constants.EMPLOYEE_USER
+            )
+            team_monthly_working_hour = {}
+            for employee in total_employees_active:
+                team_monthly_working_hour[employee.id] = employee_monthly_working_hours(
+                    employee
+                )
+
             data = {
                 "counts": {
                     "total_employees": total_employees.count(),
@@ -85,6 +97,7 @@ class AdminDashboardView(APIView):
                     "absent_employee": absent_employee.count(),
                     "pending_approvals": pending_approval_count.count(),
                 },
+                "team_monthly_working_hour": team_monthly_working_hour,
                 "current_birthdays": serializers.UserMiniSerializer(
                     current_birthdays, many=True
                 ).data,
@@ -206,8 +219,19 @@ class ResetPasswordChange(APIView):
 
 
 class AdminRegister(BaseViewSet):
-    queryset = models.Users.objects.all()
+    entity_name = "Super-Admin"
+    queryset = models.Users.objects.filter(role=constants.ADMIN_USER)
     serializer_class = serializers.AdminRegisterSerializer
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = SuperAdminFilter
+    search_fields = ["email", "first_name", "last_name", "role"]
+    ordering_fields = ["email", "first_name"]
+    ordering = ["email"]
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -217,15 +241,26 @@ class AdminRegister(BaseViewSet):
             activation_link = (
                 constants.ACCOUNT_ACTIVATION_URL
             )  # f"http://127.0.0.1:8000/adminapp/activate/{token}/"
-
-            send_email_task.delay(
-                subject="Activate your account",
-                to_email=user.email,
-                text_body=f"Click here to activate your account: {activation_link}",
-            )
+            try:
+                print("startssssssssssssssssss")
+                send_email_task.delay(
+                    subject="Activate your account",
+                    to_email=user.email,
+                    text_body=f"Click here to activate your account: {activation_link}",
+                )
+            except Exception as e:
+                print("Error here.........", e)
 
             return Response({"message": "User created successfully"}, status=201)
         return Response(serializer.errors, status=400)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return serializers.AdminRegisterSerializer
+        elif self.action == "update":
+            return serializers.AdminUpdateSerializer
+        else:
+            return serializers.AdminListSerializer
 
 
 class ActivateUser(APIView):
@@ -239,6 +274,16 @@ class ActivateUser(APIView):
             if not user.is_active:
                 user.is_active = True
                 user.save()
+                try:
+                    print("started ....!!")
+                    send_email_task.delay(
+                        subject="Welcome to HRMS",
+                        body=f"You have been added to HRMS portal as {user.role}. Please Login to continue.",
+                        to=user.email,
+                    )
+                    print("done successfully...")
+                except Exception as e:
+                    print("Error here.........", e)
                 return Response(
                     {"message": "Account activated successfully! You can now login."}
                 )

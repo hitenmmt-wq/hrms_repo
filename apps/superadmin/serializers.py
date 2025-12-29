@@ -126,16 +126,39 @@ class EmployeeAttendanceMiniSerializer(serializers.ModelSerializer):
 class AdminRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Users
-        fields = ["role", "email", "password"]
+        fields = ["role", "email", "password", "birthdate", "joining_date"]
 
     def create(self, validated_data):
         user = models.Users.objects.create(
             email=validated_data["email"],
             password=make_password(validated_data["password"]),
             role=validated_data.get("role", "employee"),
+            birthdate=validated_data.get("birthdate", None),
+            joining_date=validated_data.get("joining_date", None),
             is_active=False,
         )
         return user
+
+
+class AdminListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Users
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "joining_date",
+            "birthdate",
+            "is_active",
+        ]
+
+
+class AdminUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Users
+        fields = ["first_name", "last_name", "is_active", "role", "birthdate"]
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

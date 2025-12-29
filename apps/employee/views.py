@@ -48,8 +48,6 @@ class EmployeeDashboardView(APIView):
             year = timezone.now().year
             current_month = timezone.now().month
             previous_month = calendar.month_name[current_month - 1]
-            # year_start = date(year, 1, 1)
-            # year_end = date(year, 12, 31)
 
             todays_attendance = EmployeeAttendance.objects.filter(
                 employee=request.user, day=today

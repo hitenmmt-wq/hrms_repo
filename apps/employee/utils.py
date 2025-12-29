@@ -1,17 +1,18 @@
 import base64
 import calendar
 import os
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 import pdfkit
 
 # from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance
 from apps.superadmin.models import CommonData, Holiday, Leave
 
@@ -99,47 +100,62 @@ def calculate_leave_deduction(
 
 def employee_monthly_working_hours(employee):
     today = timezone.now().date()
-    year = timezone.now().year
-    current_month = timezone.now().month
+    year = today.year
+    month = today.month
+    month_start = today.replace(day=1)
+    month_end = today.replace(day=calendar.monthrange(year, month)[1])
 
-    # TOTAL HOURS CALCULATIONS
-    working_days = weekdays_count(
-        date.today().replace(day=1),
-        date.today().replace(
-            day=calendar.monthrange(date.today().year, date.today().month)[1]
-        ),
+    working_days = weekdays_count(month_start, month_end)
+
+    monthly_holidays = (
+        Holiday.objects.filter(date__year=year, date__month=month)
+        .exclude(date__week_day__in=[1, 7])
+        .count()
     )
-    monthly_holiday_list = Holiday.objects.filter(
-        date__month=current_month, date__year=year
-    ).count()
-    employees_leave = Leave.objects.filter(
+
+    monthly_leaves = Leave.objects.filter(
         employee=employee,
         status="approved",
         from_date__year=year,
-        from_date__month=current_month,
+        from_date__month=month,
     ).count()
 
-    total_working_days = working_days - (monthly_holiday_list + employees_leave)
+    total_working_days = max(working_days - (monthly_holidays + monthly_leaves), 0)
+
     total_working_hours = total_working_days * 8
 
-    # WORKED HOURS CALCULATIONS
+    working_days_till_today = weekdays_count(month_start, today)
 
-    working_days_currently = weekdays_count(date.today().replace(day=1), today) - 1
-    monthly_holiday_currently = Holiday.objects.filter(
-        date__lt=today, date__year=year
+    holidays_till_today = Holiday.objects.filter(
+        date__lt=today,
+        date__year=year,
+        date__month=month,
     ).count()
-    employees_leave_currently = Leave.objects.filter(
+
+    leaves_till_today = Leave.objects.filter(
         employee=employee,
         status="approved",
         from_date__lt=today,
+        from_date__year=year,
+        from_date__month=month,
     ).count()
 
-    total_working_days_till_date = working_days_currently - (
-        monthly_holiday_currently + employees_leave_currently
+    total_working_days_till_date = max(
+        working_days_till_today - (holidays_till_today + leaves_till_today), 0
     )
-    total_working_hours_till_date = total_working_days_till_date * 8
 
-    remaining_working_days = total_working_days - total_working_days_till_date
+    total_working_hours_till_date = (
+        EmployeeAttendance.objects.filter(
+            employee_id=employee.id,
+            day__year=year,
+            day__month=month,
+        )
+        .aggregate(total=Sum("work_hours"))
+        .get("total")
+        or 0
+    )
+
+    remaining_working_days = max(total_working_days - total_working_days_till_date, 0)
 
     daily_average_hours = (
         total_working_hours_till_date / total_working_days_till_date
@@ -147,17 +163,23 @@ def employee_monthly_working_hours(employee):
         else 0
     )
 
-    progress_percentage = (total_working_hours_till_date / total_working_hours) * 100
+    progress_percentage = (
+        (total_working_hours_till_date / total_working_hours) * 100
+        if total_working_hours > 0
+        else 0
+    )
 
-    monthly_working_hours_data = {
+    return {
+        "employee_email": employee.email,
+        "first_name": employee.first_name,
+        "last_name": employee.last_name,
         "total_working_hours": total_working_hours,
         "worked_hours": total_working_hours_till_date,
         "total_working_days": total_working_days,
         "remaining_working_days": remaining_working_days,
-        "daily_average_hours": daily_average_hours,
-        "progress_percentage": progress_percentage,
+        "daily_average_hours": round(daily_average_hours, 2),
+        "progress_percentage": round(progress_percentage, 2),
     }
-    return monthly_working_hours_data
 
 
 def imagefield_to_base64(image_field):

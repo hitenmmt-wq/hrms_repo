@@ -3,6 +3,22 @@ import django_filters
 from apps.superadmin import models
 
 
+class SuperAdminFilter(django_filters.FilterSet):
+    first_name = django_filters.CharFilter(
+        field_name="first_name", lookup_expr="icontains"
+    )
+    last_name = django_filters.CharFilter(
+        field_name="last_name", lookup_expr="icontains"
+    )
+    role = django_filters.CharFilter(field_name="role", lookup_expr="icontains")
+    email = django_filters.CharFilter(field_name="email", lookup_expr="icontains")
+    is_active = django_filters.BooleanFilter(field_name="is_active")
+
+    class Meta:
+        model = models.Users
+        fields = ["email", "first_name", "last_name", "role", "is_active"]
+
+
 class HolidayFilter(django_filters.FilterSet):
     start_date = django_filters.DateFilter(field_name="date", lookup_expr="gte")
     end_date = django_filters.DateFilter(field_name="date", lookup_expr="lte")

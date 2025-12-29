@@ -23,6 +23,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from apps.base.health import health_check, liveness_check, readiness_check
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("superadmin/", include("apps.superadmin.urls")),
@@ -30,6 +32,10 @@ urlpatterns = [
     path("employee/", include("apps.employee.urls")),
     path("attendance/", include("apps.attendance.urls")),
     path("notify/", include("apps.notification.urls")),
+    # Health checks for deployment
+    path("health/", health_check, name="health_check"),
+    path("ready/", readiness_check, name="readiness_check"),
+    path("alive/", liveness_check, name="liveness_check"),
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
