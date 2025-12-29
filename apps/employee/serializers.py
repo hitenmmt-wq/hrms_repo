@@ -4,6 +4,7 @@ from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.employee.utils import calculate_leave_deduction, weekdays_count
 from apps.superadmin import models
+from apps.superadmin.tasks import send_email_task
 
 #   ======= EMPLOYEE SERIALIZER   ============
 
@@ -37,6 +38,17 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
         user = models.Users(**validated_data)
         user.set_password(password)
         user.save()
+        try:
+            send_email_task(
+                subject="Welcome to HRMS",
+                to_email=user.email,
+                text_body=f"You have been added as an {user.role} to HRMS",
+                html_body=None,
+            )
+            print("done success.......")
+        except Exception as e:
+            print("error.......", e)
+
         return user
 
 

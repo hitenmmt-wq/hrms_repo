@@ -71,7 +71,7 @@ class Users(AbstractUser):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return f"{self.email} - {self.employee_id}"
+        return f"{self.email} - {self.employee_id} - {self.role}"
 
 
 class Department(BaseModel):

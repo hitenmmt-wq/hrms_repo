@@ -151,6 +151,8 @@ class Command(BaseCommand):
                 },
             )
             if created:
+                obj.set_password(item["password"])
+                obj.save()
                 self.stdout.write(self.style.SUCCESS("Admin-Employee Users created"))
 
     def create_announcement(self):
