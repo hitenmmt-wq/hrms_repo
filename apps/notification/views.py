@@ -1,6 +1,7 @@
 # from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -54,6 +55,13 @@ class NotificationViewSet(BaseViewSet):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user)
+
+    @action(detail=False, methods=["get"])
+    def unread_count(self, request):
+        count = Notification.objects.filter(
+            recipient=request.user, is_read=False
+        ).count()
+        return Response({"unread_count": count})
 
 
 class MarkAsReadView(APIView):

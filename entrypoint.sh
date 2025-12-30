@@ -1,17 +1,25 @@
 #!/bin/bash
+set -e
 
-# Wait for database to be ready
 echo "Waiting for database..."
 while ! nc -z db 5432; do
-  sleep 0.1
+  echo "Database not ready, waiting..."
+  sleep 2
 done
 echo "Database is ready!"
 
-# Run migrations
-python manage.py migrate
+echo "Waiting for Redis..."
+while ! nc -z redis 6379; do
+  echo "Redis not ready, waiting..."
+  sleep 2
+done
+echo "Redis is ready!"
 
-# Collect static files
+echo "Running migrations..."
+python manage.py migrate --noinput
+
+echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Start the application
+echo "Starting application..."
 exec "$@"

@@ -29,8 +29,6 @@ class Command(BaseCommand):
     def create_default_superuser(self):
         """
         Create default admin superuser if not exists.
-        Username: admin
-        Password: admin
         """
         password = "admin"
         email = "admin@example.com"
