@@ -110,6 +110,7 @@ class FileUploadView(generics.CreateAPIView):
                 data={
                     "conversation": conv.id,
                     "text": request.data.get("text", ""),
+                    "reply_to_id": request.data.get("reply_to_id", ""),
                     "media": (
                         media_file if media_file and media_file != "file" else None
                     ),

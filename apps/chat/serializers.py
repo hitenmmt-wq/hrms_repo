@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 from rest_framework import serializers
 
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
@@ -25,6 +26,13 @@ class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
     media_url = serializers.SerializerMethodField()
     reactions = MessageReactionSerializer(many=True, read_only=True)
+    reply_to_id = serializers.PrimaryKeyRelatedField(
+        queryset=Message.objects.all(),
+        source="reply_to",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
     reply_to = serializers.SerializerMethodField()
     reaction_counts = serializers.SerializerMethodField()
 
@@ -39,6 +47,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "media_url",
             "msg_type",
             "reply_to",
+            "reply_to_id",
             "reactions",
             "reaction_counts",
             "created_at",
@@ -63,8 +72,6 @@ class MessageSerializer(serializers.ModelSerializer):
         return None
 
     def get_reaction_counts(self, obj):
-        from django.db.models import Count
-
         return obj.reactions.values("emoji").annotate(count=Count("emoji"))
 
     def validate(self, data):
