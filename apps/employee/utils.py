@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance
 from apps.superadmin.models import CommonData, Holiday, Leave
+from apps.superadmin.tasks import send_email_task
 
 # from io import BytesIO
 
@@ -241,6 +242,18 @@ def generate_payslip_pdf(payslip):
 
     try:
         pdf = pdfkit.from_string(html, False, options=options, configuration=config)
+
+        send_email_task(
+            subject=f"Payment-Slip Generated for {payslip.month}",
+            to_email=payslip.employee.email,
+            text_body=[
+                f"Hi {payslip.employee.first_name} {payslip.employee.last_name},/n ",
+                f"Your Payment-slip has been generated for {payslip.month}./n",
+                "You can Download it from here.",
+            ],
+            pdf_bytes=pdf,
+            filename=f"payslip_{payslip.id}.pdf",
+        )
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
             f'attachment; filename="payslip_{payslip.id}.pdf"'

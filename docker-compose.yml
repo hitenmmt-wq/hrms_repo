@@ -3,10 +3,11 @@
 services:
   web:
     build: .
-    command: gunicorn hrms.wsgi:application --bind 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
     ports:
       - "8000:8000"
     depends_on:
@@ -53,15 +54,11 @@ services:
 
   celery:
     build: .
-    entrypoint: []
-    command: ["/bin/bash", "-c", "celery -A hrms worker --loglevel=info"]
+    command: celery -A hrms worker --loglevel=info
     volumes:
       - .:/app
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - web
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
       DATABASE_NAME: hrms_db
@@ -76,18 +73,15 @@ services:
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
     env_file:
       - .env
+    restart: unless-stopped
 
   celery-beat:
     build: .
-    entrypoint: []
-    command: ["/bin/bash", "-c", "celery -A hrms beat --loglevel=info"]
+    command: celery -A hrms beat --loglevel=info
     volumes:
       - .:/app
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - web
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
       DATABASE_NAME: hrms_db
@@ -102,6 +96,7 @@ services:
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
     env_file:
       - .env
+    restart: unless-stopped
 
   nginx:
     image: nginx:alpine
@@ -113,6 +108,7 @@ services:
       - ./media:/app/media
     depends_on:
       - web
+    restart: unless-stopped
 
 volumes:
   postgres_data:
