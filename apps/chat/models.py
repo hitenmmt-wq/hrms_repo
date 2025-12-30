@@ -6,7 +6,7 @@ from apps.superadmin.models import Users
 # Create your models here.
 
 
-class Conversation(models.Model):
+class Conversation(BaseModel):
     CONVERSATION_TYPES = (
         ("private", "private"),
         ("group", "group"),
@@ -14,36 +14,87 @@ class Conversation(models.Model):
     type = models.CharField(max_length=20, choices=CONVERSATION_TYPES)
     name = models.CharField(max_length=255, null=True, blank=True)
     participants = models.ManyToManyField(Users, related_name="conversations")
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} - {self.type}"
+        return f"{self.name or 'Unnamed'} - {self.type}"
 
 
 class Message(BaseModel):
+    MSG_TYPE_CHOICES = (
+        ("text", "Text"),
+        ("image", "Image"),
+        ("file", "File"),
+        ("audio", "Audio"),
+        ("video", "Video"),
+    )
+
     conversation = models.ForeignKey(
         Conversation, on_delete=models.CASCADE, related_name="messages"
     )
     sender = models.ForeignKey(
-        Users, on_delete=models.CASCADE, related_name="sender_user"
+        Users, on_delete=models.CASCADE, related_name="sent_messages"
     )
     text = models.TextField(null=True, blank=True)
     media = models.FileField(upload_to="chat_media/", null=True, blank=True)
-    msg_type = models.CharField(max_length=20, default="text")
+    msg_type = models.CharField(max_length=20, choices=MSG_TYPE_CHOICES, default="text")
+    reply_to = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="replies"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.sender.email} - {self.conversation.name} "
+        return (
+            f"Message from {self.sender.email} in {self.conversation.name or 'Unnamed'}"
+        )
 
 
-class MessageStatus(models.Model):
+class MessageStatus(BaseModel):
+    STATUS_CHOICES = (
+        ("sent", "Sent"),
+        ("delivered", "Delivered"),
+        ("read", "Read"),
+        ("failed", "Failed"),
+    )
+
     message = models.ForeignKey(
         Message, on_delete=models.CASCADE, related_name="statuses"
     )
     user = models.ForeignKey(
-        Users, on_delete=models.CASCADE, related_name="user_status"
+        Users, on_delete=models.CASCADE, related_name="message_statuses"
     )
-    status = models.CharField(max_length=20, default="sent")
-    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="sent")
+
+    class Meta:
+        unique_together = ("message", "user")
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return f"{self.user.email} - {self.status}"
+
+
+class MessageReaction(BaseModel):
+    REACTION_CHOICES = (
+        ("👍", "Thumbs Up"),
+        ("❤️", "Heart"),
+        ("😂", "Laugh"),
+        ("😮", "Wow"),
+        ("😢", "Sad"),
+        ("😡", "Angry"),
+    )
+
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE, related_name="reactions"
+    )
+    user = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="message_reactions"
+    )
+    emoji = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    class Meta:
+        unique_together = ("message", "user", "emoji")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.email} reacted {self.emoji} to message"
