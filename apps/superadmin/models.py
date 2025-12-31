@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from apps.base import constants
 from apps.base.models import BaseModel
 
 # Create your models here.
@@ -114,6 +115,10 @@ class LeaveType(BaseModel):
 
 
 class Leave(BaseModel):
+    HALF_DAY_PART = (
+        ("first", "First"),
+        ("second", "Second"),
+    )
     employee = models.ForeignKey(
         "Users", on_delete=models.CASCADE, related_name="user_leaves"
     )
@@ -126,7 +131,12 @@ class Leave(BaseModel):
     )
     from_date = models.DateField()
     to_date = models.DateField(null=True, blank=True)
-    total_days = models.IntegerField(null=True, blank=True)
+    day_part = models.CharField(
+        max_length=50, choices=HALF_DAY_PART, null=True, blank=True
+    )
+    total_days = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
     reason = models.TextField()
     status = models.CharField(max_length=50, default="pending")
 
@@ -150,7 +160,9 @@ class Leave(BaseModel):
         return f"{self.employee.email} - {self.leave_type} - {self.status}"
 
     def save(self, *args, **kwargs):
-        if not self.to_date:
+        if self.leave_type.code == constants.HALFDAY_LEAVE:
+            self.total_days = 0.5
+        elif not self.to_date:
             self.total_days = 1
         else:
             self.total_days = (self.to_date - self.from_date).days + 1

@@ -139,6 +139,7 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
             "from_date",
             "to_date",
             "total_days",
+            "day_part",
             "reason",
             "status",
         ]
@@ -158,6 +159,7 @@ class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
             "leave_type",
             "from_date",
             "to_date",
+            "day_part",
             "total_days",
             "reason",
             "status",

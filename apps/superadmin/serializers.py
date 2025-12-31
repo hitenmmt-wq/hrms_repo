@@ -226,7 +226,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LeaveApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Leave
-        fields = ["id", "leave_type", "from_date", "to_date", "reason"]
+        fields = ["id", "leave_type", "from_date", "to_date", "reason", "day_part"]
 
     def validate(self, attrs):
         if attrs["to_date"] < attrs["from_date"]:
@@ -253,6 +253,7 @@ class LeaveSerializer(serializers.ModelSerializer):
             "from_date",
             "to_date",
             "total_days",
+            "day_part",
             "status",
             "reason",
             "approved_at",

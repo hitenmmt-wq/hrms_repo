@@ -1,6 +1,7 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -626,6 +627,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
 class LeaveApprovalViewSet(BaseViewSet):
     permission_classes = [IsAdmin]
 
+    @transaction.atomic
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         user = request.user
@@ -644,11 +646,23 @@ class LeaveApprovalViewSet(BaseViewSet):
                 leave_data.status,
                 leave_data.total_days,
             )
-            EmployeeAttendance.objects.create(
-                employee=leave_data.employee,
-                day=leave_data.from_date,
-                status=constants.PAID_LEAVE,
+
+            leave_entries = []
+            initial_date = leave_data.from_date
+            last_date = (
+                leave_data.to_date if leave_data.to_date else leave_data.from_date
             )
+            while initial_date <= last_date:
+                leave_entries.append(
+                    EmployeeAttendance(
+                        employee=leave_data.employee,
+                        day=initial_date,
+                        status=constants.UNPAID_LEAVE,
+                    )
+                )
+                initial_date += timedelta(days=1)
+            EmployeeAttendance.objects.bulk_create(leave_entries)
+
             notify_employee_leave_approved(leave_data.employee, leave_data)
 
             serialize = serializers.LeaveSerializer(leave_data)

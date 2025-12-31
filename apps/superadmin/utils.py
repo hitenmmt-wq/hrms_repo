@@ -8,6 +8,7 @@ from apps.notification.services import create_notification
 
 def update_leave_balance(employee, leave_type=None, status=None, count=0):
     print("update_leave_balance this function called.....")
+    print(f"==>> leave_type: {leave_type}")
     today = timezone.now()
     year = today.year
 
@@ -24,7 +25,11 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
             leave_balance.used_pl += count
         elif leave_type and leave_type.code == constants.SICK_LEAVE:
             leave_balance.used_sl += count
-        elif leave_type and leave_type.code == constants.OTHER_LEAVE:
+        elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
+            leave_balance.used_pl += count
+        # elif leave_type and leave_type.code == constants.OTHER_LEAVE:
+        #     leave_balance.used_lop += count
+        else:
             leave_balance.used_lop += count
     else:
         return
