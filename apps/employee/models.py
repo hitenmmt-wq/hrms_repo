@@ -15,12 +15,12 @@ class LeaveBalance(BaseModel):
     employee = models.OneToOneField(
         Users, on_delete=models.CASCADE, related_name="employee_leave_balance"
     )
-    pl = models.IntegerField(default=12, null=True, blank=True)
-    sl = models.IntegerField(default=4, null=True, blank=True)
-    lop = models.IntegerField(default=0, null=True, blank=True)
-    used_pl = models.IntegerField(default=0, null=True, blank=True)
-    used_sl = models.IntegerField(default=0, null=True, blank=True)
-    used_lop = models.IntegerField(default=0, null=True, blank=True)
+    pl = models.FloatField(default=12, null=True, blank=True)
+    sl = models.FloatField(default=4, null=True, blank=True)
+    lop = models.FloatField(default=0, null=True, blank=True)
+    used_pl = models.FloatField(default=0, null=True, blank=True)
+    used_sl = models.FloatField(default=0, null=True, blank=True)
+    used_lop = models.FloatField(default=0, null=True, blank=True)
     year = models.IntegerField(default=current_year, null=True, blank=True)
 
     class Meta:
@@ -28,6 +28,18 @@ class LeaveBalance(BaseModel):
 
     def __str__(self):
         return f"{self.employee.email} - {self.year}"
+
+    @property
+    def remaining_pl(self):
+        return max(self.pl - self.used_pl, 0)
+
+    @property
+    def remaining_sl(self):
+        return max(self.sl - self.used_sl, 0)
+
+    @property
+    def remaining_lop(self):
+        return max(self.lop - self.used_lop, 0)
 
 
 class PaySlip(BaseModel):
@@ -37,7 +49,7 @@ class PaySlip(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     month = models.CharField(max_length=20, null=True, blank=True)
-    days = models.IntegerField(null=True, blank=True)
+    days = models.FloatField(null=True, blank=True)
     basic_salary = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )

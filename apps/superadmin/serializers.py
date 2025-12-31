@@ -68,6 +68,12 @@ class HolidayListSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class LeaveTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.LeaveType
+        fields = "__all__"
+
+
 #  ================  DASHBOARD SERIALIZERS  ===================
 
 
@@ -220,7 +226,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LeaveApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Leave
-        fields = ["id", "leave_type", "from_date", "to_date", "reason"]
+        fields = ["id", "leave_type", "from_date", "to_date", "reason", "day_part"]
 
     def validate(self, attrs):
         if attrs["to_date"] < attrs["from_date"]:
@@ -230,11 +236,13 @@ class LeaveApplySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
         employee = request.user
-        return models.apply_leave(employee, **validated_data)
+        validated_data["employee"] = employee
+        return models.Leave.objects.create(**validated_data)
 
 
 class LeaveSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer()
+    leave_type = LeaveTypeSerializer()
 
     class Meta:
         model = models.Leave
@@ -245,6 +253,7 @@ class LeaveSerializer(serializers.ModelSerializer):
             "from_date",
             "to_date",
             "total_days",
+            "day_part",
             "status",
             "reason",
             "approved_at",

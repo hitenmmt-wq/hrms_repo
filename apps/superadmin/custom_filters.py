@@ -49,6 +49,15 @@ class DepartmentFilter(django_filters.FilterSet):
         fields = ["name"]
 
 
+class LeaveTypeFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+    code = django_filters.CharFilter(field_name="code", lookup_expr="icontains")
+
+    class Meta:
+        model = models.LeaveType
+        fields = ["name", "code"]
+
+
 class PositionFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
 
@@ -61,8 +70,8 @@ class LeaveFilter(django_filters.FilterSet):
     employee = django_filters.CharFilter(
         field_name="employee__email", lookup_expr="icontains"
     )
-    leave_type = django_filters.CharFilter(
-        field_name="leave_type", lookup_expr="icontains"
+    leave_type = django_filters.ModelChoiceFilter(
+        field_name="leave_type", queryset=models.LeaveType.objects.all()
     )
     status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
     from_date = django_filters.DateFilter(field_name="from_date", lookup_expr="gte")

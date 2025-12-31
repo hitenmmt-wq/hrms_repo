@@ -1,14 +1,19 @@
 ACCOUNT_ACTIVATION_URL = "http://127.0.0.1:8000/adminapp/activate/{token}/"
 
+# USER ROLE CONSTANTS
 ADMIN_USER = "admin"
 EMPLOYEE_USER = "employee"
 HR_USER = "hr"
 
+# STATUS CONSTANTS
 APPROVED = "approved"
 REJECTED = "rejected"
 PENDING = "pending"
 PRESENT = "present"
 INCOMPLETE_HOURS = "incomplete_hours"
+
+# NOTIFICATION CONSTANTS
+LEAVE_APPLY = "leave_apply"
 
 PRIVILEGE_LEAVE = "privilege"
 SICK_LEAVE = "sick"
@@ -19,5 +24,7 @@ CHAT_NOTIFY = "chat_message"
 ATTENDANCE_REMINDER = "attendance_reminder"
 ATTENDANCE_REJECTED = "attendance_rejected"
 
+# LEAVE_TYPE CONSTANTS
 UNPAID_LEAVE = "unpaid_leave"
 PAID_LEAVE = "paid_leave"
+HALFDAY_LEAVE = "halfday_leave"

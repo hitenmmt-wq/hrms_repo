@@ -50,8 +50,8 @@ class LeaveBalanceFilter(django_filters.FilterSet):
 
 class ApplyLeaveFilter(django_filters.FilterSet):
     employee = django_filters.NumberFilter(field_name="employee__id")
-    leave_type = django_filters.CharFilter(
-        field_name="leave_type", lookup_expr="icontains"
+    leave_type = django_filters.ModelChoiceFilter(
+        field_name="leave_type", queryset=models.LeaveType.objects.all()
     )
     from_date = django_filters.DateFilter(field_name="from_date", lookup_expr="date")
     to_date = django_filters.DateFilter(field_name="to_date", lookup_expr="date")
@@ -60,7 +60,7 @@ class ApplyLeaveFilter(django_filters.FilterSet):
     status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
 
     class Meta:
-        models = models.Leave
+        model = models.Leave
         fields = [
             "employee",
             "leave_type",
