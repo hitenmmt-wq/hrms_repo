@@ -6,7 +6,7 @@ from django.utils import timezone
 from apps.base import constants
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
-from apps.superadmin.models import Announcement, Users
+from apps.superadmin.models import Announcement, Leave, Users
 
 
 @receiver(pre_save, sender=Users)
@@ -47,5 +47,32 @@ def notify_on_announcement(sender, instance, created, **kwargs):
             notification_type=notification_type,
             title=instance.title,
             message=instance.description[:200],
+            related_object=instance,
+        )
+
+
+@receiver(post_save, sender=Leave)
+def notify_on_leave_apply(sender, instance, created, **kwargs):
+    admins = Users.objects.filter(role="admin", is_active=True)
+    if not created:
+        return
+    notification_type = NotificationType.objects.get(code=constants.LEAVE_APPLY)
+    create_notification(
+        recipient=instance.employee,
+        notification_type=notification_type,
+        title="Leave Applied",
+        message="Your leave application has been submitted successfully.",
+        related_object=instance,
+    )
+    for admin in admins:
+        create_notification(
+            recipient=admin,
+            actor=instance.employee,
+            notification_type=notification_type,
+            title="New Leave Application",
+            message=(
+                f"{instance.employee.first_name} "
+                f"{instance.employee.last_name} has applied for leave."
+            ),
             related_object=instance,
         )

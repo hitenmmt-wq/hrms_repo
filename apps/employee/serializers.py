@@ -126,6 +126,9 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
 
 class ApplyLeaveSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer(read_only=True)
+    leave_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.LeaveType.objects.all()
+    )
 
     class Meta:
         model = models.Leave
@@ -143,6 +146,9 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
 
 class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
+    leave_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.LeaveType.objects.all()
+    )
 
     class Meta:
         model = models.Leave
@@ -169,6 +175,7 @@ class HolidayMiniSerializer(serializers.ModelSerializer):
 
 class LeaveMiniSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer(read_only=True)
+    leave_type = serializers.StringRelatedField()
 
     class Meta:
         model = models.Leave

@@ -25,11 +25,16 @@ from apps.superadmin.custom_filters import (
     DepartmentFilter,
     HolidayFilter,
     LeaveFilter,
+    LeaveTypeFilter,
     PositionFilter,
     SuperAdminFilter,
 )
 from apps.superadmin.tasks import send_email_task
-from apps.superadmin.utils import update_leave_balance
+from apps.superadmin.utils import (
+    notify_employee_leave_approved,
+    notify_employee_leave_rejected,
+    update_leave_balance,
+)
 
 # Create your views here.
 
@@ -465,6 +470,31 @@ class HolidayViewSet(BaseViewSet):
         return queryset.filter(date__year=year)
 
 
+#   ================  LEAVE_TYPE CRUD API   ========
+
+
+class LeaveTypeViewSet(BaseViewSet):
+    entity_name = "LeaveType"
+    permission_classes = [IsAdmin]
+    serializer_class = serializers.LeaveTypeSerializer
+    queryset = models.LeaveType.objects.all()
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = LeaveTypeFilter
+    search_fields = ["name", "code"]
+    ordering_fields = ["name", "code"]
+    ordering = ["name"]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return serializers.LeaveTypeListSerializer
+        return serializers.LeaveTypeSerializer
+
+
 #   ================  DEPARTMENT CRUD API   ========
 
 
@@ -586,22 +616,19 @@ class LeaveViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def cancel(self, request, pk=None):
         leave = get_object_or_404(models.Leave, id=pk, employee=request.user)
-        if leave.status == models.Leave.LEAVE_STATUS_APPROVED:
+        if leave.status == "approved":
             return ApiResponse.error("Cannot cancel approved leave", status=400)
-        leave.status = models.Leave.LEAVE_STATUS_CANCELLED
+        leave.status = "cancelled"
         leave.save(update_fields=["status"])
         return ApiResponse.success("Leave cancelled")
 
 
 class LeaveApprovalViewSet(BaseViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         user = request.user
-        if user.role != constants.ADMIN_USER:
-            return ApiResponse.error("Permission denied", status=403)
-
         try:
             leave_data = models.Leave.objects.filter(id=pk).first()
             leave_data.status = constants.APPROVED
@@ -612,15 +639,17 @@ class LeaveApprovalViewSet(BaseViewSet):
                 update_fields=["status", "approved_by", "approved_at", "response_text"]
             )
             update_leave_balance(
-                user, leave_data.leave_type, leave_data.status, leave_data.total_days
+                leave_data.employee,
+                leave_data.leave_type,
+                leave_data.status,
+                leave_data.total_days,
             )
             EmployeeAttendance.objects.create(
                 employee=leave_data.employee,
-                check_in=leave_data.from_date,
-                check_out=leave_data.to_date,
                 day=leave_data.from_date,
-                status="paid_leave",
+                status=constants.PAID_LEAVE,
             )
+            notify_employee_leave_approved(leave_data.employee, leave_data)
 
             serialize = serializers.LeaveSerializer(leave_data)
             return ApiResponse.success(
@@ -632,8 +661,6 @@ class LeaveApprovalViewSet(BaseViewSet):
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         user = request.user
-        if user.role != constants.ADMIN_USER:
-            return ApiResponse.error("Permission denied", status=403)
         try:
             leave = models.Leave.objects.filter(id=pk).first()
             leave.status = constants.REJECTED
@@ -644,7 +671,10 @@ class LeaveApprovalViewSet(BaseViewSet):
                 update_fields=["status", "approved_by", "approved_at", "response_text"]
             )
 
-            update_leave_balance(user, leave.leave_type, leave.status, leave.total_days)
+            update_leave_balance(
+                leave.employee, leave.leave_type, leave.status, leave.total_days
+            )
+            notify_employee_leave_rejected(leave.employee, leave)
 
             serialize = serializers.LeaveSerializer(leave)
             return ApiResponse.success(

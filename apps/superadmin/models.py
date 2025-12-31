@@ -105,18 +105,25 @@ class Holiday(BaseModel):
         return self.name
 
 
+class LeaveType(BaseModel):
+    name = models.CharField(max_length=50)
+    code = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class Leave(BaseModel):
-    LEAVE_TYPE = (
-        ("casual", "casual"),
-        ("sick", "sick"),
-        ("maternity", "maternity"),
-        ("privilege", "privilege"),
-        ("other", "other"),
-    )
     employee = models.ForeignKey(
         "Users", on_delete=models.CASCADE, related_name="user_leaves"
     )
-    leave_type = models.CharField(max_length=50, choices=LEAVE_TYPE, default="other")
+    leave_type = models.ForeignKey(
+        LeaveType,
+        on_delete=models.CASCADE,
+        related_name="leave_type",
+        null=True,
+        blank=True,
+    )
     from_date = models.DateField()
     to_date = models.DateField(null=True, blank=True)
     total_days = models.IntegerField(null=True, blank=True)

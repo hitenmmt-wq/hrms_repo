@@ -15,6 +15,7 @@ router.register(r"announcement", views.AnnouncementViewSet, basename="announceme
 router.register(r"position", views.PositionViewSet, basename="position")
 router.register(r"profile", views.ProfileViewSet, basename="profile")
 router.register(r"leave", views.LeaveViewSet, basename="leave")
+router.register(r"leave_type", views.LeaveTypeViewSet, basename="leave_type")
 
 urlpatterns = [
     path("", include(router.urls)),
