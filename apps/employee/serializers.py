@@ -126,9 +126,6 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
 
 class ApplyLeaveSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer(read_only=True)
-    leave_type = serializers.PrimaryKeyRelatedField(
-        queryset=models.LeaveType.objects.all()
-    )
 
     class Meta:
         model = models.Leave
@@ -143,6 +140,7 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
             "reason",
             "status",
         ]
+        depth = 1
 
 
 class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
@@ -177,7 +175,7 @@ class HolidayMiniSerializer(serializers.ModelSerializer):
 
 class LeaveMiniSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer(read_only=True)
-    leave_type = serializers.StringRelatedField()
+    leave_type = serializers.StringRelatedField()  # trying this new stringrelatedfield
 
     class Meta:
         model = models.Leave

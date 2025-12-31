@@ -77,6 +77,8 @@ def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
 
 @transaction.atomic
 def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendance:
+    if attendance.status == "paid_leave" or attendance.status == "unpaid_leave":
+        return attendance
     if attendance.check_out:
         total_hours = Decimal(
             (attendance.check_out - attendance.check_in).total_seconds() / 3600

@@ -39,8 +39,10 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def daily_logs(self, request):
         attendance = self.get_queryset().filter(day=timezone.now().date()).first()
+        print(f"==>> attendance: {attendance.id}")
 
         logs = AttendanceBreakLogs.objects.filter(attendance=attendance).order_by("-id")
+        print(f"==>> logs: {logs}")
 
         return ApiResponse.success(
             "Daily logs list", BreakLogSerializer(logs, many=True).data

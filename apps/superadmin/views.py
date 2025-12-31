@@ -96,6 +96,11 @@ class AdminDashboardView(APIView):
                     employee
                 )
 
+            print(f"==>> team_monthly_working_hour: {team_monthly_working_hour}")
+            working_days_this_month = ""
+            expected_hours = ""
+            total_team_completion = ""
+
             data = {
                 "counts": {
                     "total_employees": total_employees.count(),
@@ -104,6 +109,9 @@ class AdminDashboardView(APIView):
                     "pending_approvals": pending_approval_count.count(),
                 },
                 "team_monthly_working_hour": team_monthly_working_hour,
+                "working_days_this_month": working_days_this_month,
+                "expected_hours": expected_hours,
+                "total_team_completion": total_team_completion,
                 "current_birthdays": serializers.UserMiniSerializer(
                     current_birthdays, many=True
                 ).data,
@@ -489,11 +497,6 @@ class LeaveTypeViewSet(BaseViewSet):
     search_fields = ["name", "code"]
     ordering_fields = ["name", "code"]
     ordering = ["name"]
-
-    def get_serializer_class(self):
-        if self.action == "list":
-            return serializers.LeaveTypeListSerializer
-        return serializers.LeaveTypeSerializer
 
 
 #   ================  DEPARTMENT CRUD API   ========
