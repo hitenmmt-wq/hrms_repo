@@ -49,28 +49,40 @@ class EmployeeDashboardView(APIView):
             current_month = timezone.now().month
             previous_month = calendar.month_name[current_month - 1]
 
-            todays_attendance = EmployeeAttendance.objects.filter(
-                employee=request.user, day=today
-            ).first()
+            todays_attendance = (
+                EmployeeAttendance.objects.filter(employee=request.user, day=today)
+                .select_related("employee")
+                .first()
+            )
 
-            employee_leave = LeaveBalance.objects.filter(
-                employee=request.user, year=year
-            ).first()
+            employee_leave = (
+                LeaveBalance.objects.filter(employee=request.user, year=year)
+                .select_related("employee")
+                .first()
+            )
 
             common_data = models.CommonData.objects.first()
-            last_month_salary = PaySlip.objects.filter(
-                employee=request.user, month=previous_month
-            ).first()
+            last_month_salary = (
+                PaySlip.objects.filter(employee=request.user, month=previous_month)
+                .select_related("employee")
+                .first()
+            )
 
             holiday_list = models.Holiday.objects.filter(
                 date__year=timezone.now().year, date__gte=today
             ).order_by("date")
-            upcoming_approved_leaves = models.Leave.objects.filter(
-                status="approved", employee=request.user, from_date__gte=today
-            ).order_by("-id")[:5]
-            leave_history = models.Leave.objects.filter(employee=request.user).order_by(
-                "-id"
-            )[:5]
+            upcoming_approved_leaves = (
+                models.Leave.objects.filter(
+                    status="approved", employee=request.user, from_date__gte=today
+                )
+                .select_related("leave_type")
+                .order_by("from_date")[:5]
+            )
+            leave_history = (
+                models.Leave.objects.filter(employee=request.user)
+                .select_related("leave_type", "approved_by")
+                .order_by("-id")[:5]
+            )
 
             monthly_working_hours_data = employee_monthly_working_hours(request.user)
 
@@ -114,7 +126,9 @@ class EmployeeDashboardView(APIView):
 
 
 class EmployeeViewSet(BaseViewSet):
-    queryset = models.Users.objects.filter(role="employee")
+    queryset = models.Users.objects.filter(role="employee").select_related(
+        "department", "position"
+    )
     serializer_class = EmployeeListSerializer
     entity_name = "Employee"
     permission_classes = [IsAdmin]
@@ -149,7 +163,9 @@ class EmployeeViewSet(BaseViewSet):
 
 
 class LeaveBalanceViewSet(BaseViewSet):
-    queryset = LeaveBalance.objects.all().order_by("-id")
+    queryset = LeaveBalance.objects.select_related(
+        "employee__department", "employee__position"
+    ).order_by("-id")
     serializer_class = LeaveBalanceSerializer
     entity_name = "Leave Balance"
     permission_classes = [IsAdmin]
@@ -181,7 +197,9 @@ class LeaveBalanceViewSet(BaseViewSet):
 
 
 class ApplyLeaveViewSet(BaseViewSet):
-    queryset = models.Leave.objects.all().order_by("-id")
+    queryset = models.Leave.objects.select_related(
+        "employee__department", "employee__position", "leave_type", "approved_by"
+    ).order_by("-id")
     serializer_class = ApplyLeaveSerializer
     entity_name = "Apply Leave"
     permission_classes = [IsAuthenticated]
@@ -218,7 +236,11 @@ class ApplyLeaveViewSet(BaseViewSet):
     @action(detail=False, methods=["get"], url_path="employee_leave_list")
     def employee_leave_list(self, request):
         employee = request.user
-        leaves = models.Leave.objects.filter(employee=employee).order_by("-id")
+        leaves = (
+            models.Leave.objects.filter(employee=employee)
+            .select_related("leave_type", "approved_by")
+            .order_by("-id")
+        )
         data = ApplyLeaveSerializer(leaves, many=True).data
         return ApiResponse.success(
             data=data, message="Employee leave list fetched successfully"
@@ -229,7 +251,9 @@ class ApplyLeaveViewSet(BaseViewSet):
 
 
 class PaySlipViewSet(BaseViewSet):
-    queryset = PaySlip.objects.all().order_by("-id")
+    queryset = PaySlip.objects.select_related(
+        "employee__department", "employee__position"
+    ).order_by("-id")
     serializer_class = PaySlipSerializer
     entity_name = "Pay Slip"
     permission_classes = [IsAdmin]
@@ -258,7 +282,7 @@ class PaySlipViewSet(BaseViewSet):
     @action(detail=False, methods=["get"], url_path="employee_payslips")
     def employee_payslips(self, request):
         employee = request.user
-        payslip = PaySlip.objects.filter(employee=employee)
+        payslip = PaySlip.objects.filter(employee=employee).select_related("employee")
         data = PaySlipSerializer(payslip, many=True).data
         return ApiResponse.success(
             data=data, message="Employee payslip fetched successfully"
@@ -270,7 +294,7 @@ class PaySlipDownloadView(APIView):
 
     def get(self, request, pk):
         try:
-            payslip = PaySlip.objects.filter(pk=pk).first()
+            payslip = PaySlip.objects.select_related("employee").filter(pk=pk).first()
             if not payslip:
                 return ApiResponse.error(message="Payslip not found", status=404)
             return generate_payslip_pdf(payslip)

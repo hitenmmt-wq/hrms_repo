@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
@@ -26,13 +27,36 @@ class EmployeeAttendance(BaseModel):
     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
 
     class Meta:
-        unique_together = ("employee", "day")
         indexes = [
             models.Index(fields=["employee", "day"]),
+            models.Index(fields=["day", "status"]),
+            models.Index(fields=["check_in"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day"],
+                condition=Q(is_deleted=False),
+                name="unique_active_attendance_per_day",
+            )
         ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"
+
+    @property
+    def track_current_status(self):
+        if not self.check_in:
+            return "not_started"
+
+        if self.check_out:
+            return "completed"
+
+        last_break = self.attendance_break_logs.order_by("-id").first()
+
+        if last_break and last_break.pause_time and not last_break.restart_time:
+            return "paused"
+
+        return "ongoing"
 
 
 class AttendanceBreakLogs(BaseModel):

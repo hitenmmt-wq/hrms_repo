@@ -14,6 +14,7 @@ from apps.notification.serializers import (
     NotificationSerializer,
     NotificationTypeSerializer,
 )
+from apps.notification.websocket_service import NotificationWebSocketService
 
 # from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -50,11 +51,13 @@ class NotificationViewSet(BaseViewSet):
     ]
     filterset_class = NotificationFilter
     search_fields = ["title"]
-    ordering_fields = ["title"]
-    ordering = ["title"]
+    ordering_fields = ["-created_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user)
+        return Notification.objects.filter(recipient=self.request.user).select_related(
+            "actor__department", "actor__position", "notification_type", "content_type"
+        )
 
     @action(detail=False, methods=["get"])
     def unread_count(self, request):
@@ -63,10 +66,27 @@ class NotificationViewSet(BaseViewSet):
         ).count()
         return Response({"unread_count": count})
 
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def mark_all_read(self, request):
+        Notification.objects.filter(recipient=request.user, is_read=False).update(
+            is_read=True
+        )
+        NotificationWebSocketService.send_bulk_update(request.user.id, "all_read")
+        return Response({"status": "all marked as read"})
+
 
 class MarkAsReadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        Notification.objects.filter(id=pk, recipient=request.user).update(is_read=True)
-        return Response({"status": "read"})
+        updated = (
+            Notification.objects.filter(id=pk, recipient=request.user)
+            .select_related("recipient")
+            .update(is_read=True)
+        )
+
+        if updated:
+            NotificationWebSocketService.send_read_update(request.user.id, pk)
+            return Response({"status": "read"})
+
+        return Response({"error": "Notification not found"}, status=404)

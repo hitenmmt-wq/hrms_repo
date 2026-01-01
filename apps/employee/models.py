@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.base.models import BaseModel
@@ -24,7 +25,17 @@ class LeaveBalance(BaseModel):
     year = models.IntegerField(default=current_year, null=True, blank=True)
 
     class Meta:
-        unique_together = ("employee", "year")
+        indexes = [
+            models.Index(fields=["employee", "year"]),
+            models.Index(fields=["year"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "year"],
+                condition=Q(is_deleted=False),
+                name="unique_active_employee_per_year",
+            )
+        ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.year}"
@@ -78,6 +89,12 @@ class PaySlip(BaseModel):
         max_digits=10, decimal_places=2, null=True, blank=True
     )
     pdf_file = models.FileField(upload_to="payslips/", null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["employee", "month"]),
+            models.Index(fields=["start_date", "end_date"]),
+        ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.month} Payslip"

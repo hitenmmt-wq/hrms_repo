@@ -11,7 +11,14 @@ from apps.notification.services import create_notification
 def notify_on_message(sender, instance, created, **kwargs):
     if not created:
         return
-    notification_type = NotificationType.objects.get(code=constants.CHAT_NOTIFY)
+
+    try:
+        notification_type = NotificationType.objects.get(code=constants.CHAT_NOTIFY)
+    except NotificationType.DoesNotExist:
+        notification_type = NotificationType.objects.create(
+            code=constants.CHAT_NOTIFY, name="Chat Notification"
+        )
+
     conversation = instance.conversation
     for participant in conversation.participants.exclude(id=instance.sender.id):
         create_notification(

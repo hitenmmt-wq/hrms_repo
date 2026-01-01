@@ -1,23 +1,30 @@
 from django.urls import path
 
-from apps.chat.views import (
-    ConversationDeleteView,
-    ConversationListView,
-    CreateConversationView,
-    FileUploadView,
-)
+from apps.chat import views
 
 urlpatterns = [
-    path("conversations/", ConversationListView.as_view(), name="conversation-list"),
+    path(
+        "conversations/", views.ConversationListView.as_view(), name="conversation-list"
+    ),
     path(
         "conversations/create/",
-        CreateConversationView.as_view(),
+        views.CreateConversationView.as_view(),
         name="conversation-create",
     ),
     path(
         "conversations/<int:pk>/delete/",
-        ConversationDeleteView.as_view(),
+        views.ConversationDeleteView.as_view(),
         name="conversation-delete",
     ),
-    path("upload/", FileUploadView.as_view(), name="chat-file-upload"),
+    path("upload/", views.FileUploadView.as_view(), name="chat-file-upload"),
+    path(
+        "get_conversation_messages/<int:conversation>/",
+        views.ConversationMessageView.as_view(),
+        name="get_conversation_messages",
+    ),
+    path(
+        "message_read/<int:message_id>/",
+        views.MessageReadView.as_view(),
+        name="message_read",
+    ),
 ]
