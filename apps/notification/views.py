@@ -51,8 +51,8 @@ class NotificationViewSet(BaseViewSet):
     ]
     filterset_class = NotificationFilter
     search_fields = ["title"]
-    ordering_fields = ["title"]
-    ordering = ["title"]
+    ordering_fields = ["-created_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user).select_related(
@@ -66,7 +66,7 @@ class NotificationViewSet(BaseViewSet):
         ).count()
         return Response({"unread_count": count})
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def mark_all_read(self, request):
         Notification.objects.filter(recipient=request.user, is_read=False).update(
             is_read=True
