@@ -24,6 +24,10 @@ class LeaveBalance(BaseModel):
     year = models.IntegerField(default=current_year, null=True, blank=True)
 
     class Meta:
+        indexes = [
+            models.Index(fields=["employee", "year"]),
+            models.Index(fields=["year"]),
+        ]
         unique_together = ("employee", "year")
 
     def __str__(self):
@@ -78,6 +82,12 @@ class PaySlip(BaseModel):
         max_digits=10, decimal_places=2, null=True, blank=True
     )
     pdf_file = models.FileField(upload_to="payslips/", null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["employee", "month"]),
+            models.Index(fields=["start_date", "end_date"]),
+        ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.month} Payslip"

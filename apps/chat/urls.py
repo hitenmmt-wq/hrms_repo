@@ -3,6 +3,7 @@ from django.urls import path
 from apps.chat.views import (
     ConversationDeleteView,
     ConversationListView,
+    ConversationMessageView,
     CreateConversationView,
     FileUploadView,
 )
@@ -20,4 +21,9 @@ urlpatterns = [
         name="conversation-delete",
     ),
     path("upload/", FileUploadView.as_view(), name="chat-file-upload"),
+    path(
+        "get_conversation_messages/<int:conversation>/",
+        ConversationMessageView.as_view(),
+        name="get_conversation_messages",
+    ),
 ]

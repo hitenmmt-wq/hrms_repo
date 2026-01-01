@@ -13,7 +13,9 @@ from apps.superadmin.models import Users
 class AttendanceViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
-    queryset = EmployeeAttendance.objects.all()
+    queryset = EmployeeAttendance.objects.select_related(
+        "employee__department", "employee__position"
+    )
     order_by = ["-day"]
 
     def destroy(self, request, *args, **kwargs):
@@ -29,7 +31,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def particular_employee(self, request, pk=None):
-        employee = Users.objects.filter(id=pk).first()
+        employee = (
+            Users.objects.select_related("department", "position").filter(id=pk).first()
+        )
         attendance = self.queryset.filter(employee=employee).order_by("-day")
         return ApiResponse.success(
             "Particular Employee's Attendance list",
@@ -38,10 +42,19 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def daily_logs(self, request):
-        attendance = self.get_queryset().filter(day=timezone.now().date()).first()
+        attendance = (
+            self.get_queryset()
+            .filter(day=timezone.now().date())
+            .select_related("employee")
+            .first()
+        )
         print(f"==>> attendance: {attendance.id}")
 
-        logs = AttendanceBreakLogs.objects.filter(attendance=attendance).order_by("-id")
+        logs = (
+            AttendanceBreakLogs.objects.filter(attendance=attendance)
+            .select_related("attendance__employee")
+            .order_by("-id")
+        )
         print(f"==>> logs: {logs}")
 
         return ApiResponse.success(

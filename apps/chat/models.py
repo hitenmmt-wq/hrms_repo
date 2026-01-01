@@ -15,6 +15,12 @@ class Conversation(BaseModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     participants = models.ManyToManyField(Users, related_name="conversations")
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["type"]),
+            models.Index(fields=["created_at"]),
+        ]
+
     def __str__(self):
         return f"{self.name or 'Unnamed'} - {self.type}"
 
@@ -42,6 +48,11 @@ class Message(BaseModel):
     )
 
     class Meta:
+        indexes = [
+            models.Index(fields=["conversation", "created_at"]),
+            models.Index(fields=["sender"]),
+            models.Index(fields=["msg_type"]),
+        ]
         ordering = ["-created_at"]
 
     def __str__(self):

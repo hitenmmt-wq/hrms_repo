@@ -68,6 +68,15 @@ class Users(AbstractUser):
     joining_date = models.DateTimeField(null=True, blank=True)
     birthdate = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["employee_id"]),
+            models.Index(fields=["role", "is_active"]),
+            models.Index(fields=["department"]),
+            models.Index(fields=["birthdate"]),
+        ]
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
@@ -103,7 +112,7 @@ class Holiday(BaseModel):
     date = models.DateField()
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.date}"
 
 
 class LeaveType(BaseModel):

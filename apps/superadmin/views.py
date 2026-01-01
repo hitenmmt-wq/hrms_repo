@@ -32,6 +32,7 @@ from apps.superadmin.custom_filters import (
 )
 from apps.superadmin.tasks import send_email_task
 from apps.superadmin.utils import (
+    general_team_monthly_data,
     notify_employee_leave_approved,
     notify_employee_leave_rejected,
     update_leave_balance,
@@ -60,30 +61,45 @@ class AdminDashboardView(APIView):
         try:
             today = timezone.now().date()
             late_time = timezone.make_aware(datetime.combine(today, time(10, 5)))
-            total_employees = models.Users.objects.filter(is_active=True)
+            total_employees = models.Users.objects.filter(
+                role=constants.EMPLOYEE_USER, is_active=True
+            ).select_related("department", "position")
             pending_approval_count = models.Leave.objects.filter(
                 status="pending", from_date__gte=today
-            )
-            present_employee = EmployeeAttendance.objects.filter(day=today)
+            ).count()
+
+            present_employee = EmployeeAttendance.objects.filter(
+                day=today
+            ).select_related("employee__department", "employee__position")
+
             absent_employee = total_employees.exclude(
                 id__in=present_employee.values_list("employee_id", flat=True)
             )
 
             current_birthdays = models.Users.objects.filter(
                 is_active=True, birthdate__month=today.month, birthdate__day=today.day
+            ).select_related("department", "position")
+
+            upcoming_leaves = (
+                models.Leave.objects.filter(status="approved", from_date__gte=today)
+                .select_related(
+                    "employee__department", "employee__position", "leave_type"
+                )
+                .order_by("from_date")[:10]
             )
-            upcoming_leaves = models.Leave.objects.filter(
-                status="approved", from_date__gte=today
-            )[:10]
+
             upcoming_holidays = models.Holiday.objects.filter(
                 date__year=timezone.now().year, date__gte=today
             ).order_by("date")
             late_logins = EmployeeAttendance.objects.filter(
                 day=today, check_in__gt=late_time
+            ).select_related("employee__department", "employee__position")
+
+            recent_joiners = (
+                models.Users.objects.filter(is_active=True)
+                .select_related("department", "position")
+                .order_by("-id")[:3]
             )
-            recent_joiners = models.Users.objects.filter(is_active=True).order_by(
-                "-id"
-            )[:3]
 
             announcement = models.Announcement.objects.all().order_by("-id")[:5]
 
@@ -97,21 +113,17 @@ class AdminDashboardView(APIView):
                 )
 
             print(f"==>> team_monthly_working_hour: {team_monthly_working_hour}")
-            working_days_this_month = ""
-            expected_hours = ""
-            total_team_completion = ""
+            general_team_data = general_team_monthly_data()
 
             data = {
                 "counts": {
                     "total_employees": total_employees.count(),
                     "present_employee": present_employee.count(),
                     "absent_employee": absent_employee.count(),
-                    "pending_approvals": pending_approval_count.count(),
+                    "pending_approvals": pending_approval_count,
                 },
                 "team_monthly_working_hour": team_monthly_working_hour,
-                "working_days_this_month": working_days_this_month,
-                "expected_hours": expected_hours,
-                "total_team_completion": total_team_completion,
+                "general_team_data": general_team_data,
                 "current_birthdays": serializers.UserMiniSerializer(
                     current_birthdays, many=True
                 ).data,
@@ -234,7 +246,9 @@ class ResetPasswordChange(APIView):
 
 class AdminRegister(BaseViewSet):
     entity_name = "Super-Admin"
-    queryset = models.Users.objects.filter(role=constants.ADMIN_USER)
+    queryset = models.Users.objects.filter(role=constants.ADMIN_USER).select_related(
+        "department", "position"
+    )
     serializer_class = serializers.AdminRegisterSerializer
     pagination_class = CustomPageNumberPagination
     filter_backends = [
@@ -585,7 +599,9 @@ class ProfileViewSet(BaseViewSet):
 class LeaveViewSet(viewsets.ModelViewSet):
 
     queryset = (
-        models.Leave.objects.select_related("employee", "approved_by")
+        models.Leave.objects.select_related(
+            "employee__department", "employee__position", "approved_by", "leave_type"
+        )
         .all()
         .order_by("-from_date")
     )
@@ -635,7 +651,11 @@ class LeaveApprovalViewSet(BaseViewSet):
     def approve(self, request, pk=None):
         user = request.user
         try:
-            leave_data = models.Leave.objects.filter(id=pk).first()
+            leave_data = (
+                models.Leave.objects.select_related("employee", "leave_type")
+                .filter(id=pk)
+                .first()
+            )
             leave_data.status = constants.APPROVED
             leave_data.approved_at = datetime.now()
             leave_data.approved_by = user
@@ -679,7 +699,11 @@ class LeaveApprovalViewSet(BaseViewSet):
     def reject(self, request, pk=None):
         user = request.user
         try:
-            leave = models.Leave.objects.filter(id=pk).first()
+            leave = (
+                models.Leave.objects.select_related("employee", "leave_type")
+                .filter(id=pk)
+                .first()
+            )
             leave.status = constants.REJECTED
             leave.approved_by = user
             leave.approved_at = datetime.now()

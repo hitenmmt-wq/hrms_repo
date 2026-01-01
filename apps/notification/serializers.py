@@ -1,11 +1,12 @@
 from rest_framework import serializers
 
 from apps.notification.models import Notification, NotificationType
+from apps.superadmin.models import Users
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    actor_name = serializers.CharField(source="actor.username", read_only=True)
-    recipient = serializers.PrimaryKeyRelatedField(read_only=True)
+    actor = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all())
+    recipient = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all())
 
     class Meta:
         model = Notification
@@ -15,7 +16,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "recipient",
             "title",
             "message",
-            "actor_name",
+            "actor",
             "is_read",
             "created_at",
             "object_id",

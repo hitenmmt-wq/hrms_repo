@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Notification
+from .websocket_service import NotificationWebSocketService
 
 
 def create_notification(
@@ -13,7 +14,7 @@ def create_notification(
         content_type = ContentType.objects.get_for_model(related_object.__class__)
         object_id = related_object.id
 
-    return Notification.objects.create(
+    notification = Notification.objects.create(
         recipient=recipient,
         actor=actor,
         notification_type=notification_type,
@@ -22,3 +23,8 @@ def create_notification(
         content_type=content_type,
         object_id=object_id,
     )
+
+    # Send real-time notification
+    NotificationWebSocketService.send_notification(notification)
+
+    return notification

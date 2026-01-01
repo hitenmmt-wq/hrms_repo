@@ -26,10 +26,12 @@ class EmployeeAttendance(BaseModel):
     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
 
     class Meta:
-        unique_together = ("employee", "day")
         indexes = [
             models.Index(fields=["employee", "day"]),
+            models.Index(fields=["day", "status"]),
+            models.Index(fields=["check_in"]),
         ]
+        unique_together = ("employee", "day")
 
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"

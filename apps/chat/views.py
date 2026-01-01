@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from apps.base import permissions
 from apps.base.response import ApiResponse
-from apps.chat.models import Conversation
+from apps.chat.models import Conversation, Message
 from apps.chat.serializers import (
     ConversationCreateSerializer,
     ConversationSerializer,
@@ -32,8 +32,10 @@ class ConversationListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Conversation.objects.filter(participants=self.request.user).order_by(
-            "-created_at"
+        return (
+            Conversation.objects.filter(participants=self.request.user)
+            .prefetch_related("participants__department", "participants__position")
+            .order_by("-created_at")
         )
 
 
@@ -42,7 +44,9 @@ class ConversationDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Conversation.objects.filter(participants=self.request.user)
+        return Conversation.objects.filter(
+            participants=self.request.user
+        ).prefetch_related("participants")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -79,7 +83,9 @@ class FileUploadView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            conv = get_object_or_404(Conversation, id=conv_id)
+            conv = get_object_or_404(
+                Conversation.objects.prefetch_related("participants"), id=conv_id
+            )
 
             if not conv.participants.filter(id=request.user.id).exists():
                 return Response(
@@ -130,3 +136,17 @@ class FileUploadView(generics.CreateAPIView):
                 {"error": f"An error occurred while processing the file : {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ConversationMessageView(generics.ListAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        conv = self.kwargs["conversation"]
+        print(f"==>> conv: {conv}")
+        return (
+            Message.objects.filter(conversation=conv)
+            .prefetch_related("sender__department", "sender__position")
+            .order_by("-created_at")
+        )
