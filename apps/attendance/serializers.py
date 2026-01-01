@@ -6,6 +6,7 @@ from apps.employee.serializers import EmployeeListSerializer
 
 class AttendanceSerializer(serializers.ModelSerializer):
     employee = EmployeeListSerializer()
+    track_current_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = EmployeeAttendance

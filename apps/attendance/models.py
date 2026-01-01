@@ -43,6 +43,21 @@ class EmployeeAttendance(BaseModel):
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"
 
+    @property
+    def track_current_status(self):
+        if not self.check_in:
+            return "not_started"
+
+        if self.check_out:
+            return "completed"
+
+        last_break = self.attendance_break_logs.order_by("-id").first()
+
+        if last_break and last_break.pause_time and not last_break.restart_time:
+            return "paused"
+
+        return "ongoing"
+
 
 class AttendanceBreakLogs(BaseModel):
     attendance = models.ForeignKey(

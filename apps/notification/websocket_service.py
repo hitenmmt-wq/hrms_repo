@@ -11,19 +11,35 @@ logger = logging.getLogger(__name__)
 
 class NotificationWebSocketService:
     @staticmethod
+    def _get_safe_channel_layer():
+        """Get channel layer with Redis availability check"""
+        try:
+            channel_layer = get_channel_layer()
+            if not channel_layer:
+                return None
+            async_to_sync(channel_layer.send)("test", {"type": "test.message"})
+            return channel_layer
+        except Exception:
+            return None
+
+    @staticmethod
     def send_notification(notification):
         """Send new notification via WebSocket"""
-        channel_layer = get_channel_layer()
-        if not channel_layer:
-            logger.warning("No channel layer available")
+        if (
+            not notification
+            or not hasattr(notification, "recipient")
+            or not notification.recipient
+        ):
             return
 
-        serializer = NotificationSerializer(notification)
-        group_name = f"notifications_{notification.recipient.id}"
+        channel_layer = NotificationWebSocketService._get_safe_channel_layer()
+        if not channel_layer:
+            return
 
         try:
+            serializer = NotificationSerializer(notification)
             async_to_sync(channel_layer.group_send)(
-                group_name,
+                f"notifications_{notification.recipient.id}",
                 {
                     "type": "notification_message",
                     "payload": {
@@ -35,23 +51,19 @@ class NotificationWebSocketService:
                     },
                 },
             )
-            logger.info(f"Sent notification to group: {group_name}")
-        except Exception as e:
-            logger.error(f"Failed to send notification: {e}")
+        except Exception:
+            pass
 
     @staticmethod
     def send_read_update(user_id, notification_id):
         """Send notification read update via WebSocket"""
-        channel_layer = get_channel_layer()
+        channel_layer = NotificationWebSocketService._get_safe_channel_layer()
         if not channel_layer:
-            logger.warning("No channel layer available")
             return
-
-        group_name = f"notifications_{user_id}"
 
         try:
             async_to_sync(channel_layer.group_send)(
-                group_name,
+                f"notifications_{user_id}",
                 {
                     "type": "notification_message",
                     "payload": {
@@ -63,23 +75,19 @@ class NotificationWebSocketService:
                     },
                 },
             )
-            logger.info(f"Sent read update to group: {group_name}")
-        except Exception as e:
-            logger.error(f"Failed to send read update: {e}")
+        except Exception:
+            pass
 
     @staticmethod
     def send_bulk_update(user_id, update_type="bulk_read"):
         """Send bulk notification update via WebSocket"""
-        channel_layer = get_channel_layer()
+        channel_layer = NotificationWebSocketService._get_safe_channel_layer()
         if not channel_layer:
-            logger.warning("No channel layer available")
             return
-
-        group_name = f"notifications_{user_id}"
 
         try:
             async_to_sync(channel_layer.group_send)(
-                group_name,
+                f"notifications_{user_id}",
                 {
                     "type": "notification_message",
                     "payload": {
@@ -90,6 +98,5 @@ class NotificationWebSocketService:
                     },
                 },
             )
-            logger.info(f"Sent bulk update to group: {group_name}")
-        except Exception as e:
-            logger.error(f"Failed to send bulk update: {e}")
+        except Exception:
+            pass

@@ -275,6 +275,23 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Fallback to in-memory channel layer if Redis is not available
+try:
+    import redis
+
+    redis_client = redis.Redis(
+        host=os.environ.get("REDIS_HOST", "127.0.0.1"),
+        port=int(os.environ.get("REDIS_PORT", 6379)),
+        socket_connect_timeout=1,
+    )
+    redis_client.ping()
+except (redis.ConnectionError, redis.TimeoutError, ImportError):
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+
 # AWS S3 configuration
 
 # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
