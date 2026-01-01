@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
@@ -78,8 +79,14 @@ class MessageStatus(BaseModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="sent")
 
     class Meta:
-        unique_together = ("message", "user")
         ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["message", "user"],
+                condition=Q(is_deleted=False),
+                name="unique_active_message_per_user",
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.email} - {self.status}"
@@ -104,8 +111,14 @@ class MessageReaction(BaseModel):
     emoji = models.CharField(max_length=10, choices=REACTION_CHOICES)
 
     class Meta:
-        unique_together = ("message", "user", "emoji")
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["message", "user", "emoji"],
+                condition=Q(is_deleted=False),
+                name="unique_active_emoji_per_message",
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.email} reacted {self.emoji} to message"

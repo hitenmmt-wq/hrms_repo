@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.base.models import BaseModel
@@ -28,7 +29,13 @@ class LeaveBalance(BaseModel):
             models.Index(fields=["employee", "year"]),
             models.Index(fields=["year"]),
         ]
-        unique_together = ("employee", "year")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "year"],
+                condition=Q(is_deleted=False),
+                name="unique_active_employee_per_year",
+            )
+        ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.year}"

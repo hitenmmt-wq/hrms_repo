@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
 from apps.chat.serializers import MessageSerializer
+from apps.superadmin.models import Users
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -31,6 +32,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         self.room_group_name = f"chat_{self.conversation_id}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.mark_messages_delivered(self.conversation_id, self.user.id)
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -81,6 +83,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 self.room_group_name,
                 {"type": "notification.message", "payload": notification_payload},
             )
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "chat.message",
+                    "payload": {
+                        "type": "new_message",
+                        "message": MessageSerializer(message).data,
+                    },
+                },
+            )
 
     async def handle_typing(self, content):
         payload = {"type": "typing", "user_id": self.user.id}
@@ -100,6 +112,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.update_message_status(message_id, self.user.id, status)
 
     @database_sync_to_async
+    def mark_messages_delivered(self, conversation_id, user_id):
+        MessageStatus.objects.filter(
+            user_id=user_id, message__conversation_id=conversation_id, status="sent"
+        ).update(status="delivered")
+
+    @database_sync_to_async
     def is_participant(self, conversation_id, user_id):
         try:
             conversation = Conversation.objects.get(id=conversation_id)
@@ -111,7 +129,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def create_message(self, conversation_id, user_id, text, msg_type, reply_to):
         try:
             conversation = Conversation.objects.get(id=conversation_id)
-            from apps.superadmin.models import Users
 
             user = Users.objects.get(id=user_id)
 
@@ -122,13 +139,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 except Message.DoesNotExist:
                     pass
 
-            return Message.objects.create(
+            message = Message.objects.create(
                 conversation=conversation,
                 sender=user,
                 text=text,
                 msg_type=msg_type,
                 reply_to=reply_message,
             )
+            participants = conversation.participants.exclude(id=user.id)
+            for participant in participants:
+                MessageStatus.objects.create(
+                    message=message,
+                    user=participant,
+                    status="sent",
+                )
+            return message
         except (Conversation.DoesNotExist, Users.DoesNotExist):
             return None
 
@@ -136,7 +161,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def mark_message_read(self, message_id, user_id):
         try:
             message = Message.objects.get(id=message_id)
-            from apps.superadmin.models import Users
 
             user = Users.objects.get(id=user_id)
 
@@ -150,8 +174,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def update_message_status(self, message_id, user_id, status):
         try:
             message = Message.objects.get(id=message_id)
-            MessageStatus.objects.update(message=message, defaults={"status": status})
-        except Message.DoesNotExist:
+            user = Users.objects.get(id=user_id)
+
+            MessageStatus.objects.update_or_create(
+                message=message,
+                user=user,
+                defaults={"status": status},
+            )
+        except (Message.DoesNotExist, Users.DoesNotExist):
             pass
 
     async def handle_add_reaction(self, content):
@@ -192,7 +222,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def add_reaction(self, message_id, user_id, emoji):
         try:
             message = Message.objects.get(id=message_id)
-            from apps.superadmin.models import Users
 
             user = Users.objects.get(id=user_id)
 
@@ -207,7 +236,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def remove_reaction(self, message_id, user_id, emoji):
         try:
             message = Message.objects.get(id=message_id)
-            from apps.superadmin.models import Users
 
             user = Users.objects.get(id=user_id)
 

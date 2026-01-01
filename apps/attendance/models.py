@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
@@ -31,7 +32,13 @@ class EmployeeAttendance(BaseModel):
             models.Index(fields=["day", "status"]),
             models.Index(fields=["check_in"]),
         ]
-        unique_together = ("employee", "day")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day"],
+                condition=Q(is_deleted=False),
+                name="unique_active_attendance_per_day",
+            )
+        ]
 
     def __str__(self):
         return f"{self.employee.email} - {self.day} - {self.status}"

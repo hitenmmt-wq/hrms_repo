@@ -1,5 +1,4 @@
 from django.utils import timezone
-from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
@@ -7,10 +6,11 @@ from apps.attendance.serializers import AttendanceSerializer, BreakLogSerializer
 from apps.attendance.utils import check_in, check_out, pause_break, resume_break
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
+from apps.base.viewset import BaseViewSet
 from apps.superadmin.models import Users
 
 
-class AttendanceViewSet(viewsets.ModelViewSet):
+class AttendanceViewSet(BaseViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     queryset = EmployeeAttendance.objects.select_related(

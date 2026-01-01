@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from apps.base import permissions
 from apps.base.response import ApiResponse
-from apps.chat.models import Conversation, Message
+from apps.chat.models import Conversation, Message, MessageStatus
 from apps.chat.serializers import (
     ConversationCreateSerializer,
     ConversationSerializer,
@@ -149,4 +149,26 @@ class ConversationMessageView(generics.ListAPIView):
             Message.objects.filter(conversation=conv)
             .prefetch_related("sender__department", "sender__position")
             .order_by("-created_at")
+        )
+
+
+class MessageReadView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        msg_id = kwargs.get("message_id")
+        msg = get_object_or_404(Message, id=msg_id)
+        if msg:
+            obj, created = MessageStatus.objects.get_or_create(
+                message=msg, user=request.user, status="sent"
+            )
+            if created:
+                print("createdd........")
+            else:
+                print("getted.....")
+            obj.status = "read"
+            obj.save()
+
+        return ApiResponse.success(
+            {"message": "Message marked as read"}, status=status.HTTP_200_OK
         )
