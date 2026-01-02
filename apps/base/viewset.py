@@ -35,7 +35,10 @@ class BaseViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.soft_delete()
+        if hasattr(instance, "soft_delete"):
+            instance.soft_delete()
+        else:
+            instance.delete()
 
         return ApiResponse.success(
             message=f"{self.entity_name} deleted successfully",

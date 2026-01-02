@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
+from apps.employee import models
 from apps.notification.models import NotificationType
 from apps.superadmin.models import (
     Announcement,
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         self.create_user()
         self.create_announcement()
         self.create_holiday()
+        self.create_leave_balance()
 
         self.stdout.write(self.style.SUCCESS("Default data initialization completed."))
 
@@ -54,9 +56,16 @@ class Command(BaseCommand):
 
     def create_notification_types(self):
         notifications = [
-            {"code": "leave_request", "name": "Leave Request"},
             {"code": "announcement", "name": "Announcement"},
+            {"code": "approved", "name": "Attendance Approved"},
+            {"code": "pending", "name": "Attendance Pending"},
+            {"code": "attendance_reminder", "name": "Attendance Reminder"},
+            {"code": "birthday", "name": "Birthday Wish"},
             {"code": "chat_message", "name": "Chat Message"},
+            {"code": "general", "name": "General"},
+            {"code": "leave_apply", "name": "Leave Apply"},
+            {"code": "leave_approved", "name": "Leave Approved"},
+            {"code": "leave_rejected", "name": "Leave Rejected"},
         ]
 
         for item in notifications:
@@ -210,3 +219,23 @@ class Command(BaseCommand):
             )
             if created:
                 self.stdout.write(self.style.SUCCESS("Holiday created"))
+
+    def create_leave_balance(self):
+        employees = Users.objects.filter(is_active=True)
+        common_data = CommonData.objects.first()
+        for employee in employees:
+            if common_data:
+                leave_balance = models.LeaveBalance(
+                    employee=employee,
+                    pl_leave=common_data.pl_leave,
+                    sl_leave=common_data.sl_leave,
+                    lop_leave=common_data.lop_leave,
+                )
+                leave_balance.save()
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"LeaveBalance created for employee: {employee.email}"
+                    )
+                )
+            else:
+                self.stdout.write(self.style.ERROR("CommonData not found"))

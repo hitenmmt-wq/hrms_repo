@@ -30,6 +30,11 @@ class BaseModel(models.Model):
         self.deleted_at = timezone.now()
         self.save()
 
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
     def restore(self):
         self.is_deleted = False
         self.deleted_at = None

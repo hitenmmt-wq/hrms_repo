@@ -45,7 +45,19 @@ from apps.superadmin.utils import (
 
 class CustomScriptView(APIView):
     def get(self, request):
+        # from apps.employee.models import LeaveBalance
 
+        # employees = models.Users.objects.filter(
+        #     is_active = True
+        # )
+        # for employee in employees:
+        #     leave_balance = LeaveBalance.objects.create(
+        #         employee=employee,
+        #         pl = 12,
+        #         sl = 4,
+        #         lop = 0,
+        #         year = 2026
+        #     )
         # employee_attendance = EmployeeAttendance.objects.create
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -98,7 +110,9 @@ class AdminDashboardView(APIView):
             ).select_related("employee__department", "employee__position")
 
             recent_joiners = (
-                models.Users.objects.filter(is_active=True)
+                models.Users.objects.filter(
+                    is_active=True, role=constants.EMPLOYEE_USER
+                )
                 .select_related("department", "position")
                 .order_by("-id")[:3]
             )

@@ -13,11 +13,12 @@ def send_email_task(
         from_email=from_email or settings.EMAIL_HOST_USER,
         to=[to_email],
     )
-    mail.attach(
-        filename=filename,
-        content=pdf_bytes,
-        mimetype="application/pdf",
-    )
+    if filename and pdf_bytes:
+        mail.attach(
+            filename=filename,
+            content=pdf_bytes,
+            mimetype="application/pdf",
+        )
 
     if html_body:
         mail.attach_alternative(html_body, "text/html")

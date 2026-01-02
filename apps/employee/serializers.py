@@ -44,6 +44,8 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
                 to_email=user.email,
                 text_body=f"You have been added as an {user.role} to HRMS",
                 html_body=None,
+                pdf_bytes=None,
+                filename=None,
             )
             print("done success.......")
         except Exception as e:
@@ -117,7 +119,17 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LeaveBalance
-        fields = ["id", "employee", "year", "pl", "sl", "lop"]
+        fields = [
+            "id",
+            "employee",
+            "year",
+            "pl",
+            "sl",
+            "lop",
+            "used_pl",
+            "used_sl",
+            "used_lop",
+        ]
         depth = 1
 
 
