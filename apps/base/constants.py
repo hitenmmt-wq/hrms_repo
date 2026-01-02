@@ -28,3 +28,6 @@ ATTENDANCE_REJECTED = "attendance_rejected"
 UNPAID_LEAVE = "unpaid_leave"
 PAID_LEAVE = "paid_leave"
 HALFDAY_LEAVE = "halfday_leave"
+
+
+BIRTHDAY = "birthday"

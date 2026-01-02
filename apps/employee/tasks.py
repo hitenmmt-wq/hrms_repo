@@ -4,6 +4,7 @@ from django.utils import timezone
 from apps.attendance.models import EmployeeAttendance
 from apps.base import constants
 from apps.employee.models import LeaveBalance
+from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
 from apps.superadmin import models
 
@@ -57,11 +58,12 @@ def notify_employee_birthday():
     recipients = models.Users.objects.filter(is_active=True)
     for birthday_employee in employee_birthday_today:
         for recipient in recipients.exclude(id=birthday_employee.id):
+            notification_type = NotificationType.objects.get(code=constants.BIRTHDAY)
             create_notification(
                 recipient=recipient,
                 actor=birthday_employee,
-                notification_type="birthday",
+                notification_type=notification_type,
                 title="🎉 Birthday Alert!",
-                message=f"Today is {birthday_employee.full_name}'s birthday. Wish them!",
+                message=f"Today is {birthday_employee.first_name} {birthday_employee.last_name}'s birthday. Wish them!",
                 related_object=birthday_employee,
             )
