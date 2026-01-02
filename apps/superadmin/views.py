@@ -69,7 +69,9 @@ class AdminDashboardView(APIView):
             ).count()
 
             present_employee = EmployeeAttendance.objects.filter(
-                day=today
+                day=today,
+                employee__role=constants.EMPLOYEE_USER,
+                employee__is_active=True,
             ).select_related("employee__department", "employee__position")
 
             absent_employee = total_employees.exclude(
@@ -105,14 +107,13 @@ class AdminDashboardView(APIView):
 
             total_employees_active = total_employees.filter(
                 role=constants.EMPLOYEE_USER
-            )
+            )[:5]
             team_monthly_working_hour = {}
             for employee in total_employees_active:
                 team_monthly_working_hour[employee.id] = employee_monthly_working_hours(
                     employee
                 )
 
-            print(f"==>> team_monthly_working_hour: {team_monthly_working_hour}")
             general_team_data = general_team_monthly_data()
 
             data = {
