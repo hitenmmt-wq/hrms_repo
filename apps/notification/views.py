@@ -2,11 +2,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
+from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.notification.custom_filters import NotificationFilter, NotificationTypeFilter
 from apps.notification.models import Notification, NotificationType
@@ -64,7 +64,7 @@ class NotificationViewSet(BaseViewSet):
         count = Notification.objects.filter(
             recipient=request.user, is_read=False
         ).count()
-        return Response({"unread_count": count})
+        return ApiResponse.success({"unread_count": count})
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def mark_all_read(self, request):
@@ -72,7 +72,7 @@ class NotificationViewSet(BaseViewSet):
             is_read=True
         )
         NotificationWebSocketService.send_bulk_update(request.user.id, "all_read")
-        return Response({"status": "all marked as read"})
+        return ApiResponse.success({"message": "Mark all notification as read."})
 
 
 class MarkAsReadView(APIView):
@@ -87,6 +87,6 @@ class MarkAsReadView(APIView):
 
         if updated:
             NotificationWebSocketService.send_read_update(request.user.id, pk)
-            return Response({"status": "read"})
+            return ApiResponse.success({"message": "Notification read"})
 
-        return Response({"error": "Notification not found"}, status=404)
+        return ApiResponse.error({"error": "Notification not found"}, status=404)
