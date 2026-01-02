@@ -149,9 +149,9 @@ class EmployeeDashboardView(APIView):
 
 
 class EmployeeViewSet(BaseViewSet):
-    queryset = models.Users.objects.filter(role="employee").select_related(
-        "department", "position"
-    )
+    queryset = models.Users.objects.filter(
+        role="employee", is_active=True
+    ).select_related("department", "position")
     serializer_class = EmployeeListSerializer
     entity_name = "Employee"
     permission_classes = [IsAdmin]
