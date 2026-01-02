@@ -110,7 +110,9 @@ class AdminDashboardView(APIView):
             ).select_related("employee__department", "employee__position")
 
             recent_joiners = (
-                models.Users.objects.filter(is_active=True)
+                models.Users.objects.filter(
+                    is_active=True, role=constants.EMPLOYEE_USER
+                )
                 .select_related("department", "position")
                 .order_by("-id")[:3]
             )
