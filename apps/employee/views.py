@@ -47,7 +47,11 @@ class EmployeeDashboardView(APIView):
             today = timezone.now().date()
             year = timezone.now().year
             current_month = timezone.now().month
-            previous_month = calendar.month_name[current_month - 1]
+            previous_month = (
+                calendar.month_name[12]
+                if current_month == 1
+                else calendar.month_name[current_month - 1]
+            )
 
             todays_attendance = (
                 EmployeeAttendance.objects.filter(employee=request.user, day=today)
@@ -62,11 +66,22 @@ class EmployeeDashboardView(APIView):
             )
 
             common_data = models.CommonData.objects.first()
-            last_month_salary = (
-                PaySlip.objects.filter(employee=request.user, month=previous_month)
-                .select_related("employee")
-                .first()
-            )
+            if previous_month == "December":
+                last_month_salary = (
+                    PaySlip.objects.filter(
+                        employee=request.user,
+                        month=previous_month,
+                        start_date__year=year - 1,
+                    )
+                    .select_related("employee")
+                    .first()
+                )
+            else:
+                last_month_salary = (
+                    PaySlip.objects.filter(employee=request.user, month=previous_month)
+                    .select_related("employee")
+                    .first()
+                )
 
             holiday_list = models.Holiday.objects.filter(
                 date__year=timezone.now().year, date__gte=today
@@ -94,8 +109,16 @@ class EmployeeDashboardView(APIView):
                     "leave_calender": {
                         "total_pl": common_data.pl_leave if common_data else "",
                         "total_sl": common_data.sl_leave if common_data else "",
-                        "available_pl": employee_leave.pl if employee_leave else "",
-                        "available_sl": employee_leave.sl if employee_leave else "",
+                        "available_pl": (
+                            employee_leave.pl - employee_leave.used_pl
+                            if employee_leave
+                            else ""
+                        ),
+                        "available_sl": (
+                            employee_leave.sl - employee_leave.used_sl
+                            if employee_leave
+                            else ""
+                        ),
                     },
                     "last_month_salary": {
                         "total_earning": (
@@ -199,7 +222,7 @@ class LeaveBalanceViewSet(BaseViewSet):
 class ApplyLeaveViewSet(BaseViewSet):
     queryset = models.Leave.objects.select_related(
         "employee__department", "employee__position", "leave_type", "approved_by"
-    ).order_by("-id")
+    )
     serializer_class = ApplyLeaveSerializer
     entity_name = "Apply Leave"
     permission_classes = [IsAuthenticated]
@@ -220,13 +243,14 @@ class ApplyLeaveViewSet(BaseViewSet):
         "status",
     ]
     ordering_fields = [
+        "-id",
         "leave_type",
         "employee__email",
         "employee__role",
         "employee__first_name",
         "employee__last_name",
     ]
-    ordering = ["leave_type"]
+    ordering = ["-id"]
 
     def get_serializer_class(self):
         if self.action == "create":
