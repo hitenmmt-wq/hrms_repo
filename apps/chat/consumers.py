@@ -1,3 +1,10 @@
+"""
+WebSocket consumer for real-time chat functionality.
+
+Handles WebSocket connections, message sending/receiving, typing indicators,
+read receipts, message reactions, and real-time notifications for the HRMS chat system.
+"""
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
@@ -7,12 +14,16 @@ from apps.superadmin.models import Users
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
+    """WebSocket consumer for handling real-time chat operations."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
 
     async def connect(self):
+        """Handle WebSocket connection with user authentication and conversation verification."""
         user = self.scope.get("user")
+        print(f"==>> user: {user}")
         if not user or not user.is_authenticated:
             await self.close()
             return
@@ -36,12 +47,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
+        """Handle WebSocket disconnection and cleanup."""
         if hasattr(self, "room_group_name") and self.room_group_name:
             await self.channel_layer.group_discard(
                 self.room_group_name, self.channel_name
             )
 
     async def receive_json(self, content, **kwargs):
+        """Route incoming WebSocket messages to appropriate handlers."""
         event = content.get("type")
         print(f"==>> event: {event}")
 
@@ -59,6 +72,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.handle_remove_reaction(content)
 
     async def handle_send_message(self, content):
+        """Handle sending new messages and broadcasting to conversation participants."""
         text = content.get("text", "")
         msg_type = content.get("msg_type", "text")
         reply_to = content.get("reply_to")
@@ -95,17 +109,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             )
 
     async def handle_typing(self, content):
+        """Handle typing indicator broadcasts to conversation participants."""
         payload = {"type": "typing", "user_id": self.user.id}
         await self.channel_layer.group_send(
             self.room_group_name, {"type": "chat.message", "payload": payload}
         )
 
     async def handle_mark_read(self, content):
+        """Handle marking messages as read by the user."""
         message_id = content.get("message_id")
         if message_id:
             await self.mark_message_read(message_id, self.user.id)
 
     async def handle_status_update(self, content):
+        """Handle updating message delivery status."""
         message_id = content.get("message_id")
         status = content.get("status")
         if message_id and status:
@@ -113,12 +130,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def mark_messages_delivered(self, conversation_id, user_id):
+        """Mark all sent messages in conversation as delivered for the user."""
         MessageStatus.objects.filter(
             user_id=user_id, message__conversation_id=conversation_id, status="sent"
         ).update(status="delivered")
 
     @database_sync_to_async
     def is_participant(self, conversation_id, user_id):
+        """Check if user is a participant in the conversation."""
         try:
             conversation = Conversation.objects.get(id=conversation_id)
             return conversation.participants.filter(id=user_id).exists()
@@ -127,6 +146,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def create_message(self, conversation_id, user_id, text, msg_type, reply_to):
+        """Create new message and initialize status for all participants."""
         try:
             conversation = Conversation.objects.get(id=conversation_id)
 
@@ -159,6 +179,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def mark_message_read(self, message_id, user_id):
+        """Mark specific message as read by the user."""
         try:
             message = Message.objects.get(id=message_id)
 
@@ -172,6 +193,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def update_message_status(self, message_id, user_id, status):
+        """Update message status for specific user."""
         try:
             message = Message.objects.get(id=message_id)
             user = Users.objects.get(id=user_id)
@@ -185,6 +207,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             pass
 
     async def handle_add_reaction(self, content):
+        """Handle adding emoji reactions to messages."""
         message_id = content.get("message_id")
         emoji = content.get("emoji")
 
@@ -202,6 +225,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 )
 
     async def handle_remove_reaction(self, content):
+        """Handle removing emoji reactions from messages."""
         message_id = content.get("message_id")
         emoji = content.get("emoji")
 
@@ -220,6 +244,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def add_reaction(self, message_id, user_id, emoji):
+        """Add emoji reaction to message."""
         try:
             message = Message.objects.get(id=message_id)
 
@@ -234,6 +259,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def remove_reaction(self, message_id, user_id, emoji):
+        """Remove emoji reaction from message."""
         try:
             message = Message.objects.get(id=message_id)
 

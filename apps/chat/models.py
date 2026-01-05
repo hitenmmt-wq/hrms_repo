@@ -1,13 +1,20 @@
+"""
+Chat models for real-time messaging and communication.
+
+Handles conversations, messages, message status tracking, and reactions
+for the HRMS internal communication system.
+"""
+
 from django.db import models
 from django.db.models import Q
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 
-# Create your models here.
-
 
 class Conversation(BaseModel):
+    """Chat conversations supporting private and group messaging."""
+
     CONVERSATION_TYPES = (
         ("private", "private"),
         ("group", "group"),
@@ -27,6 +34,8 @@ class Conversation(BaseModel):
 
 
 class Message(BaseModel):
+    """Individual messages with text, media, and reply support."""
+
     MSG_TYPE_CHOICES = (
         ("text", "Text"),
         ("image", "Image"),
@@ -63,6 +72,8 @@ class Message(BaseModel):
 
 
 class MessageStatus(BaseModel):
+    """Message delivery and read status tracking per user."""
+
     STATUS_CHOICES = (
         ("sent", "Sent"),
         ("delivered", "Delivered"),
@@ -93,6 +104,8 @@ class MessageStatus(BaseModel):
 
 
 class MessageReaction(BaseModel):
+    """Emoji reactions to messages for enhanced communication."""
+
     REACTION_CHOICES = (
         ("👍", "Thumbs Up"),
         ("❤️", "Heart"),

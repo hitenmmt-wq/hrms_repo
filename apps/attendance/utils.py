@@ -1,3 +1,10 @@
+"""
+Attendance utility functions for time tracking calculations and operations.
+
+Provides helper functions for check-in/check-out operations, break time calculations,
+work hour computations, and attendance status determination for the HRMS system.
+"""
+
 from decimal import Decimal
 
 from django.db import transaction
@@ -8,6 +15,7 @@ from apps.superadmin.models import Users
 
 
 def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:
+    """Calculate total break hours from all break logs for an attendance record."""
     print("-------calculate break hours called-----------")
     total = Decimal("0.0")
 
@@ -20,6 +28,7 @@ def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:
 
 
 def _calculate_status(work_hours: Decimal) -> str:
+    """Determine attendance status based on total work hours."""
     if work_hours >= 8:
         return "present"
     if work_hours >= 4:
@@ -31,6 +40,7 @@ def _calculate_status(work_hours: Decimal) -> str:
 
 @transaction.atomic
 def check_in(employee: Users) -> EmployeeAttendance:
+    """Handle employee check-in operation with attendance record creation."""
     today = timezone.localdate()
 
     attendance, created = EmployeeAttendance.objects.get_or_create(
@@ -49,6 +59,7 @@ def check_in(employee: Users) -> EmployeeAttendance:
 
 @transaction.atomic
 def pause_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
+    """Start break time logging for an attendance record."""
     if AttendanceBreakLogs.objects.filter(
         attendance=attendance, restart_time__isnull=True
     ).exists():
@@ -62,6 +73,7 @@ def pause_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
 
 @transaction.atomic
 def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
+    """End break time logging and resume work for an attendance record."""
     br = AttendanceBreakLogs.objects.filter(
         attendance=attendance, restart_time__isnull=True
     ).first()
@@ -77,6 +89,7 @@ def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
 
 @transaction.atomic
 def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendance:
+    """Recalculate and update work hours, break hours, and attendance status."""
     if attendance.status == "paid_leave" or attendance.status == "unpaid_leave":
         return attendance
     if attendance.check_out:
@@ -100,6 +113,7 @@ def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendanc
 
 @transaction.atomic
 def check_out(attendance: EmployeeAttendance) -> EmployeeAttendance:
+    """Handle employee check-out operation with final hour calculations."""
     if not attendance.check_in:
         raise ValueError("Check-in missing")
 

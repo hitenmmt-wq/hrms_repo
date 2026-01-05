@@ -1,3 +1,11 @@
+"""
+Employee serializers for data validation and transformation.
+
+Handles serialization for employee management, leave applications,
+leave balance tracking, payslip generation, and dashboard data
+for the HRMS employee module.
+"""
+
 from rest_framework import serializers
 
 from apps.attendance.models import EmployeeAttendance
@@ -6,10 +14,10 @@ from apps.employee.utils import calculate_leave_deduction, weekdays_count
 from apps.superadmin import models
 from apps.superadmin.tasks import send_email_task
 
-#   ======= EMPLOYEE SERIALIZER   ============
-
 
 class EmployeeCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating new employees with password hashing and email notification."""
+
     password = serializers.CharField(write_only=True)
     department = serializers.PrimaryKeyRelatedField(
         queryset=models.Department.objects.all()
@@ -34,6 +42,7 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
         depth = 1
 
     def create(self, validated_data):
+        """Create employee with hashed password and send welcome email."""
         password = validated_data.pop("password")
         user = models.Users(**validated_data)
         user.set_password(password)
@@ -55,6 +64,8 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
 
 
 class EmployeeListSerializer(serializers.ModelSerializer):
+    """Serializer for employee list display with department and position details."""
+
     class Meta:
         model = models.Users
         fields = [
@@ -74,6 +85,8 @@ class EmployeeListSerializer(serializers.ModelSerializer):
 
 
 class EmployeeUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating employee information with optional password change."""
+
     password = serializers.CharField(write_only=True, required=False)
     department = serializers.PrimaryKeyRelatedField(
         queryset=models.Department.objects.all()
@@ -99,6 +112,7 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
         depth = 1
 
     def update(self, instance, validated_data):
+        """Update employee with optional password hashing."""
         password = validated_data.pop("password", None)
 
         for field, value in validated_data.items():
@@ -111,10 +125,9 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-#   ======= LEAVE BALANCE SERIALIZER   ============
-
-
 class LeaveBalanceSerializer(serializers.ModelSerializer):
+    """Serializer for employee leave balance management and tracking."""
+
     employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
 
     class Meta:
@@ -133,10 +146,9 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-#   ======= APPLY LEAVE SERIALIZER   ============
-
-
 class ApplyLeaveSerializer(serializers.ModelSerializer):
+    """Serializer for displaying leave applications with employee details."""
+
     employee = EmployeeListSerializer(read_only=True)
 
     class Meta:
@@ -156,6 +168,8 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
 
 
 class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating new leave applications."""
+
     employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
     leave_type = serializers.PrimaryKeyRelatedField(
         queryset=models.LeaveType.objects.all()
@@ -176,18 +190,19 @@ class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
         ]
 
 
-#   ======= DASHBOARD SERIALIZER   ============
-
-
 class HolidayMiniSerializer(serializers.ModelSerializer):
+    """Minimal serializer for holiday information in dashboard displays."""
+
     class Meta:
         model = models.Holiday
         fields = ["id", "name", "date"]
 
 
 class LeaveMiniSerializer(serializers.ModelSerializer):
+    """Minimal serializer for leave information in dashboard displays."""
+
     employee = EmployeeListSerializer(read_only=True)
-    leave_type = serializers.StringRelatedField()  # trying this new stringrelatedfield
+    leave_type = serializers.StringRelatedField()
 
     class Meta:
         model = models.Leave
@@ -204,16 +219,17 @@ class LeaveMiniSerializer(serializers.ModelSerializer):
 
 
 class TodayAttendanceSerializer(serializers.ModelSerializer):
+    """Serializer for today's attendance information in employee dashboard."""
+
     class Meta:
         model = EmployeeAttendance
         fields = ["id", "day", "check_in", "check_out"]
         depth = 1
 
 
-# ===================================
-
-
 class PaySlipCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating payslips with automatic calculations."""
+
     employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
 
     class Meta:
@@ -237,6 +253,7 @@ class PaySlipCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
+        """Create payslip with automatic calculations for earnings, deductions, and net salary."""
         employee = validated_data["employee"]
         start_date = validated_data["start_date"]
         end_date = validated_data["end_date"]
@@ -274,6 +291,7 @@ class PaySlipCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
+        """Update payslip with recalculated earnings, deductions, and net salary."""
         for field, value in validated_data.items():
             setattr(instance, field, value)
 
@@ -304,6 +322,8 @@ class PaySlipCreateSerializer(serializers.ModelSerializer):
 
 
 class PaySlipSerializer(serializers.ModelSerializer):
+    """Serializer for displaying payslip information with employee details."""
+
     employee = EmployeeListSerializer(read_only=True)
 
     class Meta:

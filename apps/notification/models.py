@@ -1,3 +1,10 @@
+"""
+Notification models for system-wide alerts and messaging.
+
+Handles notification types, user notifications with generic content linking,
+and read status tracking for the HRMS notification system.
+"""
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -5,10 +12,10 @@ from django.db import models
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 
-# Create your models here.
-
 
 class NotificationType(BaseModel):
+    """Notification categories and types for system alerts."""
+
     code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
 
@@ -17,6 +24,8 @@ class NotificationType(BaseModel):
 
 
 class Notification(BaseModel):
+    """User notifications with generic content linking and read tracking."""
+
     recipient = models.ForeignKey(
         Users, on_delete=models.CASCADE, related_name="notifications"
     )
