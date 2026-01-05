@@ -38,3 +38,5 @@ PAID_LEAVE = "paid_leave"
 HALFDAY_LEAVE = "halfday_leave"
 
 BIRTHDAY = "birthday"
+
+LATE_COMING = "late_coming"

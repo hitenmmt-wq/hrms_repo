@@ -13,7 +13,10 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
 from apps.employee.models import LeaveBalance
+from apps.notification.models import NotificationType
+from apps.notification.services import create_notification
 from apps.superadmin.models import CommonData, Holiday, Leave
 from apps.superadmin.tasks import send_email_task
 
@@ -181,6 +184,40 @@ def employee_monthly_working_hours(employee):
         "daily_average_hours": round(daily_average_hours, 2),
         "progress_percentage": round(progress_percentage, 2),
     }
+
+
+def notify_employee_incomplete_workhours(employee, attendance):
+    print("this function of incomplete work hours triggered.....")
+    if not attendance:
+        return "No attendance data for today"
+    if not attendance.check_in:
+        return "No check in today"
+    if not attendance.check_out:
+        return "Today's not finished yet."
+    if attendance.status == constants.INCOMPLETE_HOURS:
+        notification_type = NotificationType.objects.filter(
+            code=constants.ATTENDANCE_REMINDER
+        ).first()
+        create_notification(
+            recipient=employee,
+            notification_type=notification_type,
+            title="Working hours Alert",
+            message="Your work hours are incomplete today.",
+            related_object=attendance,
+        )
+
+    if attendance and attendance.status == constants.PRESENT:
+        if not attendance.check_in or not attendance.check_out:
+            notification_type = NotificationType.objects.filter(
+                code=constants.ATTENDANCE_REMINDER
+            ).first()
+            create_notification(
+                recipient=employee,
+                notification_type=notification_type,
+                title="Working hours Alert",
+                message="You have completed today's working hours.",
+                related_object=attendance,
+            )
 
 
 def imagefield_to_base64(image_field):

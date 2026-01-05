@@ -120,7 +120,7 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     """Serializer for displaying conversations with participants and messages."""
 
-    participants = UserSerializer(many=True, read_only=True)
+    participants = serializers.SerializerMethodField()
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
@@ -133,6 +133,14 @@ class ConversationSerializer(serializers.ModelSerializer):
             "created_at",
             "messages",
         )
+
+    def get_participants(self, obj):
+        """Return participants excluding the current user."""
+        request = self.context.get("request")
+        if request and request.user:
+            other_participants = obj.participants.exclude(id=request.user.id)
+            return UserSerializer(other_participants, many=True).data
+        return UserSerializer(obj.participants.all(), many=True).data
 
 
 class MessageStatusSerializer(serializers.ModelSerializer):

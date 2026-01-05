@@ -58,7 +58,9 @@ def notify_employee_birthday():
     recipients = models.Users.objects.filter(is_active=True)
     for birthday_employee in employee_birthday_today:
         for recipient in recipients.exclude(id=birthday_employee.id):
-            notification_type = NotificationType.objects.get(code=constants.BIRTHDAY)
+            notification_type = NotificationType.objects.filter(
+                code=constants.BIRTHDAY
+            ).first()
             create_notification(
                 recipient=recipient,
                 actor=birthday_employee,
@@ -66,4 +68,40 @@ def notify_employee_birthday():
                 title="🎉 Birthday Alert!",
                 message=f"Today is {birthday_employee.first_name} {birthday_employee.last_name}'s birthday. Wish them!",
                 related_object=birthday_employee,
+            )
+
+
+@shared_task
+def notify_frequent_late_comings():
+    print("this function of frequent late comings triggered.....")
+    today = timezone.now().date()
+    office_time = timezone.timedelta(hours=10, minutes=30)
+    print(f"==>> office_time: {office_time}")
+    late_coming_employees = (
+        EmployeeAttendance.objects.filter(day=today, check_in__gt=office_time)
+        .select_related("employee")
+        .values_list("employee", flat=True)
+        .distinct()
+    )
+    print(f"==>> late_coming_employees: {late_coming_employees}")
+    if not late_coming_employees.exists():
+        return "No late comers today"
+
+    recipients = models.Users.objects.filter(is_active=True, role="admin")
+    print(f"==>> recipients: {recipients}")
+    for late_coming_employee in late_coming_employees:
+        for recipient in recipients.exclude(id=late_coming_employee.id):
+            notification_type = NotificationType.objects.filter(
+                code=constants.LATE_COMING
+            ).first()
+            create_notification(
+                recipient=recipient,
+                actor=late_coming_employee,
+                notification_type=notification_type,
+                title="🚨 Late Coming Alert!",
+                message=(
+                    f"{late_coming_employee.employee.first_name} "
+                    f"{late_coming_employee.employee.last_name} is late today.",
+                ),
+                related_object=late_coming_employee,
             )

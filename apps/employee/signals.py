@@ -25,46 +25,80 @@ def leave_balance_post_save(sender, instance, **kwargs):
 @receiver(post_save, sender=EmployeeAttendance)
 def notify_on_attendance(sender, instance, created, **kwargs):
     print("this signal called.....notify_on_attendance.........")
-    if instance.status == constants.PENDING:
-        notification_type = NotificationType.objects.get(code=constants.PENDING)
-        create_notification(
-            recipient=instance.employee,
-            notification_type=notification_type,
-            title="Attendance Pending",
-            message="Your attendance request is pending.",
-            related_object=instance,
-        )
-
-    if instance.status == constants.PRESENT:
-        notification_type = NotificationType.objects.get(code=constants.APPROVED)
-        create_notification(
-            recipient=instance.employee,
-            notification_type=notification_type,
-            title="Attendance Completed",
-            message="Your attendance has been completed.",
-            related_object=instance,
-        )
-
-    if instance.status == constants.REJECTED:
-        notification_type = NotificationType.objects.get(
-            code=constants.ATTENDANCE_REJECTED
-        )
-        create_notification(
-            recipient=instance.employee,
-            notification_type=notification_type,
-            title="Attendance Rejected",
-            message="Your attendance has been rejected.",
-            related_object=instance,
-        )
-
-    if instance.status == constants.INCOMPLETE_HOURS:
-        notification_type = NotificationType.objects.get(
+    if (
+        instance.check_in
+        and not instance.check_out
+        and instance.work_hours == 0
+        and instance.break_hours == 0
+    ):
+        notification_type = NotificationType.objects.filter(
             code=constants.ATTENDANCE_REMINDER
-        )
+        ).first()
         create_notification(
             recipient=instance.employee,
             notification_type=notification_type,
-            title="Attendance Reminder",
-            message="Your work hours are incomplete today.",
+            title="Attendance Alert",
+            message="Let's begin on a positive note.",
             related_object=instance,
         )
+
+    if instance.check_in and instance.check_out and instance.work_hours >= 0:
+        notification_type = NotificationType.objects.filter(
+            code=constants.ATTENDANCE_REMINDER
+        ).first()
+        create_notification(
+            recipient=instance.employee,
+            notification_type=notification_type,
+            title="Attendance Alert",
+            message="Wrapped up for the day, see you soon.",
+            related_object=instance,
+        )
+
+    if instance.check_out:
+        if instance.status == constants.PENDING:
+            notification_type = NotificationType.objects.filter(
+                code=constants.PENDING
+            ).first()
+            create_notification(
+                recipient=instance.employee,
+                notification_type=notification_type,
+                title="Working Hours",
+                message="Your attendance request is pending.",
+                related_object=instance,
+            )
+
+        if instance.status == constants.PRESENT:
+            notification_type = NotificationType.objects.filter(
+                code=constants.APPROVED
+            ).first()
+            create_notification(
+                recipient=instance.employee,
+                notification_type=notification_type,
+                title="Working Hours",
+                message="Your attendance has been completed.",
+                related_object=instance,
+            )
+
+        if instance.status == constants.REJECTED:
+            notification_type = NotificationType.objects.filter(
+                code=constants.ATTENDANCE_REJECTED
+            ).first()
+            create_notification(
+                recipient=instance.employee,
+                notification_type=notification_type,
+                title="Working Hours",
+                message="Your attendance has been rejected.",
+                related_object=instance,
+            )
+
+        if instance.status == constants.INCOMPLETE_HOURS:
+            notification_type = NotificationType.objects.filter(
+                code=constants.ATTENDANCE_REMINDER
+            ).first()
+            create_notification(
+                recipient=instance.employee,
+                notification_type=notification_type,
+                title="Working Hours",
+                message="Your work hours are incomplete today.",
+                related_object=instance,
+            )

@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
+from apps.employee.utils import notify_employee_incomplete_workhours
 from apps.superadmin.models import Users
 
 
@@ -131,5 +132,5 @@ def check_out(attendance: EmployeeAttendance) -> EmployeeAttendance:
     attendance.status = _calculate_status(work_hours)
 
     attendance.save(update_fields=["check_out", "work_hours", "break_hours", "status"])
-
+    notify_employee_incomplete_workhours(attendance.employee, attendance)
     return attendance
