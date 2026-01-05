@@ -16,7 +16,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hrms.settings")
 
 django.setup()
 
-from apps.notification import routing  # noqa
+from . import routing  # noqa
 
 django_asgi_app = get_asgi_application()
 

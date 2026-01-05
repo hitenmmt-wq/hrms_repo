@@ -1,3 +1,10 @@
+"""
+Attendance views for employee time tracking and break management.
+
+Handles check-in/check-out operations, break logging, daily attendance
+records, and attendance management for the HRMS time tracking system.
+"""
+
 from django.utils import timezone
 from rest_framework.decorators import action
 
@@ -11,6 +18,8 @@ from apps.superadmin.models import Users
 
 
 class AttendanceViewSet(BaseViewSet):
+    """Attendance management ViewSet for employee time tracking operations."""
+
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     queryset = EmployeeAttendance.objects.select_related(
@@ -19,6 +28,7 @@ class AttendanceViewSet(BaseViewSet):
     order_by = ["-day"]
 
     def destroy(self, request, *args, **kwargs):
+        """Delete attendance record with success response."""
         instance = self.get_object()
         instance.delete()
 
@@ -31,6 +41,7 @@ class AttendanceViewSet(BaseViewSet):
 
     @action(detail=True, methods=["get"])
     def particular_employee(self, request, pk=None):
+        """Get attendance records for a specific employee."""
         employee = (
             Users.objects.select_related("department", "position").filter(id=pk).first()
         )
@@ -42,6 +53,7 @@ class AttendanceViewSet(BaseViewSet):
 
     @action(detail=False, methods=["get"])
     def daily_logs(self, request):
+        """Get daily break logs for the current user's attendance."""
         attendance = (
             self.get_queryset()
             .filter(day=timezone.now().date())
@@ -63,6 +75,7 @@ class AttendanceViewSet(BaseViewSet):
 
     @action(detail=False, methods=["post"])
     def check_in(self, request):
+        """Handle employee check-in for daily attendance."""
         attendance = check_in(request.user)
         return ApiResponse.success(
             "Attendance Created Successfully", AttendanceSerializer(attendance).data
@@ -70,16 +83,19 @@ class AttendanceViewSet(BaseViewSet):
 
     @action(detail=True, methods=["post"])
     def pause(self, request, pk=None):
+        """Pause work session and start break time logging."""
         pause_break(self.get_object())
         return ApiResponse.success("Work paused")
 
     @action(detail=True, methods=["post"])
     def resume(self, request, pk=None):
+        """Resume work session and end break time logging."""
         resume_break(self.get_object())
         return ApiResponse.success("Work resumed")
 
     @action(detail=True, methods=["post"])
     def check_out(self, request, pk=None):
+        """Handle employee check-out and calculate total work hours."""
         attendance = check_out(self.get_object())
         return ApiResponse.success(
             "Logged out successfully", AttendanceSerializer(attendance).data

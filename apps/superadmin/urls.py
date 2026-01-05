@@ -1,3 +1,10 @@
+"""
+URL configuration for superadmin app.
+
+Defines URL patterns for admin functionality including user management,
+organizational structure, authentication, leave management, and system configuration.
+"""
+
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView

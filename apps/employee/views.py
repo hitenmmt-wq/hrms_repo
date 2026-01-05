@@ -1,4 +1,10 @@
-# from datetime import date
+"""
+Employee views for dashboard, profile management, leave applications, and payroll.
+
+Handles employee-specific functionality including personal dashboard,
+leave balance management, payslip generation, and employee CRUD operations
+for admin users.
+"""
 
 import calendar
 
@@ -36,13 +42,14 @@ from apps.employee.serializers import (
 from apps.employee.utils import employee_monthly_working_hours, generate_payslip_pdf
 from apps.superadmin import models
 
-# Create your views here.
-
 
 class EmployeeDashboardView(APIView):
+    """Employee personal dashboard with attendance, leave balance, and salary information."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Get comprehensive employee dashboard data including attendance, leaves, and payroll info."""
         try:
             today = timezone.now().date()
             year = timezone.now().year
@@ -149,6 +156,8 @@ class EmployeeDashboardView(APIView):
 
 
 class EmployeeViewSet(BaseViewSet):
+    """Employee management ViewSet for admin operations."""
+
     queryset = models.Users.objects.filter(
         role="employee", is_active=True
     ).select_related("department", "position")
@@ -175,6 +184,7 @@ class EmployeeViewSet(BaseViewSet):
     ordering = ["email"]
 
     def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
         if self.action == "create":
             return EmployeeCreateSerializer
         if self.action in ["update", "partial_update"]:
@@ -182,10 +192,9 @@ class EmployeeViewSet(BaseViewSet):
         return EmployeeListSerializer
 
 
-#   ============ LEAVE-BALANCE CRUD API   =
-
-
 class LeaveBalanceViewSet(BaseViewSet):
+    """Leave balance management for tracking employee leave allocations."""
+
     queryset = LeaveBalance.objects.select_related(
         "employee__department", "employee__position"
     ).order_by("-id")
@@ -216,10 +225,9 @@ class LeaveBalanceViewSet(BaseViewSet):
     ordering = ["year"]
 
 
-#   ============ LEAVE-BALANCE CRUD API   =
-
-
 class ApplyLeaveViewSet(BaseViewSet):
+    """Leave application management for employees and admin approval."""
+
     queryset = models.Leave.objects.select_related(
         "employee__department", "employee__position", "leave_type", "approved_by"
     )
@@ -253,12 +261,14 @@ class ApplyLeaveViewSet(BaseViewSet):
     ordering = ["-id"]
 
     def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
         if self.action == "create":
             return ApplyLeaveCreateSerializer
         return ApplyLeaveSerializer
 
     @action(detail=False, methods=["get"], url_path="employee_leave_list")
     def employee_leave_list(self, request):
+        """Get leave history for the authenticated employee."""
         employee = request.user
         leaves = (
             models.Leave.objects.filter(employee=employee)
@@ -271,10 +281,9 @@ class ApplyLeaveViewSet(BaseViewSet):
         )
 
 
-# ======== EMPLOYEE PAYSLIP VIEWSET ============
-
-
 class PaySlipViewSet(BaseViewSet):
+    """Payslip management for employee salary processing and records."""
+
     queryset = PaySlip.objects.select_related(
         "employee__department", "employee__position"
     ).order_by("-id")
@@ -299,12 +308,14 @@ class PaySlipViewSet(BaseViewSet):
     ordering = ["-id"]
 
     def get_serializer_class(self):
+        """Return appropriate serializer based on action."""
         if self.action in ["create", "update", "partial_update"]:
             return PaySlipCreateSerializer
         return PaySlipSerializer
 
     @action(detail=False, methods=["get"], url_path="employee_payslips")
     def employee_payslips(self, request):
+        """Get payslip history for the authenticated employee."""
         employee = request.user
         payslip = PaySlip.objects.filter(employee=employee).select_related("employee")
         data = PaySlipSerializer(payslip, many=True).data
@@ -314,9 +325,12 @@ class PaySlipViewSet(BaseViewSet):
 
 
 class PaySlipDownloadView(APIView):
+    """Payslip PDF download functionality for employees."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
+        """Generate and download payslip PDF for the specified payslip ID."""
         try:
             payslip = PaySlip.objects.select_related("employee").filter(pk=pk).first()
             if not payslip:
