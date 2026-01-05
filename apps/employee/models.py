@@ -1,3 +1,10 @@
+"""
+Employee models for leave balance and payroll management.
+
+Handles employee-specific data including leave balances, payslip generation,
+and salary calculations for the HRMS payroll system.
+"""
+
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -5,14 +12,15 @@ from django.utils import timezone
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 
-# Create your models here.
-
 
 def current_year():
+    """Get current year for default leave balance year."""
     return timezone.now().year
 
 
 class LeaveBalance(BaseModel):
+    """Employee leave balance tracking with yearly allocation and usage."""
+
     employee = models.OneToOneField(
         Users, on_delete=models.CASCADE, related_name="employee_leave_balance"
     )
@@ -42,18 +50,23 @@ class LeaveBalance(BaseModel):
 
     @property
     def remaining_pl(self):
+        """Calculate remaining privilege leave balance."""
         return max(self.pl - self.used_pl, 0)
 
     @property
     def remaining_sl(self):
+        """Calculate remaining sick leave balance."""
         return max(self.sl - self.used_sl, 0)
 
     @property
     def remaining_lop(self):
+        """Calculate remaining loss of pay balance."""
         return max(self.lop - self.used_lop, 0)
 
 
 class PaySlip(BaseModel):
+    """Employee payslip with salary breakdown and deductions."""
+
     employee = models.ForeignKey(
         Users, on_delete=models.CASCADE, related_name="employee_payslips"
     )

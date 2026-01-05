@@ -1,13 +1,21 @@
+"""
+Superadmin models for HRMS core functionality.
+
+Defines core models for user management, organizational structure,
+leave management, and system configuration. These models form the
+foundation of the HRMS system.
+"""
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from apps.base import constants
 from apps.base.models import BaseModel
 
-# Create your models here.
-
 
 class CommonData(BaseModel):
+    """Company configuration and leave policy settings."""
+
     name = models.CharField(max_length=255, null=True, blank=True)
     company_link = models.CharField(max_length=255, null=True, blank=True)
     company_logo = models.ImageField(upload_to="company_logo", null=True, blank=True)
@@ -20,6 +28,8 @@ class CommonData(BaseModel):
 
 
 class SettingData(BaseModel):
+    """System configuration settings for email, database, and services."""
+
     email_host = models.CharField(max_length=255, null=True, blank=True)
     email_port = models.IntegerField(null=True, blank=True)
     email_host_user = models.CharField(max_length=255, null=True, blank=True)
@@ -46,6 +56,8 @@ class SettingData(BaseModel):
 
 
 class Users(AbstractUser):
+    """Custom user model with role-based access and employee information."""
+
     username = None
     role = models.CharField(max_length=50, null=True, blank=True, default="employee")
     email = models.EmailField(unique=True)
@@ -85,6 +97,8 @@ class Users(AbstractUser):
 
 
 class Department(BaseModel):
+    """Organizational departments for employee categorization."""
+
     name = models.CharField(max_length=50)
 
     def __str__(self):
@@ -92,6 +106,8 @@ class Department(BaseModel):
 
 
 class Announcement(BaseModel):
+    """Company-wide announcements and notifications."""
+
     title = models.CharField(max_length=225)
     description = models.TextField()
     date = models.DateTimeField()
@@ -101,6 +117,8 @@ class Announcement(BaseModel):
 
 
 class Position(BaseModel):
+    """Job positions and roles within the organization."""
+
     name = models.CharField(max_length=50)
 
     def __str__(self):
@@ -108,6 +126,8 @@ class Position(BaseModel):
 
 
 class Holiday(BaseModel):
+    """Company holidays and non-working days."""
+
     name = models.CharField(max_length=50)
     date = models.DateField()
 
@@ -116,6 +136,8 @@ class Holiday(BaseModel):
 
 
 class LeaveType(BaseModel):
+    """Types of leaves available (sick, privilege, etc.)."""
+
     name = models.CharField(max_length=50)
     code = models.CharField(max_length=50)
 
@@ -124,6 +146,8 @@ class LeaveType(BaseModel):
 
 
 class Leave(BaseModel):
+    """Employee leave applications with approval workflow."""
+
     HALF_DAY_PART = (
         ("first", "First"),
         ("second", "Second"),
@@ -169,6 +193,7 @@ class Leave(BaseModel):
         return f"{self.employee.email} - {self.leave_type} - {self.status}"
 
     def save(self, *args, **kwargs):
+        """Auto-calculate total days based on leave type and date range."""
         if self.leave_type.code == constants.HALFDAY_LEAVE:
             self.total_days = 0.5
         elif not self.to_date:

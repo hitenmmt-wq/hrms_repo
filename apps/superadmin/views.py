@@ -1,3 +1,11 @@
+"""
+Superadmin views for HRMS core functionality.
+
+Handles admin dashboard, user authentication, CRUD operations for departments,
+positions, holidays, announcements, leave management, and system configuration.
+Provides admin-level access to all HRMS features and user management.
+"""
+
 from datetime import datetime, time, timedelta
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -44,7 +52,10 @@ from apps.superadmin.utils import (
 
 
 class CustomScriptView(APIView):
+    """Custom script execution for development and maintenance tasks."""
+
     def get(self, request):
+        """Execute custom scripts for data migration or testing purposes."""
         # from apps.employee.models import LeaveBalance
 
         # employees = models.Users.objects.filter(
@@ -67,9 +78,12 @@ class CustomScriptView(APIView):
 
 
 class AdminDashboardView(APIView):
+    """Admin dashboard with key metrics, statistics, and overview data."""
+
     permission_classes = [IsAdmin]
 
     def get(self, request):
+        """Get comprehensive dashboard data including employee stats, attendance, and announcements."""
         try:
             today = timezone.now().date()
             late_time = timezone.make_aware(datetime.combine(today, time(10, 5)))
@@ -181,9 +195,12 @@ class AdminDashboardView(APIView):
 
 
 class ChangePassword(APIView):
+    """Password change functionality for authenticated users."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """Change user password with old password verification."""
         user = request.user
         old_pass = request.data.get("old_password")
         new_pass = request.data.get("new_password")
@@ -208,7 +225,10 @@ class ChangePassword(APIView):
 
 
 class ResetPassword(APIView):
+    """Password reset functionality via email link."""
+
     def post(self, request):
+        """Send password reset link to user's email address."""
         email = request.data.get("email")
         try:
             user = models.Users.objects.filter(email=email).first()
@@ -260,6 +280,8 @@ class ResetPasswordChange(APIView):
 
 
 class AdminRegister(BaseViewSet):
+    """Admin user registration and management with email activation."""
+
     entity_name = "Super-Admin"
     queryset = models.Users.objects.filter(role=constants.ADMIN_USER).select_related(
         "department", "position"
@@ -612,6 +634,7 @@ class ProfileViewSet(BaseViewSet):
 
 
 class LeaveViewSet(viewsets.ModelViewSet):
+    """Leave application management with role-based access control."""
 
     queryset = (
         models.Leave.objects.select_related(
@@ -659,6 +682,8 @@ class LeaveViewSet(viewsets.ModelViewSet):
 
 
 class LeaveApprovalViewSet(BaseViewSet):
+    """Leave approval and rejection workflow for admin users."""
+
     permission_classes = [IsAdmin]
 
     @transaction.atomic

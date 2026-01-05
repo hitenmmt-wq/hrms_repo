@@ -1,3 +1,11 @@
+"""
+Application-wide constants for HRMS system.
+
+Defines all constant values used across the HRMS application including
+user roles, status values, notification types, and leave types for
+consistent reference throughout the codebase.
+"""
+
 ACCOUNT_ACTIVATION_URL = "http://127.0.0.1:8000/adminapp/activate/{token}/"
 
 # USER ROLE CONSTANTS
@@ -28,6 +36,5 @@ ATTENDANCE_REJECTED = "attendance_rejected"
 UNPAID_LEAVE = "unpaid_leave"
 PAID_LEAVE = "paid_leave"
 HALFDAY_LEAVE = "halfday_leave"
-
 
 BIRTHDAY = "birthday"

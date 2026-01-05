@@ -1,13 +1,20 @@
+"""
+Attendance models for employee time tracking and break management.
+
+Handles daily attendance records, check-in/check-out times, work hours
+calculation, and break time logging for payroll and compliance.
+"""
+
 from django.db import models
 from django.db.models import Q
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 
-# Create your models here.
-
 
 class EmployeeAttendance(BaseModel):
+    """Daily attendance records with check-in/out times and status tracking."""
+
     ATTENDANCE_TYPE = (
         ("present", "present"),
         ("unpaid_leave", "unpaid_leave"),
@@ -45,6 +52,7 @@ class EmployeeAttendance(BaseModel):
 
     @property
     def track_current_status(self):
+        """Get current attendance status based on check-in/out and break times."""
         if not self.check_in:
             return "not_started"
 
@@ -60,6 +68,8 @@ class EmployeeAttendance(BaseModel):
 
 
 class AttendanceBreakLogs(BaseModel):
+    """Break time logs for tracking pause and restart times during work hours."""
+
     attendance = models.ForeignKey(
         EmployeeAttendance,
         on_delete=models.CASCADE,
