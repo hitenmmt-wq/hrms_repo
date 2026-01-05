@@ -1,3 +1,10 @@
+"""
+Notification serializers for system alert data validation and transformation.
+
+Handles serialization for notifications, notification types, and user alert
+management for the HRMS notification system.
+"""
+
 from rest_framework import serializers
 
 from apps.notification.models import Notification, NotificationType
@@ -5,6 +12,8 @@ from apps.superadmin.models import Users
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    """Serializer for user notifications with actor and recipient details."""
+
     actor = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all())
     recipient = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all())
 
@@ -24,6 +33,8 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class NotificationTypeSerializer(serializers.ModelSerializer):
+    """Serializer for notification type configuration and management."""
+
     class Meta:
         model = NotificationType
         fields = [

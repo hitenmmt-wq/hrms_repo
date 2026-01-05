@@ -1,3 +1,10 @@
+"""
+JWT authentication middleware for WebSocket connections.
+
+Handles JWT token authentication for Django Channels WebSocket connections,
+extracting tokens from query parameters and setting user context for chat functionality.
+"""
+
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
@@ -8,15 +15,16 @@ from apps.superadmin.models import Users
 
 
 class JwtAuthMiddleware:
+    """Middleware for authenticating WebSocket connections using JWT tokens."""
+
     def __init__(self, inner):
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
+        """Process WebSocket connection and authenticate user via JWT token."""
         query_string = scope.get("query_string", b"").decode()
         query_params = parse_qs(query_string)
-        print(f"==>> query_params: {query_params}")
         token = query_params.get("token")
-        print(f"==>> token: {token}")
 
         if token:
             try:
@@ -41,6 +49,7 @@ class JwtAuthMiddleware:
 
     @database_sync_to_async
     def get_user(self, user_id):
+        """Retrieve active user by ID from database asynchronously."""
         try:
             return Users.objects.get(id=user_id, is_active=True)
         except Users.DoesNotExist:

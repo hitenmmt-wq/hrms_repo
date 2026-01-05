@@ -45,7 +45,9 @@ class AttendanceViewSet(BaseViewSet):
         employee = (
             Users.objects.select_related("department", "position").filter(id=pk).first()
         )
-        attendance = self.queryset.filter(employee=employee).order_by("-day")
+        attendance = self.queryset.filter(
+            employee=employee, day__lte=timezone.now().date()
+        ).order_by("-day")
         return ApiResponse.success(
             "Particular Employee's Attendance list",
             AttendanceSerializer(attendance, many=True).data,
