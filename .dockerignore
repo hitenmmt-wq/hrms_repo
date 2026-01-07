@@ -29,6 +29,8 @@ media/
 staticfiles/
 .DS_Store
 .env
+.env.docker
+.ssl
 .idea/
 .vscode/
 *.swp

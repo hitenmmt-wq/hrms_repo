@@ -25,19 +25,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         user = self.scope.get("user")
         print(f"==>> user: {user}")
         if not user or not user.is_authenticated:
-            await self.close()
+            await self.close(code=4001)
             return
 
         self.user = user
         try:
             self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
-        except (KeyError, TypeError):
-            await self.close()
+        except (KeyError, TypeError) as e:
+            print(f"==>> Connection rejected: Invalid conversation ID - {e}")
+            await self.close(code=4002)
             return
 
         # Verify user is participant in conversation
-        if not await self.is_participant(self.conversation_id, user.id):
-            await self.close()
+        is_participant = await self.is_participant(self.conversation_id, user.id)
+        if not is_participant:
+            await self.close(code=4003)
             return
 
         self.room_group_name = f"chat_{self.conversation_id}"

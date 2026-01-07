@@ -86,7 +86,7 @@ class MarkAsReadView(APIView):
         )
 
         if updated:
-            NotificationWebSocketService.send_read_update(request.user.id, pk)
+            NotificationWebSocketService.send_count_update(request.user.id)
             return ApiResponse.success({"message": "Notification read"})
 
         return ApiResponse.error({"error": "Notification not found"}, status=404)

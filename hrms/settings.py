@@ -86,10 +86,19 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "https://hrms-ten-dusky.vercel.app",
+    "http://192.168.1.29:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Allow ngrok and Cloudflare domains
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://.*\.trycloudflare\.com$",
+    r"^https://.*\.trycloudflare\.com$",
+    r"^https://.*\.cloudflareaccess\.com$",
+]
 
 ROOT_URLCONF = "hrms.urls"
 
@@ -304,6 +313,17 @@ except (redis.ConnectionError, redis.TimeoutError, ImportError):
 # AWS_QUERYSTRING_AUTH = False
 # AWS_DEFAULT_ACL = None
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.trycloudflare.com",
+    "https://*.cloudflareaccess.com",
+]
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# Cloudflare configuration - disable proxy for WebSocket
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# Disable CSRF and session security for Cloudflare tunnels
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False

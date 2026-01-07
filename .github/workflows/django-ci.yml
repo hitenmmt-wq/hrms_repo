@@ -13,7 +13,7 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: hrms_db
+          POSTGRES_DB: hrms_db_demo1
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "SECRET_KEY=django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_" >> $GITHUB_ENV
           echo "DEBUG=False" >> $GITHUB_ENV
-          echo "DATABASE_NAME=hrms_db" >> $GITHUB_ENV
+          echo "DATABASE_NAME=hrms_db_demo1" >> $GITHUB_ENV
           echo "DATABASE_USER=postgres" >> $GITHUB_ENV
           echo "DATABASE_PASSWORD=postgres" >> $GITHUB_ENV
           echo "DATABASE_HOST=localhost" >> $GITHUB_ENV
@@ -80,7 +80,7 @@ jobs:
           echo "Waiting for PostgreSQL to be ready..."
           export PGPASSWORD=postgres
           for i in {1..60}; do
-            if pg_isready -h localhost -p 5432 -U postgres -d hrms_db >/dev/null 2>&1; then
+            if pg_isready -h localhost -p 5432 -U postgres -d hrms_db_demo1 >/dev/null 2>&1; then
               echo "PostgreSQL is ready!"
               break
             fi

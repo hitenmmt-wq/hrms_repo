@@ -196,7 +196,7 @@ PUT  /api/leaves/{id}/approve/ # Approve/reject leave
 
 ```env
 # Database
-DATABASE_NAME=hrms_db
+DATABASE_NAME=hrms_db_demo1
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
 DATABASE_HOST=localhost
