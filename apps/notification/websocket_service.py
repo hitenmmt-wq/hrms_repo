@@ -15,9 +15,6 @@ class NotificationWebSocketService:
         """Get channel layer with Redis availability check"""
         try:
             channel_layer = get_channel_layer()
-            if not channel_layer:
-                return None
-            async_to_sync(channel_layer.send)("test", {"type": "test.message"})
             return channel_layer
         except Exception:
             return None
@@ -34,25 +31,33 @@ class NotificationWebSocketService:
 
         channel_layer = NotificationWebSocketService._get_safe_channel_layer()
         if not channel_layer:
+            print("Channel layer not available for WebSocket notification")
             return
 
         try:
             serializer = NotificationSerializer(notification)
-            async_to_sync(channel_layer.group_send)(
-                f"notifications_{notification.recipient.id}",
-                {
-                    "type": "notification_message",
-                    "payload": {
-                        "type": "new_notification",
-                        "notification": serializer.data,
-                        "unread_count": Notification.objects.filter(
-                            recipient=notification.recipient, is_read=False
-                        ).count(),
-                    },
+            group_name = f"notifications_{notification.recipient.id}"
+            payload = {
+                "type": "notification_message",
+                "payload": {
+                    "type": "new_notification",
+                    "notification": serializer.data,
+                    "unread_count": Notification.objects.filter(
+                        recipient=notification.recipient, is_read=False
+                    ).count(),
                 },
-            )
-        except Exception:
-            pass
+            }
+
+            print(f"Sending notification to group: {group_name}")
+            print(f"Payload: {payload}")
+
+            async_to_sync(channel_layer.group_send)(group_name, payload)
+            print("Notification sent successfully via WebSocket")
+        except Exception as e:
+            print(f"Error sending notification via WebSocket: {e}")
+            import traceback
+
+            traceback.print_exc()
 
     @staticmethod
     def send_read_update(user_id, notification_id):
@@ -72,6 +77,32 @@ class NotificationWebSocketService:
                         "unread_count": Notification.objects.filter(
                             recipient_id=user_id, is_read=False
                         ).count(),
+                    },
+                },
+            )
+        except Exception:
+            pass
+
+    @staticmethod
+    def send_count_update(user_id, unread_count=None):
+        """Send only unread count update via WebSocket"""
+        channel_layer = NotificationWebSocketService._get_safe_channel_layer()
+        if not channel_layer:
+            return
+
+        try:
+            if unread_count is None:
+                unread_count = Notification.objects.filter(
+                    recipient_id=user_id, is_read=False
+                ).count()
+
+            async_to_sync(channel_layer.group_send)(
+                f"notifications_{user_id}",
+                {
+                    "type": "notification_message",
+                    "payload": {
+                        "type": "count_update",
+                        "unread_count": unread_count,
                     },
                 },
             )

@@ -62,7 +62,7 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             create_notification(
                 recipient=instance.employee,
                 notification_type=notification_type,
-                title="Working Hours",
+                title="Working Hours Alert",
                 message="Your attendance request is pending.",
                 related_object=instance,
             )
@@ -74,7 +74,7 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             create_notification(
                 recipient=instance.employee,
                 notification_type=notification_type,
-                title="Working Hours",
+                title="Working Hours Alert",
                 message="Your attendance has been completed.",
                 related_object=instance,
             )
@@ -86,7 +86,7 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             create_notification(
                 recipient=instance.employee,
                 notification_type=notification_type,
-                title="Working Hours",
+                title="Working Hours Alert",
                 message="Your attendance has been rejected.",
                 related_object=instance,
             )
@@ -98,7 +98,7 @@ def notify_on_attendance(sender, instance, created, **kwargs):
             create_notification(
                 recipient=instance.employee,
                 notification_type=notification_type,
-                title="Working Hours",
+                title="Working Hours Alert",
                 message="Your work hours are incomplete today.",
                 related_object=instance,
             )

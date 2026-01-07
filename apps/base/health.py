@@ -1,5 +1,6 @@
+import os
+
 import redis
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import JsonResponse
@@ -26,8 +27,8 @@ def health_check(request):
     # Check Redis connection
     try:
         r = redis.Redis(
-            host=getattr(settings, "REDIS_HOST", "localhost"),
-            port=getattr(settings, "REDIS_PORT", 6379),
+            host=os.environ.get("REDIS_HOST", "127.0.0.1"),
+            port=int(os.environ.get("REDIS_PORT", 6379)),
             db=0,
         )
         r.ping()

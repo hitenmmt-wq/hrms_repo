@@ -31,7 +31,7 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create entrypoint script
-RUN echo '#!/bin/bash\nset -e\necho "Waiting for database..."\nwhile ! nc -z db 5432; do\n  sleep 2\ndone\necho "Database ready!"\necho "Waiting for Redis..."\nwhile ! nc -z redis 6379; do\n  sleep 2\ndone\necho "Redis ready!"\npython manage.py migrate --noinput\npython manage.py collectstatic --noinput\nexec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+RUN echo '#!/bin/bash\nset -e\necho "Waiting for database..."\nwhile ! nc -z host.docker.internal 5432; do\n  sleep 2\ndone\necho "Database ready!"\necho "Waiting for Redis..."\nwhile ! nc -z redis 6379; do\n  sleep 2\ndone\necho "Redis ready!"\nexec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8000
 

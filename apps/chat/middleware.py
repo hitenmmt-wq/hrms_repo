@@ -30,19 +30,13 @@ class JwtAuthMiddleware:
             try:
                 access_token = AccessToken(token[0])
                 user_id = int(access_token["user_id"])
-                print(f"==>> user_id: {user_id}")
                 user = await self.get_user(user_id)
-                if user:
-                    scope["user"] = user
-                    print(f"==>> authenticated user: {user.email}")
-                else:
-                    scope["user"] = AnonymousUser()
-                    print("==>> user not found")
+                scope["user"] = user if user else AnonymousUser()
             except Exception as e:
-                print(f"==>> JWT auth error: {e}")
+                print(f"JWT auth error: {e}")
                 scope["user"] = AnonymousUser()
         else:
-            print("==>> no token provided")
+            print("No token provided")
             scope["user"] = AnonymousUser()
 
         return await self.inner(scope, receive, send)
@@ -51,7 +45,15 @@ class JwtAuthMiddleware:
     def get_user(self, user_id):
         """Retrieve active user by ID from database asynchronously."""
         try:
-            return Users.objects.get(id=user_id, is_active=True)
+            user = Users.objects.get(id=user_id)
+            print(f"Found user via ORM: {user} (email: {user.email})")
+            return user
         except Users.DoesNotExist:
-            print("user not found.....")
+            print(f"User {user_id} not found via ORM")
+            return None
+        except Exception as e:
+            print(f"Database error: {e}")
+            import traceback
+
+            traceback.print_exc()
             return None
