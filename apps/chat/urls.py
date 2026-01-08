@@ -27,4 +27,9 @@ urlpatterns = [
         views.MessageReadView.as_view(),
         name="message_read",
     ),
+    path(
+        "messages/<int:message_id>/reactions/",
+        views.MessageReactionView.as_view(),
+        name="message-reactions",
+    ),
 ]

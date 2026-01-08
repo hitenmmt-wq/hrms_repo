@@ -8,10 +8,11 @@ from rest_framework.response import Response
 
 from apps.base import permissions
 from apps.base.response import ApiResponse
-from apps.chat.models import Conversation, Message, MessageStatus
+from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
 from apps.chat.serializers import (
     ConversationCreateSerializer,
     ConversationSerializer,
+    MessageReactionSerializer,
     MessageSerializer,
 )
 
@@ -37,6 +38,14 @@ class ConversationListView(generics.ListAPIView):
             .prefetch_related("participants__department", "participants__position")
             .order_by("-created_at")
         )
+
+
+class RemainingUsers(generics.ListAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return super().get_queryset()
 
 
 class ConversationDeleteView(generics.DestroyAPIView):
@@ -172,3 +181,70 @@ class MessageReadView(generics.GenericAPIView):
         return ApiResponse.success(
             {"message": "Message marked as read"}, status=status.HTTP_200_OK
         )
+
+
+class MessageReactionView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Add reaction to a message."""
+        message_id = kwargs.get("message_id")
+        emoji = request.data.get("emoji")
+
+        if not emoji:
+            return Response(
+                {"error": "Emoji is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        message = get_object_or_404(Message, id=message_id)
+
+        # Check if user is participant in conversation
+        if not message.conversation.participants.filter(id=request.user.id).exists():
+            return Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        reaction, created = MessageReaction.objects.get_or_create(
+            message=message,
+            user=request.user,
+            emoji=emoji,
+            defaults={"is_deleted": False},
+        )
+
+        if not created and reaction.is_deleted:
+            reaction.is_deleted = False
+            reaction.save()
+            created = True
+
+        if created:
+            serializer = MessageReactionSerializer(reaction)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(
+                {"message": "Reaction already exists"}, status=status.HTTP_200_OK
+            )
+
+    def delete(self, request, *args, **kwargs):
+        """Remove reaction from a message."""
+        message_id = kwargs.get("message_id")
+        emoji = request.data.get("emoji")
+
+        if not emoji:
+            return Response(
+                {"error": "Emoji is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            reaction = MessageReaction.objects.get(
+                message_id=message_id, user=request.user, emoji=emoji, is_deleted=False
+            )
+            reaction.is_deleted = True
+            reaction.save()
+
+            return ApiResponse.success(
+                {"message": "Reaction removed successfully"}, status=status.HTTP_200_OK
+            )
+        except MessageReaction.DoesNotExist:
+            return Response(
+                {"error": "Reaction not found"}, status=status.HTTP_404_NOT_FOUND
+            )
