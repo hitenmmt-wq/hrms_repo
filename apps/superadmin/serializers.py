@@ -243,6 +243,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user profile data with department and profile URL."""
 
+    profile = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Users
         fields = [
@@ -264,13 +266,25 @@ class UserSerializer(serializers.ModelSerializer):
         representation["profile"] = instance.profile.url if instance.profile else None
         return representation
 
+    def get_profile(self, obj):
+        request = self.context.get("request")
+        if obj.profile and request:
+            return request.build_absolute_uri(obj.profile.url)
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile display."""
 
+    profile = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Users
         fields = ["first_name", "last_name", "email", "role", "department", "profile"]
+
+    def get_profile(self, obj):
+        request = self.context.get("request")
+        if obj.profile and request:
+            return request.build_absolute_uri(obj.profile.url)
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
