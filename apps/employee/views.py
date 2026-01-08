@@ -108,6 +108,8 @@ class EmployeeDashboardView(APIView):
 
             monthly_working_hours_data = employee_monthly_working_hours(request.user)
 
+            # total_pl = employee_leave.pl if employee_leave.pl else common_data.pl_leave if common_data else None
+            # total_sl = employee_leave.sl if employee_leave.sl else common_data.sl_leave if common_data else None
             return ApiResponse.success(
                 data={
                     "attendance": TodayAttendanceSerializer(

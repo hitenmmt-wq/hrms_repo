@@ -9,7 +9,6 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
-from apps.chat.serializers import MessageSerializer
 from apps.superadmin.models import Users
 
 
@@ -79,36 +78,33 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         msg_type = content.get("msg_type", "text")
         reply_to = content.get("reply_to")
 
-        message = await self.create_message(
+        message_data = await self.create_message_with_data(
             self.conversation_id, self.user.id, text, msg_type, reply_to
         )
-
-        if message:
-            serializer = MessageSerializer(message, context={"request": None})
-            print(f"==>> serializer: {serializer}")
-
-            notification_payload = {
-                "type": "new_notification",
-                "notification": {
-                    "title": f"New message from {self.user.email}",
-                    "message": (text or "")[:100],
-                    "type": "chat_message",
-                },
-            }
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {"type": "notification.message", "payload": notification_payload},
-            )
+        if message_data:
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     "type": "chat.message",
                     "payload": {
                         "type": "new_message",
-                        "message": MessageSerializer(message).data,
+                        "message": message_data,
                     },
                 },
             )
+
+            participant_ids = await self.get_conversation_participants(
+                self.conversation_id
+            )
+            for user_id in participant_ids:
+                if user_id != self.user.id:
+                    await self.channel_layer.group_send(
+                        f"notifications_{user_id}",
+                        {
+                            "type": "notification.message",
+                            "payload": "notification_payload",
+                        },
+                    )
 
     async def handle_typing(self, content):
         """Handle typing indicator broadcasts to conversation participants."""
@@ -130,6 +126,41 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if message_id and status:
             await self.update_message_status(message_id, self.user.id, status)
 
+    async def handle_add_reaction(self, content):
+        """Handle adding emoji reactions to messages."""
+        message_id = content.get("message_id")
+        emoji = content.get("emoji")
+
+        if message_id and emoji:
+            reaction_data = await self.add_reaction(message_id, self.user.id, emoji)
+            if reaction_data:
+                payload = {
+                    "type": "reaction_added",
+                    "message_id": message_id,
+                    "reaction": reaction_data,
+                }
+                await self.channel_layer.group_send(
+                    self.room_group_name, {"type": "chat.message", "payload": payload}
+                )
+
+    async def handle_remove_reaction(self, content):
+        """Handle removing emoji reactions from messages."""
+        message_id = content.get("message_id")
+        emoji = content.get("emoji")
+
+        if message_id and emoji:
+            success = await self.remove_reaction(message_id, self.user.id, emoji)
+            if success:
+                payload = {
+                    "type": "reaction_removed",
+                    "message_id": message_id,
+                    "user_id": self.user.id,
+                    "emoji": emoji,
+                }
+                await self.channel_layer.group_send(
+                    self.room_group_name, {"type": "chat.message", "payload": payload}
+                )
+
     @database_sync_to_async
     def mark_messages_delivered(self, conversation_id, user_id):
         """Mark all sent messages in conversation as delivered for the user."""
@@ -147,11 +178,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return False
 
     @database_sync_to_async
-    def create_message(self, conversation_id, user_id, text, msg_type, reply_to):
-        """Create new message and initialize status for all participants."""
+    def create_message_with_data(
+        self, conversation_id, user_id, text, msg_type, reply_to
+    ):
+        """Create new message and return simple data dict."""
         try:
             conversation = Conversation.objects.get(id=conversation_id)
-
             user = Users.objects.get(id=user_id)
 
             reply_message = None
@@ -175,7 +207,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     user=participant,
                     status="sent",
                 )
-            return message
+            return {
+                "id": message.id,
+                "text": message.text,
+                "msg_type": message.msg_type,
+                "sender": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                "created_at": message.created_at.isoformat(),
+                "reply_to": reply_message.id if reply_message else None,
+            }
         except (Conversation.DoesNotExist, Users.DoesNotExist):
             return None
 
@@ -184,9 +228,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """Mark specific message as read by the user."""
         try:
             message = Message.objects.get(id=message_id)
-
             user = Users.objects.get(id=user_id)
-
             MessageStatus.objects.update_or_create(
                 message=message, user=user, defaults={"status": "read"}
             )
@@ -199,63 +241,41 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             message = Message.objects.get(id=message_id)
             user = Users.objects.get(id=user_id)
-
             MessageStatus.objects.update_or_create(
-                message=message,
-                user=user,
-                defaults={"status": status},
+                message=message, user=user, defaults={"status": status}
             )
         except (Message.DoesNotExist, Users.DoesNotExist):
             pass
-
-    async def handle_add_reaction(self, content):
-        """Handle adding emoji reactions to messages."""
-        message_id = content.get("message_id")
-        emoji = content.get("emoji")
-
-        if message_id and emoji:
-            reaction = await self.add_reaction(message_id, self.user.id, emoji)
-            if reaction:
-                payload = {
-                    "type": "reaction_added",
-                    "message_id": message_id,
-                    "user_id": self.user.id,
-                    "emoji": emoji,
-                }
-                await self.channel_layer.group_send(
-                    self.room_group_name, {"type": "chat.message", "payload": payload}
-                )
-
-    async def handle_remove_reaction(self, content):
-        """Handle removing emoji reactions from messages."""
-        message_id = content.get("message_id")
-        emoji = content.get("emoji")
-
-        if message_id and emoji:
-            removed = await self.remove_reaction(message_id, self.user.id, emoji)
-            if removed:
-                payload = {
-                    "type": "reaction_removed",
-                    "message_id": message_id,
-                    "user_id": self.user.id,
-                    "emoji": emoji,
-                }
-                await self.channel_layer.group_send(
-                    self.room_group_name, {"type": "chat.message", "payload": payload}
-                )
 
     @database_sync_to_async
     def add_reaction(self, message_id, user_id, emoji):
         """Add emoji reaction to message."""
         try:
             message = Message.objects.get(id=message_id)
-
             user = Users.objects.get(id=user_id)
 
             reaction, created = MessageReaction.objects.get_or_create(
-                message=message, user=user, emoji=emoji
+                message=message, user=user, emoji=emoji, defaults={"is_deleted": False}
             )
-            return reaction
+
+            if not created and reaction.is_deleted:
+                reaction.is_deleted = False
+                reaction.save()
+                created = True
+
+            if created:
+                return {
+                    "id": reaction.id,
+                    "emoji": reaction.emoji,
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                    },
+                    "created_at": reaction.created_at.isoformat(),
+                }
+            return None
         except (Message.DoesNotExist, Users.DoesNotExist):
             return None
 
@@ -263,19 +283,28 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def remove_reaction(self, message_id, user_id, emoji):
         """Remove emoji reaction from message."""
         try:
-            message = Message.objects.get(id=message_id)
-
-            user = Users.objects.get(id=user_id)
-
-            deleted_count, _ = MessageReaction.objects.filter(
-                message=message, user=user, emoji=emoji
-            ).delete()
-            return deleted_count > 0
-        except (Message.DoesNotExist, Users.DoesNotExist):
+            reaction = MessageReaction.objects.get(
+                message_id=message_id, user_id=user_id, emoji=emoji, is_deleted=False
+            )
+            reaction.is_deleted = True
+            reaction.save()
+            return True
+        except MessageReaction.DoesNotExist:
             return False
 
+    @database_sync_to_async
+    def get_conversation_participants(self, conversation_id):
+        """Get list of participant IDs for a conversation."""
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+            return list(conversation.participants.values_list("id", flat=True))
+        except Conversation.DoesNotExist:
+            return []
+
     async def chat_message(self, event):
+        """Send message to WebSocket client."""
         await self.send_json(event["payload"])
 
     async def notification_message(self, event):
+        """Send notification to WebSocket client."""
         await self.send_json(event["payload"])

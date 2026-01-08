@@ -103,7 +103,7 @@ def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendanc
     break_hours = _calculate_break_hours(attendance)
     work_hours = max(Decimal("0.0"), total_hours - break_hours)
 
-    attendance.work_hours = work_hours - break_hours
+    attendance.work_hours = work_hours
     attendance.break_hours = break_hours
     attendance.status = _calculate_status(work_hours)
 
