@@ -79,6 +79,9 @@ class Users(AbstractUser):
     )
     joining_date = models.DateTimeField(null=True, blank=True)
     birthdate = models.DateTimeField(null=True, blank=True)
+    salary_ctc = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
 
     class Meta:
         indexes = [

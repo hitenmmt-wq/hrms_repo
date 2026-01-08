@@ -582,8 +582,8 @@ class AnnouncementViewSet(BaseViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_class = AnnouncementFilter
     search_fields = ["title", "date"]
-    ordering_fields = ["date"]
-    ordering = ["date"]
+    ordering_fields = ["-id"]
+    ordering = ["-id"]
 
     def get_serializer_class(self):
         if self.action == "list":
