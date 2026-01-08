@@ -205,7 +205,7 @@ def generate_payslip_pdf(payslip):
         (payslip.basic_salary or 0)
         + (payslip.hr_allowance or 0)
         + (payslip.special_allowance or 0)
-    )
+    ) - payslip.total_deductions
 
     context = {
         "payslip": payslip,
@@ -243,23 +243,31 @@ def generate_payslip_pdf(payslip):
     try:
         pdf = pdfkit.from_string(html, False, options=options, configuration=config)
 
+        if not pdf:
+            raise Exception("PDF generation failed - empty content")
+
         send_email_task(
             subject=f"Payment-Slip Generated for {payslip.month}",
             to_email=payslip.employee.email,
-            text_body=[
-                f"Hi {payslip.employee.first_name} {payslip.employee.last_name},/n ",
-                f"Your Payment-slip has been generated for {payslip.month}./n",
-                "You can Download it from here.",
-            ],
+            text_body=(
+                f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
+                f"\n\nYour Payment-slip has been generated for {payslip.month}."
+                "\n\nYou can Download it from here."
+            ),
             pdf_bytes=pdf,
             filename=f"payslip_{payslip.id}.pdf",
         )
+
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
             f'attachment; filename="payslip_{payslip.id}.pdf"'
         )
+        response["Content-Length"] = len(pdf)
+        response["Cache-Control"] = "no-cache"
         return response
 
     except Exception as e:
         print(f"PDF generation error: {e}")
-        return HttpResponse(html, content_type="text/html")
+        return HttpResponse(
+            f"PDF generation failed: {str(e)}", content_type="text/plain", status=500
+        )

@@ -103,12 +103,12 @@
 
         <tr>
             <td>H.R.A</td>
-            <td>{{ payslip.hra | default:"0" }}</td>
+            <td>{{ payslip.hr_allowance | default:"0" }}</td>
         </tr>
 
         <tr>
             <td>Special Allowance</td>
-            <td>{{ payslip.allowances | default:"0" }}</td>
+            <td>{{ payslip.special_allowance | default:"0" }}</td>
         </tr>
 
         <tr>
@@ -118,12 +118,12 @@
 
         <tr>
             <td>Deduction (Professional Tax)</td>
-            <td>{{ payslip.professional_tax | default:"0" }}</td>
+            <td>{{ payslip.tax_deductions | default:"0" }}</td>
         </tr>
 
         <tr>
             <td>CTC</td>
-            <td>{{ payslip.ctc | default:"0" }}</td>
+            <td>{{ payslip.total_earnings | default:"0" }}</td>
         </tr>
     </table>
 

@@ -38,6 +38,8 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
             "employee_id",
             "password",
             "joining_date",
+            "birthdate",
+            "salary_ctc",
         ]
         depth = 1
 
@@ -80,6 +82,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "joining_date",
             "is_active",
             "birthdate",
+            "salary_ctc",
         ]
         depth = 1
 
@@ -108,6 +111,7 @@ class EmployeeUpdateSerializer(serializers.ModelSerializer):
             "employee_id",
             "password",
             "joining_date",
+            "salary_ctc",
         ]
         depth = 1
 
