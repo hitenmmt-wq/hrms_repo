@@ -239,16 +239,18 @@ class ResetPassword(APIView):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = PasswordResetTokenGenerator().make_token(user)
-        localhost = "http://127.0.0.1:8000/"
+        host = request.build_absolute_uri
 
         reset_link = (
-            f"{localhost}adminapp/auth/confirm_reset_password/?uid={uid}&?token={token}"
+            f"{host}superadmin/auth/confirm_reset_password/?uid={uid}&?token={token}"
         )
 
         send_email_task.delay(
             subject="Reset Password",
             to_email=user.email,
             text_body=f"Use this link to reset your password: {reset_link}",
+            pdf_bytes=None,
+            filename=None,
         )
 
         return Response({"message": "Password reset link sent successfully"})
@@ -582,8 +584,8 @@ class AnnouncementViewSet(BaseViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_class = AnnouncementFilter
     search_fields = ["title", "date"]
-    ordering_fields = ["date"]
-    ordering = ["date"]
+    ordering_fields = ["-id"]
+    ordering = ["-id"]
 
     def get_serializer_class(self):
         if self.action == "list":

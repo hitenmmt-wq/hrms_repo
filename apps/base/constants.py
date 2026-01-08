@@ -8,6 +8,9 @@ consistent reference throughout the codebase.
 
 ACCOUNT_ACTIVATION_URL = "http://127.0.0.1:8000/adminapp/activate/{token}/"
 
+LOCALHOST = "http://127.0.0.1:8000/"
+LIVE_SERVER = "https://yorkshire-sake-boulevard-randy.trycloudflare.com/"
+
 # USER ROLE CONSTANTS
 ADMIN_USER = "admin"
 EMPLOYEE_USER = "employee"
