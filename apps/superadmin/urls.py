@@ -44,7 +44,7 @@ urlpatterns = [
     path("auth/reset_password/", views.ResetPassword.as_view(), name="reset_password"),
     path(
         "auth/confirm_reset_password/",
-        views.ResetPasswordChange.as_view(),
+        views.ConfirmResetPassword.as_view(),
         name="confirm_reset_password",
     ),
     path(

@@ -15,6 +15,7 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
@@ -192,6 +193,34 @@ class EmployeeViewSet(BaseViewSet):
         if self.action in ["update", "partial_update"]:
             return EmployeeUpdateSerializer
         return EmployeeListSerializer
+
+    @action(detail=False, methods=["GET"])
+    def present_employees(self, request):
+        today = timezone.now().date()
+        present_employee = EmployeeAttendance.objects.filter(
+            day=today,
+            employee__role=constants.EMPLOYEE_USER,
+            employee__is_active=True,
+            check_in__isnull=False,
+        ).select_related("employee__department", "employee__position")
+        present_employee_data = EmployeeListSerializer(present_employee, many=True).data
+
+        return ApiResponse.success(present_employee_data)
+
+    @action(detail=False, methods=["GET"])
+    def absent_employees(self, request):
+        today = timezone.now().date()
+        present_employee_ids = EmployeeAttendance.objects.filter(
+            day=today, check_in__isnull=False
+        ).values_list("employee_id", flat=True)
+
+        absent_employees = (
+            models.Users.objects.filter(role=constants.EMPLOYEE_USER, is_active=True)
+            .exclude(id__in=present_employee_ids)
+            .select_related("department", "position")
+        )
+        absent_employee_data = EmployeeListSerializer(absent_employees, many=True).data
+        return ApiResponse.success(absent_employee_data)
 
 
 class LeaveBalanceViewSet(BaseViewSet):

@@ -6,6 +6,7 @@ urlpatterns = [
     path(
         "conversations/", views.ConversationListView.as_view(), name="conversation-list"
     ),
+    path("remaining_users/", views.RemainingUsers.as_view(), name="remaining_users"),
     path(
         "conversations/create/",
         views.CreateConversationView.as_view(),

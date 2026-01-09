@@ -15,6 +15,8 @@ from apps.chat.serializers import (
     MessageReactionSerializer,
     MessageSerializer,
 )
+from apps.employee.serializers import EmployeeListSerializer
+from apps.superadmin.models import Users
 
 # Create your views here.
 
@@ -41,11 +43,31 @@ class ConversationListView(generics.ListAPIView):
 
 
 class RemainingUsers(generics.ListAPIView):
-    serializer_class = ConversationSerializer
+    serializer_class = EmployeeListSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return super().get_queryset()
+        user = self.request.user
+        user_conversation_ids = Conversation.objects.filter(
+            type="private", participants=user
+        ).values_list("id", flat=True)
+
+        connected_user_ids = (
+            Users.objects.filter(conversations__id__in=user_conversation_ids)
+            .exclude(id=user.id)
+            .values_list("id", flat=True)
+            .distinct()
+        )
+
+        remaining_users = (
+            Users.objects.filter(
+                is_active=True,
+            )
+            .exclude(id__in=connected_user_ids)
+            .exclude(id=user.id)
+            .select_related("department", "position")
+        )
+        return remaining_users
 
 
 class ConversationDeleteView(generics.DestroyAPIView):
