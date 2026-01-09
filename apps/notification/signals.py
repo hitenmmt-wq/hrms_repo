@@ -1,10 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from apps.base import constants
 from apps.chat.models import Message
-from apps.notification.models import NotificationType
-from apps.notification.services import create_notification
 
 
 @receiver(post_save, sender=Message)
@@ -12,20 +9,9 @@ def notify_on_message(sender, instance, created, **kwargs):
     if not created:
         return
 
-    try:
-        notification_type = NotificationType.objects.get(code=constants.CHAT_NOTIFY)
-    except NotificationType.DoesNotExist:
-        notification_type = NotificationType.objects.create(
-            code=constants.CHAT_NOTIFY, name="Chat Notification"
-        )
+    # Use Celery task to avoid async context issues
+    from celery import current_app
 
-    conversation = instance.conversation
-    for participant in conversation.participants.exclude(id=instance.sender.id):
-        create_notification(
-            recipient=participant,
-            actor=instance.sender,
-            notification_type=notification_type,
-            title=f"New message in {conversation.name or 'chat'}",
-            message=instance.text[:100] if instance.text else "Media message",
-            related_object=instance,
-        )
+    current_app.send_task(
+        "apps.notification.tasks.create_chat_notification", args=[instance.id]
+    )

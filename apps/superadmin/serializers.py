@@ -184,7 +184,7 @@ class AdminRegisterSerializer(serializers.ModelSerializer):
             role=validated_data.get("role", "employee"),
             birthdate=validated_data.get("birthdate", None),
             joining_date=validated_data.get("joining_date", None),
-            is_active=False,
+            is_active=True,
         )
         return user
 

@@ -18,7 +18,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import APIView, action
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.attendance.models import EmployeeAttendance
@@ -248,7 +247,11 @@ class ResetPassword(APIView):
         send_email_task.delay(
             subject="Reset Password",
             to_email=user.email,
-            text_body=f"Use this link to reset your password: {reset_link}",
+            text_body="Use this link to reset your password: ",
+            html_body=f"""
+            <p>Use the link below to reset your password:</p>
+            <a href="{reset_link}">Reset Password</a>
+            """,
             pdf_bytes=None,
             filename=None,
         )
@@ -305,15 +308,15 @@ class AdminRegister(BaseViewSet):
         if serializer.is_valid():
             user = serializer.save()
 
-            activation_link = (
-                constants.ACCOUNT_ACTIVATION_URL
-            )  # f"http://127.0.0.1:8000/adminapp/activate/{token}/"
             try:
                 print("startssssssssssssssssss")
                 send_email_task.delay(
-                    subject="Activate your account",
+                    subject="Welcome to HRMS",
                     to_email=user.email,
-                    text_body=f"Click here to activate your account: {activation_link}",
+                    text_body=f"You have been added to HRMS portal as {user.role}. Please Login to continue.",
+                    html_body=None,
+                    pdf_bytes=None,
+                    filename=None,
                 )
             except Exception as e:
                 print("Error here.........", e)
@@ -330,35 +333,38 @@ class AdminRegister(BaseViewSet):
             return serializers.AdminListSerializer
 
 
-class ActivateUser(APIView):
-    def get(self, request, token):
-        try:
-            access_token = AccessToken(token)
-            user_id = access_token["user_id"]
+# class ActivateUser(APIView):
+#     def get(self, request, token):
+#         try:
+#             access_token = AccessToken(token)
+#             user_id = access_token["user_id"]
 
-            user = get_object_or_404(models.Users, id=user_id)
+#             user = get_object_or_404(models.Users, id=user_id)
 
-            if not user.is_active:
-                user.is_active = True
-                user.save()
-                try:
-                    print("started ....!!")
-                    send_email_task.delay(
-                        subject="Welcome to HRMS",
-                        body=f"You have been added to HRMS portal as {user.role}. Please Login to continue.",
-                        to=user.email,
-                    )
-                    print("done successfully...")
-                except Exception as e:
-                    print("Error here.........", e)
-                return Response(
-                    {"message": "Account activated successfully! You can now login."}
-                )
-            else:
-                return Response({"message": "Account already activated."})
+#             if not user.is_active:
+#                 user.is_active = True
+#                 user.save()
+#                 try:
+#                     print("started ....!!")
+#                     send_email_task.delay(
+#                         subject="Welcome to HRMS",
+#                         text_body=f"You have been added to HRMS portal as {user.role}. Please Login to continue.",
+#                         to_email=user.email,
+#                         html_body=None,
+#                         pdf_bytes=None,
+#                         filename=None,
+#                     )
+#                     print("done successfully...")
+#                 except Exception as e:
+#                     print("Error here.........", e)
+#                 return Response(
+#                     {"message": "Account activated successfully! You can now login."}
+#                 )
+#             else:
+#                 return Response({"message": "Account already activated."})
 
-        except Exception:
-            return Response({"error": "Invalid or expired token"}, status=400)
+#         except Exception:
+#             return Response({"error": "Invalid or expired token"}, status=400)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

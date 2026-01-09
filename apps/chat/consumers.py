@@ -8,6 +8,7 @@ read receipts, message reactions, and real-time notifications for the HRMS chat 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
+from apps.chat.connection_tracker import chat_tracker
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
 from apps.superadmin.models import Users
 
@@ -45,6 +46,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.mark_messages_delivered(self.conversation_id, self.user.id)
+
+        # Track this connection
+        chat_tracker.add_connection(self.user.id, self.conversation_id)
+
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -53,6 +58,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_discard(
                 self.room_group_name, self.channel_name
             )
+
+        # Remove connection tracking
+        if hasattr(self, "user") and hasattr(self, "conversation_id"):
+            chat_tracker.remove_connection(self.user.id, self.conversation_id)
 
     async def receive_json(self, content, **kwargs):
         """Route incoming WebSocket messages to appropriate handlers."""
@@ -92,19 +101,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     },
                 },
             )
-
-            participant_ids = await self.get_conversation_participants(
-                self.conversation_id
-            )
-            for user_id in participant_ids:
-                if user_id != self.user.id:
-                    await self.channel_layer.group_send(
-                        f"notifications_{user_id}",
-                        {
-                            "type": "notification.message",
-                            "payload": "notification_payload",
-                        },
-                    )
+            # Note: Notifications are handled by Django signals in signals.py
 
     async def handle_typing(self, content):
         """Handle typing indicator broadcasts to conversation participants."""
