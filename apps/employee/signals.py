@@ -3,7 +3,7 @@ from django.dispatch import receiver
 
 from apps.attendance.models import EmployeeAttendance
 from apps.base import constants
-from apps.employee.models import LeaveBalance
+from apps.employee.models import LeaveBalance, PaySlip
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
 from apps.superadmin.models import CommonData
@@ -102,3 +102,20 @@ def notify_on_attendance(sender, instance, created, **kwargs):
                 message="Your work hours are incomplete today.",
                 related_object=instance,
             )
+
+
+@receiver(post_save, sender=PaySlip)
+def notify_on_payslip_generated(sender, instance, created, **kwargs):
+    print("this signal called.....notify_on_payslip_generated.........")
+    if created:
+        notification_type = NotificationType.objects.filter(
+            code=constants.PAYSLIP_GENERATED
+        ).first()
+        create_notification(
+            recipient=instance.employee,
+            notification_type=notification_type,
+            title="Payslip Generated",
+            message="Your payslip has been generated.",
+            related_object=instance,
+        )
+        print(f"==>> notification_type: {notification_type}")

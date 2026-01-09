@@ -1,9 +1,13 @@
+from calendar import monthrange
+from decimal import Decimal
+
 from celery import shared_task
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.attendance.models import EmployeeAttendance
 from apps.base import constants
-from apps.employee.models import LeaveBalance
+from apps.employee.models import LeaveBalance, PaySlip
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
 from apps.superadmin import models
@@ -69,6 +73,154 @@ def notify_employee_birthday():
                 message=f"Today is {birthday_employee.first_name} {birthday_employee.last_name}'s birthday. Wish them!",
                 related_object=birthday_employee,
             )
+
+
+@shared_task
+def generate_monthly_payslips():
+    """Auto-generate payslips on 5th of each month with leave deductions."""
+    print("🔥 PAYSLIP GENERATION TASK TRIGGERED 🔥")
+
+    today = timezone.now().date()
+    current_year = today.year
+    current_month = today.month
+
+    # Calculate previous month
+    if current_month == 1:
+        prev_month = 12
+        prev_year = current_year - 1
+    else:
+        prev_month = current_month - 1
+        prev_year = current_year
+
+    # Get month date range
+    start_date = timezone.datetime(prev_year, prev_month, 1).date()
+    end_date = timezone.datetime(
+        prev_year, prev_month, monthrange(prev_year, prev_month)[1]
+    ).date()
+    month_name = start_date.strftime("%B %Y")
+    common_data = models.CommonData.objects.first()
+    employees = models.Users.objects.filter(
+        role=constants.EMPLOYEE_USER, is_active=True
+    )
+
+    for employee in employees:
+        # Skip if payslip already exists
+        if PaySlip.objects.filter(employee=employee, month=month_name).exists():
+            continue
+
+        # Get or create leave balance
+        leave_balance, _ = LeaveBalance.objects.get_or_create(
+            employee=employee,
+            year=current_year,
+            defaults={
+                "pl": common_data.pl_leave,
+                "sl": common_data.sl_leave,
+                "lop": common_data.lop_leave,
+            },
+        )
+
+        # Calculate leave deductions
+        leave_deduction = calculate_leave_deduction(
+            employee, start_date, end_date, leave_balance
+        )
+        print(f"==>> leave_deduction: {leave_deduction}")
+
+        # Calculate salary components
+        basic_salary = employee.salary_ctc * Decimal("0.5")
+        hr_allowance = basic_salary * Decimal("0.6")
+        special_allowance = basic_salary * Decimal("0.4")
+        total_earnings = basic_salary + hr_allowance + special_allowance
+
+        # Calculate deductions
+        tax_deductions = 200
+        other_deductions = Decimal("0")
+        total_deductions = tax_deductions + other_deductions + leave_deduction
+
+        net_salary = total_earnings - total_deductions
+
+        # Create payslip
+        PaySlip.objects.create(
+            employee=employee,
+            start_date=start_date,
+            end_date=end_date,
+            month=month_name,
+            days=monthrange(prev_year, prev_month)[1],
+            basic_salary=basic_salary,
+            hr_allowance=hr_allowance,
+            special_allowance=special_allowance,
+            total_earnings=total_earnings,
+            tax_deductions=tax_deductions,
+            other_deductions=other_deductions,
+            leave_deductions=leave_deduction,
+            total_deductions=total_deductions,
+            net_salary=net_salary,
+        )
+
+        print(f"Payslip generated for {employee.email} - {month_name}")
+
+    return f"Payslips generated successfully for {month_name}"
+
+
+def calculate_leave_deduction(employee, start_date, end_date, leave_balance):
+    """Calculate leave deduction based on PL/SL usage and carry-forward logic."""
+    # Get approved leaves in the month
+    leaves = models.Leave.objects.filter(
+        employee=employee,
+        status="approved",
+    ).filter(
+        Q(from_date__lte=end_date)
+        & Q(
+            Q(to_date__gte=start_date)
+            | Q(to_date__isnull=True, from_date__gte=start_date)
+        )
+    )
+    print(f"==>> leaves: {leaves}")
+
+    total_leave_days = sum(float(leave.total_days or 0) for leave in leaves)
+
+    if total_leave_days == 0:
+        return Decimal("0")
+
+    # Monthly PL allocation (1 per month)
+    monthly_pl_allocation = 1
+
+    # Quarterly SL allocation (4 per quarter, so ~1.33 per month)
+    current_quarter = ((start_date.month - 1) // 3) + 1
+    quarterly_sl_allocation = 4 if current_quarter <= 4 else 0
+    monthly_sl_allocation = quarterly_sl_allocation / 3
+
+    # Available leaves (including carry-forward)
+    available_pl = leave_balance.remaining_pl + monthly_pl_allocation
+    available_sl = leave_balance.remaining_sl + monthly_sl_allocation
+
+    # Calculate deduction
+    deductible_days = 0
+    remaining_days = total_leave_days
+
+    # First use PL
+    if remaining_days > 0 and available_pl > 0:
+        used_pl = min(remaining_days, available_pl)
+        remaining_days -= used_pl
+        leave_balance.used_pl += used_pl
+
+    # Then use SL
+    if remaining_days > 0 and available_sl > 0:
+        used_sl = min(remaining_days, available_sl)
+        remaining_days -= used_sl
+        leave_balance.used_sl += used_sl
+
+    # Remaining days are LOP (deductible)
+    if remaining_days > 0:
+        deductible_days = remaining_days
+        leave_balance.used_lop += deductible_days
+
+    leave_balance.save()
+
+    # Calculate per-day salary deduction
+    daily_salary = (employee.salary_ctc or Decimal("0")) / 30
+    leave_deduction = daily_salary * Decimal(str(deductible_days))
+
+    return leave_deduction
 
 
 @shared_task

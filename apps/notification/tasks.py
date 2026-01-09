@@ -1,9 +1,11 @@
 from celery import shared_task
+from django.contrib.contenttypes.models import ContentType
 
 from apps.base import constants
 from apps.chat.connection_tracker import chat_tracker
 from apps.chat.models import Message
-from apps.notification.models import NotificationType
+from apps.notification.models import Notification, NotificationType
+from apps.notification.websocket_service import NotificationWebSocketService
 
 
 @shared_task
@@ -36,7 +38,7 @@ def create_chat_notification(message_id):
                 recipient=participant,
                 actor=message.sender,
                 notification_type=notification_type,
-                title=f"New message from {message.sender.first_name} {message.sender.last_name} or 'Unknown'",
+                title=f"New message from {message.sender.first_name} {message.sender.last_name}",
                 message=message.text[:100] if message.text else "Media message",
                 related_object=message,
             )
@@ -48,9 +50,6 @@ def _create_notification_without_websocket(
     *, recipient, actor=None, notification_type, title, message="", related_object=None
 ):
     """Create notification without triggering WebSocket from async context."""
-    from django.contrib.contenttypes.models import ContentType
-
-    from apps.notification.models import Notification
 
     content_type = None
     object_id = None
@@ -78,9 +77,6 @@ def _create_notification_without_websocket(
 def send_notification_websocket(notification_id):
     """Send notification via WebSocket in separate task."""
     try:
-        from apps.notification.models import Notification
-        from apps.notification.websocket_service import NotificationWebSocketService
-
         notification = Notification.objects.get(id=notification_id)
         NotificationWebSocketService.send_notification(notification)
     except Notification.DoesNotExist:

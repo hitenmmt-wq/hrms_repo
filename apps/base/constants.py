@@ -6,10 +6,10 @@ user roles, status values, notification types, and leave types for
 consistent reference throughout the codebase.
 """
 
-ACCOUNT_ACTIVATION_URL = "https://fees-riders-plans-translated.trycloudflare.com/superadmin/activate/{token}/"
+ACCOUNT_ACTIVATION_URL = "https://insights-photo-includes-nursing.trycloudflare.com/superadmin/activate/{token}/"
 
 LOCALHOST = "http://127.0.0.1:8000/"
-LIVE_SERVER = "https://fees-riders-plans-translated.trycloudflare.com/"
+LIVE_SERVER = "https://insights-photo-includes-nursing.trycloudflare.com/"
 
 # USER ROLE CONSTANTS
 ADMIN_USER = "admin"
@@ -25,6 +25,7 @@ INCOMPLETE_HOURS = "incomplete_hours"
 
 # NOTIFICATION CONSTANTS
 LEAVE_APPLY = "leave_apply"
+PAYSLIP_GENERATED = "payslip_generated"
 
 PRIVILEGE_LEAVE = "privilege"
 SICK_LEAVE = "sick"

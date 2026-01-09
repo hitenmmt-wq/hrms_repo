@@ -238,11 +238,12 @@ class ResetPassword(APIView):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = PasswordResetTokenGenerator().make_token(user)
-        host = request.build_absolute_uri
+        # host = request.build_absolute_uri
 
-        reset_link = host(
-            f"/superadmin/auth/confirm_reset_password/?uid={uid}&token={token}"
+        reset_link = (
+            f"https://hrms-ten-dusky.vercel.app/reset-password/?uid={uid}&token={token}"
         )
+        # f"/superadmin/auth/confirm_reset_password/?uid={uid}&token={token}"
 
         send_email_task.delay(
             subject="Reset Password",

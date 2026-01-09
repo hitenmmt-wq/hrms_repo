@@ -67,6 +67,7 @@ class Command(BaseCommand):
             {"code": "leave_approved", "name": "Leave Approved"},
             {"code": "leave_rejected", "name": "Leave Rejected"},
             {"code": "late_coming", "name": "Late Coming"},
+            {"code": "payslip_generated", "name": "Payslip Generated"},
         ]
 
         for item in notifications:
