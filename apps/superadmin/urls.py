@@ -30,7 +30,7 @@ urlpatterns = [
     path(
         "admin_dashboard/", views.AdminDashboardView.as_view(), name="admin_dashboard"
     ),
-    path("activate/<str:token>/", views.ActivateUser.as_view(), name="activate_user"),
+    # path("activate/<str:token>/", views.ActivateUser.as_view(), name="activate_user"),
     path(
         "auth/login/",
         views.CustomTokenObtainPairView.as_view(),
