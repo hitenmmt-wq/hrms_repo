@@ -101,7 +101,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     },
                 },
             )
-            # Note: Notifications are handled by Django signals in signals.py
 
     async def handle_typing(self, content):
         """Handle typing indicator broadcasts to conversation participants."""

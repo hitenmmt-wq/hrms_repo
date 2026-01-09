@@ -31,4 +31,8 @@ app.conf.beat_schedule = {
         "task": "apps.employee.tasks.notify_frequent_late_comings",
         "schedule": crontab(minute=0, hour=13),
     },
+    "generate-monthly-payslips": {
+        "task": "apps.employee.tasks.generate_monthly_payslips",
+        "schedule": crontab(minute=0, hour=9, day_of_month=5),
+    },
 }

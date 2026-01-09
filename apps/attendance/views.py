@@ -58,7 +58,7 @@ class AttendanceViewSet(BaseViewSet):
         """Get daily break logs for the current user's attendance."""
         attendance = (
             self.get_queryset()
-            .filter(day=timezone.now().date())
+            .filter(employee=request.user, day=timezone.now().date())
             .select_related("employee")
             .first()
         )

@@ -227,13 +227,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         """Add user profile data to token response."""
         data = super().validate(attrs)
+        request = self.context.get("request")
 
         data["user"] = {
             "id": self.user.id,
             "email": self.user.email or None,
             "role": self.user.role or None,
             "department": self.user.department.name if self.user.department else None,
-            "profile": self.user.profile.url if self.user.profile else None,
+            "profile": (
+                request.build_absolute_uri(self.user.profile.url)
+                if self.user.profile
+                else None
+            ),
             "first_name": self.user.first_name or None,
             "last_name": self.user.last_name or None,
         }

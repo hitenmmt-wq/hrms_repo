@@ -7,7 +7,9 @@ for admin users.
 """
 
 import calendar
+from datetime import datetime
 
+from django.db.models import Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -15,6 +17,7 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base import constants
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
@@ -39,6 +42,7 @@ from apps.employee.serializers import (
     PaySlipSerializer,
     TodayAttendanceSerializer,
 )
+from apps.employee.tasks import calculate_leave_deduction
 from apps.employee.utils import employee_monthly_working_hours, generate_payslip_pdf
 from apps.superadmin import models
 
@@ -193,6 +197,37 @@ class EmployeeViewSet(BaseViewSet):
             return EmployeeUpdateSerializer
         return EmployeeListSerializer
 
+    @action(detail=False, methods=["GET"])
+    def present_employees(self, request):
+        today = timezone.now().date()
+        present_employee_attendance = EmployeeAttendance.objects.filter(
+            day=today,
+            employee__role=constants.EMPLOYEE_USER,
+            employee__is_active=True,
+            check_in__isnull=False,
+        ).values_list("employee_id", flat=True)
+        present_employee = models.Users.objects.filter(
+            id__in=present_employee_attendance
+        ).select_related("department", "position")
+        present_employee_data = EmployeeListSerializer(present_employee, many=True).data
+
+        return ApiResponse.success(present_employee_data)
+
+    @action(detail=False, methods=["GET"])
+    def absent_employees(self, request):
+        today = timezone.now().date()
+        present_employee_ids = EmployeeAttendance.objects.filter(
+            day=today, check_in__isnull=False
+        ).values_list("employee_id", flat=True)
+
+        absent_employees = (
+            models.Users.objects.filter(role=constants.EMPLOYEE_USER, is_active=True)
+            .exclude(id__in=present_employee_ids)
+            .select_related("department", "position")
+        )
+        absent_employee_data = EmployeeListSerializer(absent_employees, many=True).data
+        return ApiResponse.success(absent_employee_data)
+
 
 class LeaveBalanceViewSet(BaseViewSet):
     """Leave balance management for tracking employee leave allocations."""
@@ -324,6 +359,162 @@ class PaySlipViewSet(BaseViewSet):
         return ApiResponse.success(
             data=data, message="Employee payslip fetched successfully"
         )
+
+    @action(detail=False, methods=["POST"])
+    def get_leaves_data(self, request):
+        """Get leave data for calculating leave deductions based on date range."""
+        employee_id = request.data.get("employee_id")
+        try:
+            employee = models.Users.objects.filter(id=employee_id).first()
+            if not employee:
+                return ApiResponse.error(message="Employee not found", status=404)
+
+            start_date = request.data.get("start_date")
+            end_date = request.data.get("end_date")
+
+            if not start_date or not end_date:
+                return ApiResponse.error(
+                    message="start_date and end_date are required", status=400
+                )
+
+            # Get leave balance
+            leave_balance = LeaveBalance.objects.filter(employee=employee).first()
+            if not leave_balance:
+                return ApiResponse.error(message="Leave balance not found", status=404)
+
+            # Import the calculation function
+            from apps.employee.tasks import calculate_leave_deduction
+
+            # Calculate leave deduction
+            leave_deduction = calculate_leave_deduction(
+                employee, start_date, end_date, leave_balance
+            )
+
+            leaves = models.Leave.objects.filter(
+                employee=employee,
+                status="approved",
+            ).filter(
+                Q(from_date__lte=end_date)
+                & Q(
+                    Q(to_date__gte=start_date)
+                    | Q(to_date__isnull=True, from_date__gte=start_date)
+                )
+            )
+
+            total_leave_days = sum(float(leave.total_days or 0) for leave in leaves)
+
+            return ApiResponse.success(
+                data={
+                    "employee_id": employee.id,
+                    "total_leave_days": total_leave_days,
+                    "leave_deduction": float(leave_deduction),
+                    "leaves": ApplyLeaveSerializer(leaves, many=True).data,
+                },
+                message="Leave data fetched successfully",
+            )
+
+        except Exception as e:
+            return ApiResponse.error(message=str(e), status=400)
+
+    @action(detail=False, methods=["POST"])
+    def get_leaves_data_payslip(self, request):
+        """Generate payslip manually for specific employee and date range."""
+        try:
+            employee_id = request.data.get("employee_id")
+            start_date = request.data.get("start_date")
+            end_date = request.data.get("end_date")
+
+            employee = models.Users.objects.filter(id=employee_id).first()
+            if not employee:
+                return ApiResponse.error(message="Employee not found", status=404)
+
+            if not start_date or not end_date:
+                return ApiResponse.error(
+                    message="start_date and end_date are required", status=400
+                )
+
+            # Convert string dates to date objects
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            # Check if payslip already exists
+            if PaySlip.objects.filter(
+                employee=employee, start_date=start_date, end_date=end_date
+            ).exists():
+                return ApiResponse.error(
+                    message="Payslip already exists for this period", status=400
+                )
+
+            # Get leave balance
+            leave_balance = LeaveBalance.objects.filter(employee=employee).first()
+            if not leave_balance:
+                return ApiResponse.error(message="Leave balance not found", status=404)
+
+            # Calculate leave deduction
+            leave_deduction = calculate_leave_deduction(
+                employee, start_date, end_date, leave_balance
+            )
+
+            return ApiResponse.success(
+                data={
+                    "leave_deduction": leave_deduction,
+                },
+                message="Leaves data fetched successfully",
+            )
+
+        except Exception as e:
+            return ApiResponse.error(message=str(e), status=400)
+
+    @action(detail=False, methods=["POST"])
+    def generate_manual_payslip(self, request):
+        employee_id = request.data.get("employee_id")
+        start_date = request.data.get("start_date")
+        end_date = request.data.get("end_date")
+        month_name = request.data.get("month_name")
+        days = request.data.get("days")
+        basic_salary = request.data.get("basic_salary")
+        hr_allowance = request.data.get("hr_allowance")
+        special_allowance = request.data.get("special_allowance")
+        total_earnings = request.data.get("total_earnings")
+        tax_deductions = request.data.get("tax_deductions")
+        other_deductions = request.data.get("other_deductions")
+        leave_deduction = request.data.get("leave_deduction")
+        total_deductions = request.data.get("total_deductions")
+        net_salary = request.data.get("net_salary")
+        employee = models.Users.objects.filter(id=employee_id).first()
+        if not employee:
+            return ApiResponse.error(message="Employee not found", status=404)
+        try:
+            if PaySlip.objects.filter(
+                employee=employee, start_date=start_date, end_date=end_date
+            ).exists():
+                return ApiResponse.error(
+                    message="Payslip already exists for this period", status=400
+                )
+
+            payslip = PaySlip.objects.create(
+                employee=employee,
+                start_date=start_date,
+                end_date=end_date,
+                month=month_name,
+                days=days,
+                basic_salary=basic_salary,
+                hr_allowance=hr_allowance,
+                special_allowance=special_allowance,
+                total_earnings=total_earnings,
+                tax_deductions=tax_deductions,
+                other_deductions=other_deductions,
+                leave_deductions=leave_deduction,
+                total_deductions=total_deductions,
+                net_salary=net_salary,
+            )
+
+            return ApiResponse.success(
+                data=PaySlipSerializer(payslip).data,
+                message="Payslip generated successfully",
+            )
+        except Exception as e:
+            return ApiResponse.error(message=str(e), status=400)
 
 
 class PaySlipDownloadView(APIView):

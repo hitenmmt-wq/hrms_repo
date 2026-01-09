@@ -238,11 +238,12 @@ class ResetPassword(APIView):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = PasswordResetTokenGenerator().make_token(user)
-        host = request.build_absolute_uri
+        # host = request.build_absolute_uri
 
         reset_link = (
-            f"{host}superadmin/auth/confirm_reset_password/?uid={uid}&?token={token}"
+            f"https://hrms-ten-dusky.vercel.app/reset-password/?uid={uid}&token={token}"
         )
+        # f"/superadmin/auth/confirm_reset_password/?uid={uid}&token={token}"
 
         send_email_task.delay(
             subject="Reset Password",
@@ -250,7 +251,7 @@ class ResetPassword(APIView):
             text_body="Use this link to reset your password: ",
             html_body=f"""
             <p>Use the link below to reset your password:</p>
-            <a href="{reset_link}">Reset Password</a>
+            <a href="{reset_link}">Reset Password</a> : {reset_link}
             """,
             pdf_bytes=None,
             filename=None,
@@ -259,7 +260,7 @@ class ResetPassword(APIView):
         return Response({"message": "Password reset link sent successfully"})
 
 
-class ResetPasswordChange(APIView):
+class ConfirmResetPassword(APIView):
     def post(self, request):
         uid = request.data.get("uid")
         token = request.data.get("token")
