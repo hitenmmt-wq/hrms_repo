@@ -706,7 +706,7 @@ class LeaveApprovalViewSet(BaseViewSet):
                 .first()
             )
             leave_data.status = constants.APPROVED
-            leave_data.approved_at = datetime.now()
+            leave_data.approved_at = timezone.now()
             leave_data.approved_by = user
             leave_data.response_text = request.data.get("response_text", "")
             leave_data.save(
@@ -724,12 +724,20 @@ class LeaveApprovalViewSet(BaseViewSet):
             last_date = (
                 leave_data.to_date if leave_data.to_date else leave_data.from_date
             )
+            # Determine attendance status based on leave type
+            attendance_status = (
+                constants.PAID_LEAVE
+                if leave_data.leave_type.code
+                in [constants.SICK_LEAVE, constants.PRIVILEGE_LEAVE]
+                else constants.UNPAID_LEAVE
+            )
+
             while initial_date <= last_date:
                 leave_entries.append(
                     EmployeeAttendance(
                         employee=leave_data.employee,
                         day=initial_date,
-                        status=constants.UNPAID_LEAVE,
+                        status=attendance_status,
                     )
                 )
                 initial_date += timedelta(days=1)
@@ -755,7 +763,7 @@ class LeaveApprovalViewSet(BaseViewSet):
             )
             leave.status = constants.REJECTED
             leave.approved_by = user
-            leave.approved_at = datetime.now()
+            leave.approved_at = timezone.now()
             leave.response_text = request.data.get("response_text", "")
             leave.save(
                 update_fields=["status", "approved_by", "approved_at", "response_text"]

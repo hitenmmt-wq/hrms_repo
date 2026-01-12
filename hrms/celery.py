@@ -2,6 +2,7 @@ import os
 
 from celery import Celery
 from celery.schedules import crontab
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hrms.settings")
 
@@ -12,7 +13,7 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.enable_utc = False
-app.conf.timezone = "Asia/Kolkata"
+app.conf.timezone = settings.TIME_ZONE  # "Asia/Kolkata"
 
 app.conf.beat_schedule = {
     "credit-leave-balances-yearly": {

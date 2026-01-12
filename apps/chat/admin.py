@@ -7,3 +7,4 @@ from apps.chat import models
 admin.site.register(models.Conversation)
 admin.site.register(models.Message)
 admin.site.register(models.MessageStatus)
+admin.site.register(models.MessageReaction)

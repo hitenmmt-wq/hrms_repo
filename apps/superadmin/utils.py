@@ -1,5 +1,5 @@
 import calendar
-from datetime import date, datetime
+from datetime import date
 
 from django.utils import timezone
 
@@ -17,6 +17,7 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
     print(f"==>> leave_type: {leave_type}")
     today = timezone.now()
     year = today.year
+    current_month = today.month
 
     leave_balance = LeaveBalance.objects.filter(employee=employee, year=year).first()
 
@@ -28,14 +29,46 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
 
     elif status == constants.APPROVED:
         if leave_type and leave_type.code == constants.PRIVILEGE_LEAVE:
-            leave_balance.used_pl += count
+            # Calculate monthly PL allocation (1 per month)
+            monthly_pl_available = min(current_month, leave_balance.pl)
+            current_available_pl = monthly_pl_available - leave_balance.used_pl
+
+            if current_available_pl >= count:
+                # Sufficient PL available - all paid
+                leave_balance.used_pl += count
+            else:
+                # Partial PL available - use available PL and rest as LOP
+                if current_available_pl > 0:
+                    leave_balance.used_pl += current_available_pl
+                    leave_balance.used_lop += count - current_available_pl
+                else:
+                    # No PL available - all goes to LOP
+                    leave_balance.used_lop += count
+
         elif leave_type and leave_type.code == constants.SICK_LEAVE:
-            leave_balance.used_sl += count
+            # Check if sufficient SL balance exists
+            if leave_balance.remaining_sl >= count:
+                leave_balance.used_sl += count
+            else:
+                # Use available SL and rest as LOP
+                available_sl = leave_balance.remaining_sl
+                leave_balance.used_sl += available_sl
+                leave_balance.used_lop += count - available_sl
         elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
-            leave_balance.used_pl += count
-        # elif leave_type and leave_type.code == constants.OTHER_LEAVE:
-        #     leave_balance.used_lop += count
+            # Calculate monthly PL allocation for half day
+            monthly_pl_available = min(current_month, leave_balance.pl)
+            current_available_pl = monthly_pl_available - leave_balance.used_pl
+
+            if current_available_pl >= count:
+                leave_balance.used_pl += count
+            else:
+                if current_available_pl > 0:
+                    leave_balance.used_pl += current_available_pl
+                    leave_balance.used_lop += count - current_available_pl
+                else:
+                    leave_balance.used_lop += count
         else:
+            # Other leave types go to LOP
             leave_balance.used_lop += count
     else:
         return
@@ -46,8 +79,8 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
 
 def general_team_monthly_data():
     # Work pending
-    month = datetime.now().month
-    year = datetime.now().year
+    month = timezone.now().month
+    year = timezone.now().year
     month_last_day = calendar.monthrange(year, month)[1]
     days = weekdays_count(date(year, month, 1), date(year, month, month_last_day))
     leaves = Holiday.objects.filter(date__month=month, date__year=year).count()
