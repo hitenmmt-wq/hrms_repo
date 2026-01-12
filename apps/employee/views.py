@@ -42,7 +42,7 @@ from apps.employee.serializers import (
     PaySlipSerializer,
     TodayAttendanceSerializer,
 )
-from apps.employee.tasks import calculate_leave_deduction
+from apps.employee.tasks import get_leave_deduction_preview
 from apps.employee.utils import employee_monthly_working_hours, generate_payslip_pdf
 from apps.superadmin import models
 
@@ -382,11 +382,8 @@ class PaySlipViewSet(BaseViewSet):
             if not leave_balance:
                 return ApiResponse.error(message="Leave balance not found", status=404)
 
-            # Import the calculation function
-            from apps.employee.tasks import calculate_leave_deduction
-
-            # Calculate leave deduction
-            leave_deduction = calculate_leave_deduction(
+            # Calculate leave deduction (preview only)
+            leave_deduction = get_leave_deduction_preview(
                 employee, start_date, end_date, leave_balance
             )
 
@@ -402,6 +399,7 @@ class PaySlipViewSet(BaseViewSet):
             )
 
             total_leave_days = sum(float(leave.total_days or 0) for leave in leaves)
+            print(f"==>> total_leave_days: {total_leave_days}")
 
             return ApiResponse.success(
                 data={
@@ -450,8 +448,8 @@ class PaySlipViewSet(BaseViewSet):
             if not leave_balance:
                 return ApiResponse.error(message="Leave balance not found", status=404)
 
-            # Calculate leave deduction
-            leave_deduction = calculate_leave_deduction(
+            # Calculate leave deduction (preview only)
+            leave_deduction = get_leave_deduction_preview(
                 employee, start_date, end_date, leave_balance
             )
 

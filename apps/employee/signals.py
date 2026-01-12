@@ -30,6 +30,7 @@ def notify_on_attendance(sender, instance, created, **kwargs):
         and not instance.check_out
         and instance.work_hours == 0
         and instance.break_hours == 0
+        and created
     ):
         notification_type = NotificationType.objects.filter(
             code=constants.ATTENDANCE_REMINDER

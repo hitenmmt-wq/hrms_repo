@@ -146,6 +146,9 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
             "used_pl",
             "used_sl",
             "used_lop",
+            "remaining_pl",
+            "remaining_sl",
+            "remaining_lop",
         ]
         depth = 1
 
