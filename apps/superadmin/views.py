@@ -251,7 +251,7 @@ class ResetPassword(APIView):
             text_body="Use this link to reset your password: ",
             html_body=f"""
             <p>Use the link below to reset your password:</p>
-            <a href="{reset_link}">Reset Password</a> : {reset_link}
+            <a href="{reset_link}">Click here to Reset Password</a>
             """,
             pdf_bytes=None,
             filename=None,
