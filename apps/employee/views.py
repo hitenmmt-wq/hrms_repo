@@ -383,7 +383,7 @@ class PaySlipViewSet(BaseViewSet):
                 return ApiResponse.error(message="Leave balance not found", status=404)
 
             # Calculate leave deduction (preview only)
-            leave_deduction = get_leave_deduction_preview(
+            leave_deduction, deductible_days = get_leave_deduction_preview(
                 employee, start_date, end_date, leave_balance
             )
 
@@ -405,6 +405,7 @@ class PaySlipViewSet(BaseViewSet):
                 data={
                     "employee_id": employee.id,
                     "total_leave_days": total_leave_days,
+                    "deductible_days": deductible_days,
                     "leave_deduction": float(leave_deduction),
                     "leaves": ApplyLeaveSerializer(leaves, many=True).data,
                 },
@@ -449,12 +450,29 @@ class PaySlipViewSet(BaseViewSet):
                 return ApiResponse.error(message="Leave balance not found", status=404)
 
             # Calculate leave deduction (preview only)
-            leave_deduction = get_leave_deduction_preview(
+            leave_deduction, deductible_days = get_leave_deduction_preview(
                 employee, start_date, end_date, leave_balance
+            )
+
+            leaves_in_month = models.Leave.objects.filter(
+                employee=employee,
+                status="approved",
+            ).filter(
+                Q(from_date__lte=end_date)
+                & Q(
+                    Q(to_date__gte=start_date)
+                    | Q(to_date__isnull=True, from_date__gte=start_date)
+                )
+            )
+            print(f"==>> leaves_in_month: {leaves_in_month}")
+            total_leave_taken = sum(
+                float(leave.total_days or 0) for leave in leaves_in_month
             )
 
             return ApiResponse.success(
                 data={
+                    "total_leave_taken": total_leave_taken,
+                    "total_leave_deducted": deductible_days,
                     "leave_deduction": leave_deduction,
                 },
                 message="Leaves data fetched successfully",
@@ -465,6 +483,7 @@ class PaySlipViewSet(BaseViewSet):
 
     @action(detail=False, methods=["POST"])
     def generate_manual_payslip(self, request):
+        print("request_data--------------------------------------", request.data)
         employee_id = request.data.get("employee_id")
         start_date = request.data.get("start_date")
         end_date = request.data.get("end_date")
@@ -477,6 +496,7 @@ class PaySlipViewSet(BaseViewSet):
         tax_deductions = request.data.get("tax_deductions")
         other_deductions = request.data.get("other_deductions")
         leave_deduction = request.data.get("leave_deduction")
+        print(f"==>> leave_deduction: {leave_deduction}")
         total_deductions = request.data.get("total_deductions")
         net_salary = request.data.get("net_salary")
         employee = models.Users.objects.filter(id=employee_id).first()

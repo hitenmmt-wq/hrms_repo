@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.attendance.models import EmployeeAttendance
 from apps.base import constants
 from apps.employee.models import LeaveBalance, PaySlip
+from apps.employee.utils import holidays_in_month, weekdays_count
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
 from apps.superadmin import models
@@ -96,6 +97,8 @@ def generate_monthly_payslips():
     end_date = timezone.datetime(
         prev_year, prev_month, monthrange(prev_year, prev_month)[1]
     ).date()
+    holidays = holidays_in_month(prev_month, prev_year)
+    days = (weekdays_count(start_date, end_date)) - int(holidays)
     month_name = start_date.strftime("%B %Y")
     common_data = models.CommonData.objects.first()
     employees = models.Users.objects.filter(
@@ -137,7 +140,7 @@ def generate_monthly_payslips():
             start_date=start_date,
             end_date=end_date,
             month=month_name,
-            days=monthrange(prev_year, prev_month)[1],
+            days=days,
             basic_salary=basic_salary,
             hr_allowance=hr_allowance,
             special_allowance=special_allowance,
@@ -155,55 +158,88 @@ def generate_monthly_payslips():
 
 
 def calculate_leave_deduction(employee, start_date, end_date, leave_balance):
-    """Calculate leave deduction based on monthly PL allocation and SL usage."""
-    leaves = models.Leave.objects.filter(
-        employee=employee,
-        status="approved",
-    ).filter(
-        Q(from_date__lte=end_date)
-        & Q(
-            Q(to_date__gte=start_date)
-            | Q(to_date__isnull=True, from_date__gte=start_date)
+    """Calculate leave deduction based on leave types and monthly allocation - UPDATES BALANCE."""
+    # Get approved leaves in the month
+    leaves = (
+        models.Leave.objects.filter(
+            employee=employee,
+            status="approved",
         )
+        .filter(
+            Q(from_date__lte=end_date)
+            & Q(
+                Q(to_date__gte=start_date)
+                | Q(to_date__isnull=True, from_date__gte=start_date)
+            )
+        )
+        .select_related("leave_type")
     )
-    print(f"==>> leaves: {leaves}")
+    print(f"🔍 Payslip generation - leaves found: {leaves.count()}")
 
-    total_leave_days = sum(float(leave.total_days or 0) for leave in leaves)
-
-    if total_leave_days == 0:
+    if not leaves.exists():
         return Decimal("0")
 
     current_month = start_date.month
-    monthly_pl_allocation = min(current_month, leave_balance.pl or 12)
+    monthly_pl_allocation = current_month
 
+    # Available leaves
     available_pl = monthly_pl_allocation - (leave_balance.used_pl or 0)
     available_sl = (leave_balance.sl or 4) - (leave_balance.used_sl or 0)
 
+    # Ensure available leaves don't go negative
+    available_pl = max(0, available_pl)
+    available_sl = max(0, available_sl)
+
+    # Separate leaves by type
+    pl_days = 0
+    sl_days = 0
+    other_days = 0
+
+    for leave in leaves:
+        days = float(leave.total_days or 0)
+        if leave.leave_type and leave.leave_type.code == constants.SICK_LEAVE:
+            sl_days += days
+        elif leave.leave_type and leave.leave_type.code in [
+            constants.PRIVILEGE_LEAVE,
+            constants.HALFDAY_LEAVE,
+        ]:
+            pl_days += days
+        else:
+            other_days += days
+
+    print(f"📊 Leave breakdown - PL: {pl_days}, SL: {sl_days}, Other: {other_days}")
+    print(f"💰 Available - PL: {available_pl}, SL: {available_sl}")
+
     deductible_days = 0
-    remaining_days = total_leave_days
 
-    if remaining_days > 0 and available_pl > 0:
-        used_pl = min(remaining_days, available_pl)
-        remaining_days -= used_pl
-        leave_balance.used_pl = (leave_balance.used_pl or 0) + used_pl
+    if sl_days > 0:
+        if available_sl >= sl_days:
+            leave_balance.used_sl = (leave_balance.used_sl or 0) + sl_days
+        else:
+            if available_sl > 0:
+                leave_balance.used_sl = (leave_balance.used_sl or 0) + available_sl
+                deductible_days += sl_days - available_sl
+            else:
+                deductible_days += sl_days
 
-    # Then use available SL
-    if remaining_days > 0 and available_sl > 0:
-        used_sl = min(remaining_days, available_sl)
-        remaining_days -= used_sl
-        # Update leave balance for SL usage
-        leave_balance.used_sl = (leave_balance.used_sl or 0) + used_sl
+    if pl_days > 0:
+        free_pl_per_month = 1
+        if pl_days <= free_pl_per_month:
+            leave_balance.used_pl = (leave_balance.used_pl or 0) + pl_days
+        else:
+            leave_balance.used_pl = (leave_balance.used_pl or 0) + pl_days
+            excess_pl = pl_days - free_pl_per_month
+            deductible_days += excess_pl
 
-    # Remaining days are LOP (deductible)
-    if remaining_days > 0:
-        deductible_days = remaining_days
-        leave_balance.used_lop = (leave_balance.used_lop or 0) + deductible_days
+    if other_days > 0:
+        deductible_days += other_days
+        leave_balance.used_lop = (leave_balance.used_lop or 0) + other_days
 
     leave_balance.save()
 
-    # Calculate per-day salary deduction
     daily_salary = (employee.salary_ctc or Decimal("0")) / 30
     leave_deduction = daily_salary * Decimal(str(deductible_days))
+    print(f"💸 Total deductible days: {deductible_days}, deduction: {leave_deduction}")
 
     return leave_deduction
 
@@ -227,21 +263,23 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
     )
 
     if not leaves.exists():
-        return Decimal("0")
+        return Decimal("0"), 0
 
-    # Monthly PL allocation (1 per month up to current month)
-    current_month = start_date.month
-    monthly_pl_allocation = min(current_month, leave_balance.pl or 12)
+    current_month = 6  # start_date.month
+    monthly_pl_allocation = current_month  # 1 PL per month
+    print(f"==>> monthly_pl_allocation: {monthly_pl_allocation}")
 
-    # Available leaves (don't modify original balance)
     available_pl = monthly_pl_allocation - (leave_balance.used_pl or 0)
     available_sl = (leave_balance.sl or 4) - (leave_balance.used_sl or 0)
 
-    # Separate leaves by type
+    available_pl = max(0, available_pl)
+    available_sl = max(0, available_sl)
+
     pl_days = 0
     sl_days = 0
     other_days = 0
 
+    print(f"==>> leaves: {leaves}")
     for leave in leaves:
         days = float(leave.total_days or 0)
         if leave.leave_type and leave.leave_type.code == constants.SICK_LEAVE:
@@ -254,10 +292,11 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
         else:
             other_days += days
 
-    # Calculate deductible days
+    print(f"==>> available_pl: {available_pl}, available_sl: {available_sl}")
+    print(f"==>> pl_days: {pl_days}, sl_days: {sl_days}, other_days: {other_days}")
+
     deductible_days = 0
 
-    # Process SL first
     if sl_days > 0:
         if available_sl >= sl_days:
             available_sl -= sl_days
@@ -265,24 +304,27 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
             deductible_days += sl_days - available_sl
             available_sl = 0
 
-    # Process PL next
+    # Process PL next - 1 PL free per month, excess deducted
     if pl_days > 0:
-        if available_pl >= pl_days:
-            available_pl -= pl_days
+        free_pl_per_month = 1  # 1 PL is free per month
+        if pl_days <= free_pl_per_month:
+            # All PL covered (1 or less)
+            print(f"✅ All {pl_days} PL days covered (free allowance)")
         else:
-            deductible_days += pl_days - available_pl
-            available_pl = 0
+            # More than 1 PL - deduct excess
+            excess_pl = pl_days - free_pl_per_month
+            deductible_days += excess_pl
+            print(f"⚠️ PL: {free_pl_per_month} free, {excess_pl} excess deducted")
 
     # Other leave types are always deductible
     deductible_days += other_days
 
     # Calculate per-day salary deduction
     daily_salary = (employee.salary_ctc or Decimal("0")) / 30
-    print(f"==>> daily_salary: {daily_salary}")
     leave_deduction = daily_salary * Decimal(str(deductible_days))
-    print(f"==>> leave_deduction: {leave_deduction}")
+    print(f"==>> daily_salary: {daily_salary}, leave_deduction: {leave_deduction}")
 
-    return leave_deduction
+    return leave_deduction, deductible_days
 
 
 @shared_task

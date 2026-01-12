@@ -20,6 +20,10 @@ from apps.superadmin.tasks import send_email_task
 # from io import BytesIO
 
 
+def holidays_in_month(year, month):
+    return Holiday.objects.filter(date__year=year, date__month=month).count()
+
+
 def weekdays_count(start_date, end_date):
     count = 0
     current = start_date
