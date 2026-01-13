@@ -2,7 +2,7 @@ from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 
 from apps.base import constants
-from apps.chat.connection_tracker import chat_tracker
+from apps.chat.connection_tracker import ChatConnectionTracker
 from apps.chat.models import Message
 from apps.notification.models import Notification, NotificationType
 from apps.notification.websocket_service import NotificationWebSocketService
@@ -11,6 +11,7 @@ from apps.notification.websocket_service import NotificationWebSocketService
 @shared_task
 def create_chat_notification(message_id):
     """Create chat notification asynchronously to avoid WebSocket context issues."""
+
     try:
         message = Message.objects.get(id=message_id)
     except Message.DoesNotExist:
@@ -24,16 +25,37 @@ def create_chat_notification(message_id):
         )
 
     conversation = message.conversation
-    for participant in conversation.participants.exclude(id=message.sender.id):
+    participants = conversation.participants.exclude(id=message.sender.id)
+    for participant in participants:
+
+        worker_tracker = ChatConnectionTracker()
+
+        if not worker_tracker.redis_client:
+            print(
+                f"❌ Redis unavailable - creating notification for user {participant.id}"
+            )
+            _create_notification_without_websocket(
+                recipient=participant,
+                actor=message.sender,
+                notification_type=notification_type,
+                title=f"New message from {message.sender.first_name} {message.sender.last_name}",
+                message=message.text[:100] if message.text else "Media message",
+                related_object=message,
+            )
+            continue
+
         # Check if user is connected to this conversation
-        is_connected = chat_tracker.is_connected(participant.id, conversation.id)
+        is_connected = worker_tracker.is_connected(participant.id, conversation.id)
         print(
-            f"User {participant.id} connected to conversation {conversation.id}: {is_connected}"
+            f"🔗 User {participant.email} connected to conversation {conversation.id}: {is_connected}"
         )
+
+        # Debug: Show all user connections
+        user_connections = worker_tracker.get_user_connections(participant.id)
+        print(f"==>> user_connections: {user_connections}")
 
         # Only create notification if user is NOT connected to this conversation
         if not is_connected:
-            print(f"Creating notification for user {participant.id}")
             _create_notification_without_websocket(
                 recipient=participant,
                 actor=message.sender,
@@ -43,7 +65,9 @@ def create_chat_notification(message_id):
                 related_object=message,
             )
         else:
-            print(f"Skipping notification for connected user {participant.id}")
+            print(f"⏭️ Skipping notification for connected user {participant.email}")
+
+    print(f"🏁 CHAT NOTIFICATION TASK COMPLETED for message_id: {message_id}")
 
 
 def _create_notification_without_websocket(

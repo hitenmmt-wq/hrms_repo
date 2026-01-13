@@ -49,6 +49,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # Track this connection
         chat_tracker.add_connection(self.user.id, self.conversation_id)
+        # Debug: Show all user connections after adding
+        user_connections = chat_tracker.get_user_connections(self.user.id)
+        print(f"📱 User {self.user.email} now has connections: {user_connections}")
 
         await self.accept()
 
@@ -62,6 +65,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # Remove connection tracking
         if hasattr(self, "user") and hasattr(self, "conversation_id"):
             chat_tracker.remove_connection(self.user.id, self.conversation_id)
+            user_connections = chat_tracker.get_user_connections(self.user.id)
+            print(f"==>> user_connections: {user_connections}")
 
     async def receive_json(self, content, **kwargs):
         """Route incoming WebSocket messages to appropriate handlers."""

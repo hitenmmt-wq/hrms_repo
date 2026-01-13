@@ -6,12 +6,10 @@ user roles, status values, notification types, and leave types for
 consistent reference throughout the codebase.
 """
 
-ACCOUNT_ACTIVATION_URL = (
-    "https://stylish-battle-billion-cab.trycloudflare.com/superadmin/activate/{token}/"
-)
+ACCOUNT_ACTIVATION_URL = "https://drives-straight-basin-anthony.trycloudflare.com/superadmin/activate/{token}/"
 
 LOCALHOST = "http://127.0.0.1:8000/"
-LIVE_SERVER = "https://stylish-battle-billion-cab.trycloudflare.com/"
+LIVE_SERVER = "https://drives-straight-basin-anthony.trycloudflare.com/"
 
 # USER ROLE CONSTANTS
 ADMIN_USER = "admin"

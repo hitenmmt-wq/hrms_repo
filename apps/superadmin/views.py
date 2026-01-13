@@ -371,12 +371,48 @@ class AdminRegister(BaseViewSet):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = serializers.CustomTokenObtainPairSerializer
 
+    #  ----This code is for Employee Idle behaviour handeling ------
+    # def post(self, request, *args, **kwargs):
+    #     response = super().post(request, *args, **kwargs)
+
+    #     if response.status_code == 200:
+    #         # Update idle detector config file
+    #         self.update_idle_config(response.data)
+
+    #     return response
+
+    # def update_idle_config(self, login_data):
+    #     """Update idle detector config file with employee data"""
+    #     try:
+    #         config_path = os.path.join(os.getcwd(), '..', 'idle_monitor', 'config.json')
+
+    #         config = {
+    #             "api_url": constants.LIVE_SERVER,
+    #             "employee_token": login_data["data"]["access"],
+    #             "refresh_token": login_data["data"]["refresh"],
+    #             "employee_id": login_data["data"]["user"]["id"],
+    #             "employee_name": f"{login_data['data']['user']['first_name']}
+    #                   {login_data['data']['user']['last_name']}",
+    #             "employee_email": login_data["data"]["user"]["email"],
+    #             "idle_threshold": 600
+    #         }
+
+    #         with open(config_path, 'w') as f:
+    #             json.dump(config, f, indent=2)
+
+    #         print(f"✅ Idle detector config updated for {config['employee_name']}")
+
+    #     except Exception as e:
+    #         print(f"⚠️ Failed to update idle config: {e}")
+
 
 class UserViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = serializers.UserSerializer(request.user)
+        serializer = serializers.UserSerializer(
+            request.user, context={"request": request}
+        )
         return Response(serializer.data)
 
 
@@ -591,8 +627,8 @@ class AnnouncementViewSet(BaseViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_class = AnnouncementFilter
     search_fields = ["title", "date"]
-    ordering_fields = ["-id"]
-    ordering = ["-id"]
+    ordering_fields = ["-date"]
+    ordering = ["-date"]
 
     def get_serializer_class(self):
         if self.action == "list":
