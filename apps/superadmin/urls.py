@@ -57,4 +57,9 @@ urlpatterns = [
         views.LeaveApprovalViewSet.as_view({"post": "reject"}),
         name="leave-reject",
     ),
+    path(
+        "leave_balance_details/",
+        views.LeaveApprovalViewSet.as_view({"get": "leave_balance_details"}),
+        name="leave_balance_details",
+    ),
 ]

@@ -153,7 +153,7 @@ class AdminDashboardView(APIView):
                 "team_monthly_working_hour": team_monthly_working_hour,
                 "general_team_data": general_team_data,
                 "current_birthdays": serializers.UserMiniSerializer(
-                    current_birthdays, many=True
+                    current_birthdays, many=True, context={"request": request}
                 ).data,
                 "upcoming_leaves": serializers.LeaveMiniSerializer(
                     upcoming_leaves, many=True
@@ -162,13 +162,13 @@ class AdminDashboardView(APIView):
                     upcoming_holidays, many=True
                 ).data,
                 "recent_joiners": serializers.UserMiniSerializer(
-                    recent_joiners, many=True
+                    recent_joiners, many=True, context={"request": request}
                 ).data,
                 "present_employee": serializers.EmployeeAttendanceMiniSerializer(
                     present_employee, many=True
                 ).data,
                 "absent_employee": serializers.UserMiniSerializer(
-                    absent_employee, many=True
+                    absent_employee, many=True, context={"request": request}
                 ).data,
                 "late_logins": serializers.LateLoginMiniSerializer(
                     late_logins, many=True
@@ -674,6 +674,18 @@ class ProfileViewSet(BaseViewSet):
             return serializers.ProfileUpdateSerializer
         return serializers.ProfileSerializer
 
+    @action(detail=False, methods=["get"])
+    def all_active_users(self, request):
+        active_users = models.Users.objects.filter(is_active=True).select_related(
+            "department", "position"
+        )
+        serializer = serializers.UserMiniSerializer(
+            active_users, many=True, context={"request": request}
+        )
+        return ApiResponse.success(
+            message="All active Users fetched successfully", data=serializer.data
+        )
+
 
 #  ==============  LEAVES CRUD API ====================
 
@@ -814,5 +826,40 @@ class LeaveApprovalViewSet(BaseViewSet):
             return ApiResponse.success(
                 message="Leave rejected", data=serialize.data, status=status.HTTP_200_OK
             )
+        except Exception as exc:
+            return ApiResponse.error(str(exc), status=400)
+
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def leave_balance_details(self, request):
+        """Get detailed leave balance information for employee."""
+        from apps.employee.tasks import get_leave_balance_details
+
+        # Get parameters
+        employee_id = request.data.get("employee_id")
+        print(f"==>> employee_id: {employee_id}")
+        start_date = request.data.get("start_date")
+        end_date = request.data.get("end_date")
+
+        # Validate parameters
+        if not all([employee_id, start_date, end_date]):
+            return ApiResponse.error(
+                "employee_id, start_date, and end_date are required", status=400
+            )
+
+        try:
+            employee = models.Users.objects.get(id=employee_id)
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            balance_details = get_leave_balance_details(employee, start_date, end_date)
+
+            return ApiResponse.success(
+                message="Leave balance details fetched successfully",
+                data=balance_details,
+            )
+        except models.Users.DoesNotExist:
+            return ApiResponse.error("Employee not found", status=404)
+        except ValueError:
+            return ApiResponse.error("Invalid date format. Use YYYY-MM-DD", status=400)
         except Exception as exc:
             return ApiResponse.error(str(exc), status=400)
