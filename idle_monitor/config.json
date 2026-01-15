@@ -1,0 +1,9 @@
+{
+  "api_url": "http://localhost:8000",
+  "employee_token": "PASTE_ACCESS_TOKEN_HERE",
+  "refresh_token": "PASTE_REFRESH_TOKEN_HERE",
+  "employee_id": "PASTE_EMPLOYEE_ID_HERE",
+  "employee_name": "PASTE_EMPLOYEE_NAME_HERE",
+  "employee_email": "PASTE_EMPLOYEE_EMAIL_HERE",
+  "idle_threshold": 600
+}
