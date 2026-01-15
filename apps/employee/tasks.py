@@ -265,7 +265,8 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
     if not leaves.exists():
         return Decimal("0"), 0
 
-    current_month = 6  # start_date.month
+    current_year = timezone.now().year
+    current_month = timezone.now().month  # start_date.month
     monthly_pl_allocation = current_month  # 1 PL per month
     print(f"==>> monthly_pl_allocation: {monthly_pl_allocation}")
 
@@ -319,12 +320,102 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
     # Other leave types are always deductible
     deductible_days += other_days
 
+    holidays = holidays_in_month(current_year, current_month)
+    working_days = weekdays_count(start_date, end_date) - holidays
     # Calculate per-day salary deduction
-    daily_salary = (employee.salary_ctc or Decimal("0")) / 30
+    daily_salary = (employee.salary_ctc or Decimal("0")) / working_days
     leave_deduction = daily_salary * Decimal(str(deductible_days))
     print(f"==>> daily_salary: {daily_salary}, leave_deduction: {leave_deduction}")
 
     return leave_deduction, deductible_days
+
+
+def get_leave_balance_details(employee, start_date, end_date):
+    """Get detailed leave balance information for employee between dates."""
+
+    # Get or create leave balance for the year
+    year = start_date.year
+    leave_balance, _ = LeaveBalance.objects.get_or_create(employee=employee, year=year)
+
+    # Get approved leaves in the date range
+    leaves = (
+        models.Leave.objects.filter(
+            employee=employee,
+            status="approved",
+        )
+        .filter(
+            Q(from_date__lte=end_date)
+            & Q(
+                Q(to_date__gte=start_date)
+                | Q(to_date__isnull=True, from_date__gte=start_date)
+            )
+        )
+        .select_related("leave_type")
+    )
+
+    # Calculate monthly usage from date range
+    monthly_pl = monthly_sl = monthly_lop = 0
+    for leave in leaves:
+        days = float(leave.total_days or 0)
+        if leave.leave_type and leave.leave_type.code == constants.SICK_LEAVE:
+            monthly_sl += days
+        elif leave.leave_type and leave.leave_type.code in [
+            constants.PRIVILEGE_LEAVE,
+            constants.HALFDAY_LEAVE,
+        ]:
+            monthly_pl += days
+        else:
+            monthly_lop += days
+
+    # Monthly PL allocation - 1 per month up to current month (cumulative)
+    current_month = start_date.month
+    total_pl_allocated = current_month  # Total PL available up to this month
+
+    # Calculate used leaves by type from database
+    used_pl = leave_balance.used_pl or 0
+    used_sl = leave_balance.used_sl or 0
+    used_lop = leave_balance.used_lop or 0
+    print(f"==>> used_lop: {used_lop}")
+
+    # Calculate available leaves
+    total_sl_allocated = leave_balance.sl or 4
+    available_pl = max(0, total_pl_allocated - used_pl)
+    print(f"==>> available_pl: {available_pl}")
+    available_sl = max(0, total_sl_allocated - used_sl)
+    print(f"==>> available_sl: {available_sl}")
+
+    return {
+        "monthly": {
+            "pl": {
+                "total": current_month,
+                "used": monthly_pl,
+                "available": max(0, current_month - (leave_balance.used_pl or 0)),
+            },
+            "sl": {
+                "total": leave_balance.sl or 4,
+                "used": monthly_sl,
+                "available": max(
+                    0, (leave_balance.sl or 4) - (leave_balance.used_sl or 0)
+                ),
+            },
+            "lop": {"total": 0, "used": monthly_lop, "available": 0},
+        },
+        "yearly": {
+            "pl": {
+                "total": 12,
+                "used": leave_balance.used_pl or 0,
+                "available": max(0, 12 - (leave_balance.used_pl or 0)),
+            },
+            "sl": {
+                "total": leave_balance.sl or 4,
+                "used": leave_balance.used_sl or 0,
+                "available": max(
+                    0, (leave_balance.sl or 4) - (leave_balance.used_sl or 0)
+                ),
+            },
+            "lop": {"total": 0, "used": leave_balance.used_lop or 0, "available": 0},
+        },
+    }
 
 
 @shared_task

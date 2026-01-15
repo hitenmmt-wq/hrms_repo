@@ -110,6 +110,8 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
 class UserMiniSerializer(serializers.ModelSerializer):
     """Minimal user serializer for dashboard and list displays."""
 
+    profile = serializers.SerializerMethodField()
+
     class Meta:
         model = models.Users
         fields = [
@@ -123,6 +125,14 @@ class UserMiniSerializer(serializers.ModelSerializer):
             "department",
         ]
         depth = 1
+
+    def get_profile(self, obj):
+        request = self.context.get("request")
+        if obj.profile and request:
+            return request.build_absolute_uri(obj.profile.url)
+        if obj.profile:
+            return obj.profile.url
+        return None
 
 
 class HolidayMiniSerializer(serializers.ModelSerializer):

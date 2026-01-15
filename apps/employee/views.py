@@ -43,7 +43,12 @@ from apps.employee.serializers import (
     TodayAttendanceSerializer,
 )
 from apps.employee.tasks import get_leave_deduction_preview
-from apps.employee.utils import employee_monthly_working_hours, generate_payslip_pdf
+from apps.employee.utils import (
+    employee_monthly_working_hours,
+    generate_payslip_pdf,
+    holidays_in_month,
+    weekdays_count,
+)
 from apps.superadmin import models
 
 
@@ -468,9 +473,11 @@ class PaySlipViewSet(BaseViewSet):
             total_leave_taken = sum(
                 float(leave.total_days or 0) for leave in leaves_in_month
             )
-
+            holidays = holidays_in_month(start_date.year, start_date.month)
+            working_days = weekdays_count(start_date, end_date) - int(holidays)
             return ApiResponse.success(
                 data={
+                    "working_days": working_days,
                     "total_leave_taken": total_leave_taken,
                     "total_leave_deducted": deductible_days,
                     "leave_deduction": leave_deduction,
