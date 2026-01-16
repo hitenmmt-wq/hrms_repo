@@ -69,6 +69,12 @@ class CustomScriptView(APIView):
         #         year = 2026
         #     )
         # employee_attendance = EmployeeAttendance.objects.create
+        from apps.chat.models import MessageStatus
+
+        msg = MessageStatus.objects.all()
+        for ab in msg:
+            ab.status = "delivered"
+            ab.save()
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
 
