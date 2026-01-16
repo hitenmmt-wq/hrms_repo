@@ -389,16 +389,18 @@ def get_leave_balance_details(employee, start_date, end_date):
             "pl": {
                 "total": current_month,
                 "used": monthly_pl,
-                "available": max(0, current_month - (leave_balance.used_pl or 0)),
+                "available": max(0, current_month - (monthly_pl or 0)),
             },
             "sl": {
                 "total": leave_balance.sl or 4,
                 "used": monthly_sl,
-                "available": max(
-                    0, (leave_balance.sl or 4) - (leave_balance.used_sl or 0)
-                ),
+                "available": max(0, (leave_balance.sl or 4) - (monthly_sl or 0)),
             },
-            "lop": {"total": 0, "used": monthly_lop, "available": 0},
+            "lop": {
+                "total": 0,
+                "used": abs(current_month - monthly_pl),
+                "available": 0,
+            },
         },
         "yearly": {
             "pl": {

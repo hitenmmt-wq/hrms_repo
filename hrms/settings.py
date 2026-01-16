@@ -55,6 +55,7 @@ DJANGO_APPS = [
     "apps.employee.apps.EmployeeConfig",
     "apps.attendance.apps.AttendanceappConfig",
     "apps.notification.apps.NotificationConfig",
+    "apps.ai.apps.AiConfig",
 ]
 
 THIRD_PARTY_APPS = [
