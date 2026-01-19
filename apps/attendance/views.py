@@ -9,12 +9,18 @@ from django.utils import timezone
 from rest_framework.decorators import action
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
-from apps.attendance.serializers import AttendanceSerializer, BreakLogSerializer
+from apps.attendance.serializers import (  # , IdleStatusSerializer
+    AttendanceSerializer,
+    BreakLogSerializer,
+)
 from apps.attendance.utils import check_in, check_out, pause_break, resume_break
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.superadmin.models import Users
+
+# from rest_framework.views import APIView
+# from rest_framework import status
 
 
 class AttendanceViewSet(BaseViewSet):
@@ -102,3 +108,71 @@ class AttendanceViewSet(BaseViewSet):
         return ApiResponse.success(
             "Logged out successfully", AttendanceSerializer(attendance).data
         )
+
+
+# class IdleStatusView(APIView):
+#     """API endpoint for receiving idle status updates from desktop application."""
+
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         """Handle idle status updates and trigger auto-pause if needed."""
+#         serializer = IdleStatusSerializer(data=request.data)
+
+#         if not serializer.is_valid():
+#             return ApiResponse.error("Invalid data", serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+#         data = serializer.validated_data
+#         user = request.user
+
+#         # Get today's attendance record
+#         today_attendance = EmployeeAttendance.objects.filter(
+#             employee=user,
+#             day=timezone.now().date()
+#         ).first()
+
+#         if not today_attendance:
+#             return ApiResponse.error("No attendance record found for today", status_code=status.HTTP_404_NOT_FOUND)
+
+#         # Handle idle status
+#         if data['is_idle']:
+#             # Auto-pause work if user is idle and currently working
+#             if today_attendance.track_current_status == 'ongoing':
+#                 pause_break(today_attendance)
+#                 return ApiResponse.success({
+#                     "message": "Work auto-paused due to inactivity",
+#                     "idle_duration": data['idle_duration'],
+#                     "action": "paused"
+#                 })
+
+
+#         return ApiResponse.success({
+#             "message": "Idle status received",
+#             "current_status": today_attendance.track_current_status,
+#             "action": "none"
+#         })
+
+
+# class IdleDetectorHealthView(APIView):
+#     """Health check endpoint for idle detector connection status."""
+
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         """Check if idle detector is properly configured and connected."""
+#         user = request.user
+#         print("------------this function is called for detecting of application running ------------")
+
+#         today_attendance = EmployeeAttendance.objects.filter(
+#             employee=user,
+#             day=timezone.now().date()
+#         ).first()
+
+#         return ApiResponse.success({
+#             "status": "connected",
+#             "employee_id": user.id,
+#             "employee_name": f"{user.first_name} {user.last_name}",
+#             "has_attendance_today": bool(today_attendance),
+#             "current_status": today_attendance.track_current_status if today_attendance else None,
+#             "timestamp": timezone.now().isoformat()
+#         })
