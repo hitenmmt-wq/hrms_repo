@@ -37,3 +37,11 @@ class BreakLogSerializer(serializers.ModelSerializer):
         model = AttendanceBreakLogs
         fields = "__all__"
         depth = 1
+
+
+# class IdleStatusSerializer(serializers.Serializer):
+#     """Serializer for idle status updates from desktop application."""
+
+#     is_idle = serializers.BooleanField()
+#     timestamp = serializers.DateTimeField()
+#     idle_duration = serializers.FloatField(min_value=0)
