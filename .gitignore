@@ -9,6 +9,8 @@ myworld/
 .env
 .env.staging
 .env.production
+.env.docker
+.env.ai.example
 
 # Deployment
 backups/

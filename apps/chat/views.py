@@ -3,6 +3,8 @@ import os
 from django.shortcuts import get_object_or_404
 from django.utils.text import get_valid_filename
 from rest_framework import generics, status
+
+# from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -17,6 +19,10 @@ from apps.chat.serializers import (
 )
 from apps.employee.serializers import EmployeeListSerializer
 from apps.superadmin.models import Users
+
+# from django.utils import timezone
+# from datetime import timedelta
+
 
 # Create your views here.
 
@@ -270,3 +276,139 @@ class MessageReactionView(generics.GenericAPIView):
             return Response(
                 {"error": "Reaction not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+# class ChatSummaryView(generics.GenericAPIView):
+#     """Get chat summary with unread counts and read receipts."""
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+#         user = request.user
+#         conversations = Conversation.objects.filter(
+#             participants=user, is_deleted=False
+#         ).prefetch_related('participants', 'messages')
+
+#         summary = []
+#         total_unread = 0
+
+#         for conv in conversations:
+#             unread_count = conv.get_unread_count(user)
+#             total_unread += unread_count
+
+#             # Get last message
+#             last_msg = conv.messages.filter(is_deleted=False).first()
+
+#             # Get read receipts for user's messages
+#             read_receipts = conv.get_read_receipts_for_sender(user)
+
+#             summary.append({
+#                 "conversation_id": conv.id,
+#                 "conversation_type": conv.type,
+#                 "conversation_name": conv.name,
+#                 "unread_count": unread_count,
+#                 "last_message": {
+#                     "id": last_msg.id,
+#                     "text": last_msg.text,
+#                     "sender_id": last_msg.sender.id,
+#                     "created_at": last_msg.created_at,
+#                 } if last_msg else None,
+#                 "read_receipts": read_receipts,
+#             })
+
+#         return ApiResponse.success({
+#             "total_unread_messages": total_unread,
+#             "conversations": summary
+#         }, status=status.HTTP_200_OK)
+
+
+# class MessagePollingView(generics.GenericAPIView):
+#     """API endpoints for message polling when WebSocket is unavailable."""
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get(self, request, *args, **kwargs):
+#         """Get recent messages across all conversations."""
+#         minutes = int(request.query_params.get('minutes', 5))
+#         conversation_id = request.query_params.get('conversation_id')
+#         last_message_id = request.query_params.get('last_message_id')
+
+#         user_conversations = Conversation.objects.filter(participants=request.user)
+
+#         query = Message.objects.filter(
+#             conversation__in=user_conversations,
+#             created_at__gt=timezone.now() - timedelta(minutes=minutes)
+#         ).exclude(sender=request.user)
+
+#         if conversation_id:
+#             query = query.filter(conversation_id=conversation_id)
+
+#         if last_message_id:
+#             query = query.filter(id__gt=last_message_id)
+
+#         messages = query.select_related('sender', 'conversation').order_by('-created_at')[:50]
+
+#         messages_data = []
+#         for msg in messages:
+#             messages_data.append({
+#                 'id': msg.id,
+#                 'conversation_id': msg.conversation_id,
+#                 'sender': msg.sender.email,
+#                 'text': msg.text,
+#                 'msg_type': msg.msg_type,
+#                 'created_at': msg.created_at.isoformat()
+#             })
+
+#         return ApiResponse.success({
+#             'messages': messages_data,
+#             'count': len(messages_data),
+#             'timestamp': timezone.now().isoformat()
+#         }, status=status.HTTP_200_OK)
+
+#     def post(self, request, *args, **kwargs):
+#         """Send message via REST API."""
+#         conversation_id = request.data.get('conversation_id')
+#         content = request.data.get('content', '').strip()
+
+#         if not conversation_id or not content:
+#             return Response(
+#                 {'error': 'conversation_id and content are required'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         try:
+#             conversation = get_object_or_404(
+#                 Conversation.objects.prefetch_related('participants'),
+#                 id=conversation_id
+#             )
+
+#             if not conversation.participants.filter(id=request.user.id).exists():
+#                 return Response(
+#                     {'error': 'Access denied'},
+#                     status=status.HTTP_403_FORBIDDEN
+#                 )
+
+#             message = Message.objects.create(
+#                 conversation=conversation,
+#                 sender=request.user,
+#                 text=content,
+#                 msg_type='text'
+#             )
+
+#             # Create message status for participants
+#             participants = conversation.participants.exclude(id=request.user.id)
+#             for participant in participants:
+#                 MessageStatus.objects.create(
+#                     message=message,
+#                     user=participant,
+#                     status='sent'
+#                 )
+
+#             serializer = MessageSerializer(message)
+#             return ApiResponse.success({
+#                 'message': serializer.data
+#             }, status=status.HTTP_201_CREATED)
+
+#         except Exception as e:
+#             return Response(
+#                 {'error': f'Failed to send message: {str(e)}'},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
