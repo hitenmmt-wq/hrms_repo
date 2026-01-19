@@ -33,7 +33,9 @@ class ChatConnectionTracker:
             self.redis_client = None
             print(f"Redis not available for chat tracker: {e}")
 
-    def add_connection(self, user_id: int, conversation_id: int):
+    def add_connection(
+        self, user_id: int, conversation_id: int, is_visible: bool = True
+    ):
         """Add a user's connection to a conversation."""
         if not self.redis_client:
             return
@@ -42,7 +44,13 @@ class ChatConnectionTracker:
             key = f"chat_connections:{user_id}"
             self.redis_client.sadd(key, str(conversation_id))
             self.redis_client.expire(key, 3600)  # Expire after 1 hour
-            print(f"Added connection: User {user_id} -> Conversation {conversation_id}")
+
+            visibility_key = f"chat_visible:{user_id}:{conversation_id}"
+            self.redis_client.set(visibility_key, "1" if is_visible else "0", ex=3600)
+
+            print(
+                f"Added connection: User {user_id} -> Conversation {conversation_id} (visible: {is_visible})"
+            )
         except Exception as e:
             print(f"Redis connection error in add_connection: {e}")
 
@@ -54,6 +62,11 @@ class ChatConnectionTracker:
         try:
             key = f"chat_connections:{user_id}"
             self.redis_client.srem(key, str(conversation_id))
+
+            # Remove visibility tracking
+            visibility_key = f"chat_visible:{user_id}:{conversation_id}"
+            self.redis_client.delete(visibility_key)
+
             print(
                 f"Removed connection: User {user_id} -> Conversation {conversation_id}"
             )
@@ -75,6 +88,33 @@ class ChatConnectionTracker:
         except Exception as e:
             print(f"Redis connection error in is_connected: {e}")
             return False
+
+    def is_tab_visible(self, user_id: int, conversation_id: int) -> bool:
+        """Check if user's tab is visible for a specific conversation."""
+        if not self.redis_client:
+            return False
+
+        try:
+            visibility_key = f"chat_visible:{user_id}:{conversation_id}"
+            visible = self.redis_client.get(visibility_key)
+            return visible == "1" if visible else False
+        except Exception as e:
+            print(f"Redis connection error in is_tab_visible: {e}")
+            return False
+
+    def set_tab_visibility(self, user_id: int, conversation_id: int, is_visible: bool):
+        """Update tab visibility status."""
+        if not self.redis_client:
+            return
+
+        try:
+            visibility_key = f"chat_visible:{user_id}:{conversation_id}"
+            self.redis_client.set(visibility_key, "1" if is_visible else "0", ex=3600)
+            print(
+                f"Updated visibility: User {user_id} -> Conversation {conversation_id}: {is_visible}"
+            )
+        except Exception as e:
+            print(f"Redis connection error in set_tab_visibility: {e}")
 
     def get_user_connections(self, user_id: int) -> Set[int]:
         """Get all conversation IDs user is connected to."""

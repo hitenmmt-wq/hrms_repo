@@ -48,6 +48,7 @@ class MessageSerializer(serializers.ModelSerializer):
     )
     reply_to = serializers.SerializerMethodField()
     reaction_counts = serializers.SerializerMethodField()
+    read_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
@@ -63,6 +64,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "reply_to_id",
             "reactions",
             "reaction_counts",
+            "read_by",
             "created_at",
         )
         read_only_fields = ("sender", "created_at")
@@ -89,6 +91,21 @@ class MessageSerializer(serializers.ModelSerializer):
     def get_reaction_counts(self, obj):
         """Get aggregated reaction counts by emoji type."""
         return obj.reactions.values("emoji").annotate(count=Count("emoji"))
+
+    def get_read_by(self, obj):
+        """Get list of users who have read this message."""
+        read_statuses = MessageStatus.objects.filter(
+            message=obj, is_deleted=False, status="read"
+        ).select_related("user")
+
+        return [
+            {
+                "user_id": status.user.id,
+                "user_name": f"{status.user.first_name} {status.user.last_name}",
+                "read_at": status.updated_at,
+            }
+            for status in read_statuses
+        ]
 
     def validate(self, data):
         """Ensure message has either text content or media attachment."""
@@ -122,6 +139,9 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     participants = serializers.SerializerMethodField()
     messages = MessageSerializer(many=True, read_only=True)
+    unread_count = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    read_receipts = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -132,6 +152,9 @@ class ConversationSerializer(serializers.ModelSerializer):
             "participants",
             "created_at",
             "messages",
+            "unread_count",
+            "last_message",
+            "read_receipts",
         )
 
     def get_participants(self, obj):
@@ -141,6 +164,34 @@ class ConversationSerializer(serializers.ModelSerializer):
             other_participants = obj.participants.exclude(id=request.user.id)
             return UserSerializer(other_participants, many=True).data
         return UserSerializer(obj.participants.all(), many=True).data
+
+    def get_unread_count(self, obj):
+        """Calculate unread messages for the current user in the conversation."""
+        request = self.context.get("request")
+        if request and request.user:
+            return obj.get_unread_count(request.user)
+        return 0
+
+    def get_last_message(self, obj):
+        """Get the last message in the conversation."""
+        last_msg = obj.messages.filter(is_deleted=False).first()
+        if last_msg:
+            return {
+                "id": last_msg.id,
+                "text": last_msg.text,
+                "sender_id": last_msg.sender.id,
+                "sender_name": f"{last_msg.sender.first_name} {last_msg.sender.last_name}",
+                "created_at": last_msg.created_at,
+                "msg_type": last_msg.msg_type,
+            }
+        return None
+
+    def get_read_receipts(self, obj):
+        """Get last read message for each participant (for sender to see)."""
+        request = self.context.get("request")
+        if request and request.user:
+            return obj.get_read_receipts_for_sender(request.user)
+        return {}
 
 
 class MessageStatusSerializer(serializers.ModelSerializer):

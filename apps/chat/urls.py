@@ -33,4 +33,14 @@ urlpatterns = [
         views.MessageReactionView.as_view(),
         name="message-reactions",
     ),
+    # path(
+    #     "summary/",
+    #     views.ChatSummaryView.as_view(),
+    #     name="chat-summary",
+    # ),
+    # path(
+    #     "polling/",
+    #     views.MessagePollingView.as_view(),
+    #     name="message-polling",
+    # ),
 ]

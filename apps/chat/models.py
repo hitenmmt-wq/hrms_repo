@@ -32,6 +32,57 @@ class Conversation(BaseModel):
     def __str__(self):
         return f"{self.name or 'Unnamed'} - {self.type}"
 
+    def get_unread_count(self, user):
+        """Get unread message count for a specific user."""
+        return (
+            MessageStatus.objects.filter(
+                message__conversation=self,
+                message__is_deleted=False,
+                user=user,
+                is_deleted=False,
+                status__in=["sent", "delivered"],
+            )
+            .exclude(message__sender=user)
+            .count()
+        )
+
+    def get_last_read_message_by_user(self, user, sender):
+        print(f"==>> sender: {sender}")
+        print(f"==>> user: {user}")
+        """Get the last message sent by sender that was read by user."""
+        last_read_status = (
+            MessageStatus.objects.filter(
+                message__conversation=self,
+                message__is_deleted=False,
+                message__sender=sender,
+                user=user,
+                is_deleted=False,
+                status="read",
+            )
+            .select_related("message")
+            .order_by("-message__created_at")
+            .first()
+        )
+        print(f"==>> last_read_status: {last_read_status}")
+
+        return last_read_status.message.id if last_read_status else None
+
+    def get_read_receipts_for_sender(self, sender):
+        """Get last read message ID for each participant (messages sent by sender, read by others)."""
+        participants = self.participants.exclude(id=sender.id)
+        read_receipts = {}
+
+        for participant in participants:
+            # Get last message sent by sender that was read by participant
+            last_read_msg_id = self.get_last_read_message_by_user(participant, sender)
+            read_receipts[participant.id] = {
+                "user_id": participant.id,
+                "user_name": f"{participant.first_name} {participant.last_name}",
+                "last_read_message_id": last_read_msg_id,
+            }
+
+        return read_receipts
+
 
 class Message(BaseModel):
     """Individual messages with text, media, and reply support."""
@@ -66,9 +117,7 @@ class Message(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return (
-            f"Message from {self.sender.email} in {self.conversation.name or 'Unnamed'}"
-        )
+        return f"Message({self.id}) from {self.sender.email} in {self.conversation.name or 'Unnamed'}"
 
 
 class MessageStatus(BaseModel):
@@ -100,7 +149,9 @@ class MessageStatus(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.user.email} - {self.status}"
+        return (
+            f"{self.user.email} - {self.status} - conv: {self.message.conversation.id}"
+        )
 
 
 class MessageReaction(BaseModel):
