@@ -36,4 +36,8 @@ app.conf.beat_schedule = {
         "task": "apps.employee.tasks.generate_monthly_payslips",
         "schedule": crontab(minute=0, hour=9, day_of_month=5),
     },
+    "auto_checkout_employees": {
+        "task": "apps.employee.tasks.auto_checkout_employees",
+        "schedule": crontab(minute=59, hour=23),  # Every day at 11:59 PM
+    },
 }
