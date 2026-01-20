@@ -68,7 +68,6 @@ class AttendanceViewSet(BaseViewSet):
             .select_related("employee")
             .first()
         )
-        print(f"==>> attendance: {attendance.id}")
 
         logs = (
             AttendanceBreakLogs.objects.filter(attendance=attendance)
