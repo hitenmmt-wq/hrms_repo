@@ -16,22 +16,52 @@ class ChatConnectionTracker:
 
     def __init__(self):
         try:
-            self.redis_client = redis.Redis(
-                host=getattr(settings, "REDIS_HOST", "127.0.0.1"),
-                port=getattr(settings, "REDIS_PORT", 6379),
-                db=getattr(settings, "REDIS_DB", 0),
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5,
-                retry_on_timeout=True,
-                health_check_interval=30,
-            )
-            # Test the connection
-            self.redis_client.ping()
-            print("Redis connection established for chat tracker")
+
+            # Try localhost first, then try Docker host
+            redis_hosts = [
+                ("127.0.0.1", 6379),  # Local Redis
+                ("host.docker.internal", 6379),  # Docker Redis on Windows/Mac
+                ("redis", 6379),  # Docker DNS name
+            ]
+
+            redis_host = getattr(settings, "REDIS_HOST", "127.0.0.1")
+            redis_port = getattr(settings, "REDIS_PORT", 6379)
+
+            # Add configured host to the beginning of the list
+            redis_hosts = [(redis_host, redis_port)] + redis_hosts
+
+            self.redis_client = None
+            last_error = None
+
+            # Try each host until one works
+            for host, port in redis_hosts:
+                try:
+                    client = redis.Redis(
+                        host=host,
+                        port=port,
+                        db=getattr(settings, "REDIS_DB", 0),
+                        decode_responses=True,
+                        socket_connect_timeout=2,
+                        socket_timeout=2,
+                        retry_on_timeout=True,
+                        health_check_interval=30,
+                    )
+                    client.ping()
+                    self.redis_client = client
+                    print(
+                        f"✅ Redis connection established for chat tracker at {host}:{port}"
+                    )
+                    return
+                except Exception as e:
+                    last_error = e
+                    continue
+
+            # If no connection worked, set to None
+            self.redis_client = None
+            print(f"❌ Redis not available for chat tracker: {last_error}")
         except Exception as e:
             self.redis_client = None
-            print(f"Redis not available for chat tracker: {e}")
+            print(f"❌ Redis initialization error: {e}")
 
     def add_connection(
         self, user_id: int, conversation_id: int, is_visible: bool = True
