@@ -95,6 +95,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         event = content.get("type")
         handlers = {
             "send_message": self.handle_send_message,
+            "delete_message": self.handle_delete_message,
             "typing_start": self.handle_start_typing,
             "typing_stop": self.handle_stop_typing,
             "tab_visible": self.handle_tab_visibility,
@@ -108,6 +109,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         handler = handlers.get(event)
         if handler:
             await handler(content)
+
+    async def handle_delete_message(self, content):
+        message_id = content.get("message_id", "")
+        if not message_id:
+            return self.send_json(
+                {"type": "error", "message": "Message ID not provided"}
+            )
+        delete_message = await self.delete_message(message_id, self.user.id)
+        await self.send_json({"type": delete_message, "message_id": message_id})
+        return delete_message
 
     async def handle_send_message(self, content):
         print(f"==>> content: {content}")
@@ -645,6 +656,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return list(conversation.participants.values_list("id", flat=True))
         except Conversation.DoesNotExist:
             return []
+
+    @database_sync_to_async
+    def delete_message(self, message_id, user_id):
+        print(f"==>> user_id: {user_id}")
+        print(f"==>> message_id: {message_id}")
+        """Delete a message."""
+        try:
+            message = Message.objects.filter(id=message_id).first()
+            if message and message.sender.id == user_id:
+                message.delete()
+                return "Message deleted successfully"
+            return "Unauthorized to delete this message"
+        except Message.DoesNotExist:
+            return "Message does not exist"
 
     # WebSocket event handlers
     async def global_message_read(self, event):

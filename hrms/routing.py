@@ -2,14 +2,19 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from django.urls import path
 
+from apps.ai.routing import websocket_urlpatterns as ai_urlpatterns
 from apps.chat.middleware import JwtAuthMiddleware
 from apps.chat.routing import websocket_urlpatterns as chat_urlpatterns
 from apps.notification.consumers import NotificationConsumer
 
-# Combine all WebSocket URL patterns (Chat, Notification)
-websocket_urlpatterns = chat_urlpatterns + [
-    path("ws/notifications/", NotificationConsumer.as_asgi()),
-]
+# Combine all WebSocket URL patterns (Chat, Notification, AI-chatbot)
+websocket_urlpatterns = (
+    chat_urlpatterns
+    + ai_urlpatterns
+    + [
+        path("ws/notifications/", NotificationConsumer.as_asgi()),
+    ]
+)
 
 application = ProtocolTypeRouter(
     {

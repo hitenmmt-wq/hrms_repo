@@ -34,6 +34,7 @@ urlpatterns = [
     path("employee/", include("apps.employee.urls")),
     path("attendance/", include("apps.attendance.urls")),
     path("notify/", include("apps.notification.urls")),
+    path("ai/", include("apps.ai.urls")),
     # Health checks for deployment
     path("health/", health_check, name="health_check"),
     path("ready/", readiness_check, name="readiness_check"),
