@@ -5,16 +5,14 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.ai.extras.ai_utils import SecurityValidator
-from apps.ai.services import AIService
-from apps.base.permissions import IsAuthenticated
-
-from .models import AIConversation, AIMessage, AIQueryLog
-from .serializers import (
+from apps.ai.models import AIConversation, AIMessage, AIQueryLog
+from apps.ai.serializers import (
     AIConversationSerializer,
     AIMessageSerializer,
     AIQueryLogSerializer,
 )
+from apps.ai.services import AIService
+from apps.base.permissions import IsAuthenticated
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +54,6 @@ class AIConversationViewSet(viewsets.ModelViewSet):
                 {"error": "Message cannot be empty"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Security validation
-        if not SecurityValidator.is_safe_message(message):
-            return Response(
-                {"error": "Invalid message format"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
             ai_service = AIService(request.user)
             response_data = ai_service.process_query(message, conversation.session_id)
@@ -92,12 +84,6 @@ class AIConversationViewSet(viewsets.ModelViewSet):
         if not message:
             return Response(
                 {"error": "Message cannot be empty"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Security validation
-        if not SecurityValidator.is_safe_message(message):
-            return Response(
-                {"error": "Invalid message format"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
