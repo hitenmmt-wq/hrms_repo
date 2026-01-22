@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.attendance.models import EmployeeAttendance
+from apps.attendance.utils import check_out
 from apps.base import constants
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.employee.utils import holidays_in_month, weekdays_count
@@ -454,3 +455,18 @@ def notify_frequent_late_comings():
                 ),
                 related_object=late_coming_employee,
             )
+
+
+@shared_task
+def auto_checkout_employees():
+    print("this function of auto checkout triggered.....")
+    today = timezone.now().date()
+    employees_to_checkout = EmployeeAttendance.objects.filter(
+        day=today, check_in__isnull=False, check_out__isnull=True
+    )
+    print(f"==>> employees_to_checkout: {employees_to_checkout}")
+    for attendance in employees_to_checkout:
+        check_out(attendance)
+        print(f"Auto checked out {attendance.employee.email} for {today}")
+
+    return "Auto checkout completed for employees."

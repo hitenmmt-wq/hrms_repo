@@ -73,7 +73,7 @@ class CustomScriptView(APIView):
 
         msg = MessageStatus.objects.all()
         for ab in msg:
-            ab.status = "delivered"
+            ab.status = "read"
             ab.save()
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
