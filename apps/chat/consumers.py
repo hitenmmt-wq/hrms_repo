@@ -40,21 +40,30 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # Join specific conversation if provided
         conversation_id = self.scope["url_route"]["kwargs"].get("conversation_id")
         if conversation_id:
-            self.conversation_id = conversation_id
-            is_participant = await self.is_participant(conversation_id, user.id)
+            self.conversation_id = int(conversation_id)
+            is_participant = await self.is_participant(self.conversation_id, user.id)
             if is_participant:
                 self.room_group_name = f"chat_{conversation_id}"
                 await self.channel_layer.group_add(
                     self.room_group_name, self.channel_name
                 )
-                chat_tracker.add_connection(self.user.id, conversation_id)
+                chat_tracker.add_connection(self.user.id, self.conversation_id)
+                print(
+                    f"\n{'='*70}"
+                    f"\n✅ USER CONNECTED TO WEBSOCKET"
+                    f"\n  User: {self.user.email} (ID: {self.user.id})"
+                    f"\n  Conversation: {self.conversation_id}"
+                    f"\n  Tab Visible: {self.is_tab_visible}"
+                    f"\n  Channel: {self.channel_name}"
+                    f"\n{'='*70}\n"
+                )
 
         await self.accept()
         await self.send_missed_messages()
         await self.send_unread_counts()
 
         # Mark messages as read if in specific conversation
-        if hasattr(self, "conversation_id"):
+        if hasattr(self, "conversation_id") and self.is_tab_visible:
             await self.mark_and_broadcast_read_messages()
             await self.channel_layer.group_send(
                 self.global_user_group, {"type": "global.unread_update"}
@@ -71,7 +80,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 self.global_user_group, self.channel_name
             )
         if hasattr(self, "user") and hasattr(self, "conversation_id"):
-            chat_tracker.remove_connection(self.user.id, self.conversation_id)
+            chat_tracker.remove_connection(self.user.id, int(self.conversation_id))
+            print(
+                f"\n{'='*70}"
+                f"\n❌ USER DISCONNECTED FROM WEBSOCKET"
+                f"\n  User: {self.user.email} (ID: {self.user.id})"
+                f"\n  Conversation: {self.conversation_id}"
+                f"\n  Close Code: {close_code}"
+                f"\n{'='*70}\n"
+            )
 
     async def receive_json(self, content, **kwargs):
         """Route incoming WebSocket messages."""
@@ -103,6 +120,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         message_data = await self.create_message_with_data(
             conversation_id, self.user.id, text, msg_type, reply_to
         )
+        print(f"==>> message_data: {message_data}")
         if message_data:
             if hasattr(self, "room_group_name"):
                 await self.channel_layer.group_send(
@@ -144,7 +162,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    "type": "typing_indicator",
+                    "type": "global.typing_indicator",
                     "payload": payload,
                     "sender_id": self.user.id,
                 },
@@ -170,13 +188,18 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         read_message_ids = await self.mark_all_messages_read(
             self.conversation_id, self.user.id
         )
-        await self.notify_message_read(read_message_ids)
+        # await self.notify_message_read(read_message_ids)
         if not read_message_ids:
             return
+
+        await self.channel_layer.group_send(
+            f"user_{self.user.id}", {"type": "global.unread_update"}
+        )
 
         messages = await self.get_messages_for_read_receipt(read_message_ids)
 
         for msg in messages:
+            # Notify sender that messages were read
             await self.channel_layer.group_send(
                 f"user_{msg['sender_id']}",
                 {
@@ -194,20 +217,25 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
-            # Send to conversation group
-            # if hasattr(self, 'room_group_name'):
-            #     await self.channel_layer.group_send(
-            #         self.room_group_name, {"type": "chat.message", "payload": payload}
-            #     )
-
-            # # Send to participants' global groups
-            # participants = await self.get_conversation_participants(self.conversation_id)
-            # for participant_id in participants:
-            #     if participant_id != self.user.id:
-            #         await self.channel_layer.group_send(
-            #             f"user_{participant_id}",
-            #             {"type": "global.read_receipt", "payload": payload}
-            #         )
+            # Broadcast to conversation group so all connected participants see the read status
+            if hasattr(self, "room_group_name"):
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat.message_read",
+                        "payload": {
+                            "type": "message_read",
+                            "conversation_id": msg["conversation_id"],
+                            "message_id": msg["id"],
+                            "text": msg.get("text", ""),
+                            "reader": {
+                                "id": self.user.id,
+                                "first_name": self.user.first_name,
+                                "last_name": self.user.last_name,
+                            },
+                        },
+                    },
+                )
 
     async def notify_message_read(self, message_ids):
         """Notify senders that their messages were read"""
@@ -238,8 +266,23 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def handle_tab_visibility(self, content):
         """Handle tab visibility changes."""
         self.is_tab_visible = content.get("visible", True)
-        if self.is_tab_visible and hasattr(self, "conversation_id"):
-            await self.mark_and_broadcast_read_messages()
+        print(
+            f"\n{'-'*70}"
+            f"\n🔔 TAB VISIBILITY CHANGED"
+            f"\n  User: {self.user.email} (ID: {self.user.id})"
+            f"\n  Tab Visible: {self.is_tab_visible}"
+            f"\n  Conversation: {getattr(self, 'conversation_id', 'N/A')}"
+            f"\n{'-'*70}\n"
+        )
+
+        if hasattr(self, "conversation_id"):
+            # Update visibility in Redis tracker
+            chat_tracker.set_tab_visibility(
+                self.user.id, int(self.conversation_id), self.is_tab_visible
+            )
+            # Mark messages as read if tab is now visible
+            if self.is_tab_visible:
+                await self.mark_and_broadcast_read_messages()
 
     async def handle_add_reaction(self, content):
         """Handle adding emoji reactions to messages."""
@@ -305,6 +348,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             MessageStatus.objects.filter(
                 user_id=user_id, status__in=["sent", "delivered"]
             )
+            .exclude(message__sender_id=user_id)
             .values("message__conversation_id")
             .annotate(count=Count("id"))
         )
@@ -333,11 +377,22 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             status__in=["sent", "delivered"],
         ).exclude(message__sender_id=user_id)
 
-        # Get message IDs before updating
         message_ids = list(unread_statuses.values_list("message_id", flat=True))
+        count = len(message_ids)
 
-        # Update to read
-        unread_statuses.update(status="read")
+        unread_statuses.update(status="read", updated_at=timezone.now())
+
+        if count > 0:
+            user = Users.objects.get(id=user_id)
+            print(
+                f"\n{'-'*70}"
+                f"\n📖 MESSAGES MARKED AS READ"
+                f"\n  User: {user.email} (ID: {user_id})"
+                f"\n  Conversation: {conversation_id}"
+                f"\n  Messages Marked: {count}"
+                f"\n  Message IDs: {message_ids}"
+                f"\n{'-'*70}\n"
+            )
 
         return message_ids
 
@@ -345,9 +400,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     def mark_single_message_read(self, message_id, user_id):
         """Mark a single message as read."""
         try:
-            MessageStatus.objects.filter(
-                message_id=message_id, user_id=user_id
-            ).exclude(message__sender_id=user_id).update(status="read")
+            updated = (
+                MessageStatus.objects.filter(message_id=message_id, user_id=user_id)
+                .exclude(message__sender_id=user_id)
+                .update(status="read")
+            )
+            return updated > 0
         except Exception as e:
             print(f"Error marking message as read: {e}")
 
@@ -384,33 +442,78 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 reply_to=reply_message,
             )
             participants = conversation.participants.exclude(id=user.id)
+
             for participant in participants:
                 is_connected = chat_tracker.is_connected(
-                    participant.id, conversation_id
+                    participant.id, int(conversation_id)
                 )
                 is_visible = chat_tracker.is_tab_visible(
-                    participant.id, conversation_id
+                    participant.id, int(conversation_id)
                 )
 
+                # Determine message status: read if actively viewing, delivered if connected, sent if disconnected
                 if is_connected and is_visible:
-                    initial_status = "read"
+                    status = "read"
                 elif is_connected:
-                    initial_status = "delivered"
+                    status = "delivered"
                 else:
-                    initial_status = "sent"
+                    status = "sent"
+                print(f"==>> status: {status}")
 
                 MessageStatus.objects.create(
                     message=message,
                     user=participant,
-                    status=initial_status,
+                    status=status,
                 )
 
-                async_to_sync(self.channel_layer.group_send)(
-                    f"user_{participant.id}", {"type": "global.unread_update"}
-                )
+                # Broadcast message read notification if user is connected and visible
+                if status == "read":
+                    # Notify sender that message was read immediately
+                    async_to_sync(self.channel_layer.group_send)(
+                        f"user_{user.id}",
+                        {
+                            "type": "global.message_read",
+                            "payload": {
+                                "type": "message_read",
+                                "conversation_id": conversation_id,
+                                "message_id": message.id,
+                                "text": message.text,
+                                "reader": {
+                                    "id": participant.id,
+                                    "first_name": participant.first_name,
+                                    "last_name": participant.last_name,
+                                },
+                                "read_at": timezone.now().isoformat(),
+                            },
+                        },
+                    )
+
+                    # Also broadcast to chat conversation group so all connected participants get read status
+                    async_to_sync(self.channel_layer.group_send)(
+                        f"chat_{conversation_id}",
+                        {
+                            "type": "chat.message_read",
+                            "payload": {
+                                "type": "message_read",
+                                "conversation_id": conversation_id,
+                                "text": message.text,
+                                "message_id": message.id,
+                                "reader": {
+                                    "id": participant.id,
+                                    "first_name": participant.first_name,
+                                    "last_name": participant.last_name,
+                                },
+                                "read_at": timezone.now().isoformat(),
+                            },
+                        },
+                    )
 
                 if not (is_connected and is_visible):
                     self._create_chat_notification(message, participant)
+
+                    async_to_sync(self.channel_layer.group_send)(
+                        f"user_{participant.id}", {"type": "global.unread_update"}
+                    )
 
                     async_to_sync(self.channel_layer.group_send)(
                         f"user_{participant.id}",
@@ -436,6 +539,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                             },
                         },
                     )
+
+            # Return message data for broadcasting to conversation group
             return {
                 "id": message.id,
                 "text": message.text,
@@ -447,8 +552,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     "last_name": user.last_name,
                 },
                 "created_at": message.created_at.isoformat(),
-                "reply_to": reply_message.id if reply_message else None,
+                "conversation_id": conversation_id,
             }
+
         except (Conversation.DoesNotExist, Users.DoesNotExist):
             return None
 
@@ -556,24 +662,82 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def global_message(self, event):
         await self.send_json(event["payload"])
 
-    # async def typing_indicator(self, event):
-    #     print(f"==>> event=====================: {event}")
-    #     if event.get("sender_id") != self.user.id:
-    #         await self.send_json(event["payload"])
+    async def typing_indicator(self, event):
+        print(f"==>> event=====================: {event}")
+        if event.get("sender_id") != self.user.id:
+            await self.send_json(event["payload"])
 
     async def chat_message(self, event):
         payload = event["payload"]
         await self.send_json(payload)
 
-        # Auto-mark as read if tab visible
+        # Receiver auto-read logic
         if (
             payload.get("type") == "new_message"
             and self.is_tab_visible
-            and payload.get("message", {}).get("sender", {}).get("id") != self.user.id
+            and payload["message"]["sender"]["id"] != self.user.id
         ):
-            message_id = payload.get("message", {}).get("id")
-            if message_id:
-                await self.mark_single_message_read(message_id, self.user.id)
+            message_id = payload["message"]["id"]
+
+            updated = await self.mark_single_message_read(message_id, self.user.id)
+
+            if updated:
+                print(
+                    f"\n{'-'*70}"
+                    f"\n📨 REAL-TIME MESSAGE MARKED AS READ"
+                    f"\n  User: {self.user.email} (ID: {self.user.id})"
+                    f"\n  Conversation: {payload['conversation_id']}"
+                    f"\n  Message ID: {message_id}"
+                    f"\n  Sender: {payload['message']['sender']['email']}"
+                    f"\n{'-'*70}\n"
+                )
+                # notify sender
+                await self.channel_layer.group_send(
+                    f"user_{payload['message']['sender']['id']}",
+                    {
+                        "type": "global.message_read",
+                        "payload": {
+                            "type": "message_read",
+                            "conversation_id": payload["conversation_id"],
+                            "message_id": message_id,
+                            "reader": {
+                                "id": self.user.id,
+                                "first_name": self.user.first_name,
+                                "last_name": self.user.last_name,
+                            },
+                            "read_at": timezone.now().isoformat(),
+                        },
+                    },
+                )
+
+                # Broadcast to conversation group so all participants see the read status
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat.message_read",
+                        "payload": {
+                            "type": "message_read",
+                            "conversation_id": payload["conversation_id"],
+                            "message_id": message_id,
+                            "text": payload["message"]["text"],
+                            "reader": {
+                                "id": self.user.id,
+                                "first_name": self.user.first_name,
+                                "last_name": self.user.last_name,
+                            },
+                            "read_at": timezone.now().isoformat(),
+                        },
+                    },
+                )
+
+                # Update unread count for this user
+                await self.channel_layer.group_send(
+                    f"user_{self.user.id}", {"type": "global.unread_update"}
+                )
+
+    async def chat_message_read(self, event):
+        """Handle message read notifications in chat group."""
+        await self.send_json(event["payload"])
 
     async def read_receipt(self, event):
         if event["payload"]["user_id"] != self.user.id:

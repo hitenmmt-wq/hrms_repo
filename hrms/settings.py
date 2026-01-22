@@ -328,3 +328,7 @@ USE_X_FORWARDED_PORT = True
 # Disable CSRF and session security for Cloudflare tunnels
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
+
+AI_PROVIDER = os.getenv("AI_PROVIDER", "DUMMY")
+HF_API_KEY = os.getenv("HF_API_KEY")
+HF_MODEL = os.getenv("HF_MODEL")

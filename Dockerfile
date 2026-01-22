@@ -1,5 +1,5 @@
 # Use the official Python image
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Prevent Python from writing pyc files and enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
+    libcairo2-dev \
     libgdk-pixbuf-2.0-0 \
     libffi-dev \
     shared-mime-info \
