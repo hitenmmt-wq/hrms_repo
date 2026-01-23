@@ -60,6 +60,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     async def handle_user_message(self, data):
         """Process user message and generate AI response."""
         message = data.get("message", "").strip()
+        conversation_id = data.get("conversation_id", "").strip()
         print(f"==>> message: {message}")
 
         if not message:
@@ -72,12 +73,20 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         ai_service = AIService(self.user)
         print(f"==>> ai_service: {ai_service}")
 
-        response = await ai_service.process_query(message)
+        response = await ai_service.process_query(message, conversation_id)
         print(f"==>> response: {response}")
 
         await self.send(json.dumps({"type": "ai_typing", "is_typing": False}))
 
-        await self.send(json.dumps({"type": "ai_message", "message": response}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "ai_message",
+                    "conversation_id": response["conversation_id"],
+                    "message": response,
+                }
+            )
+        )
 
     async def handle_typing_indicator(self, data):
         """Handle typing indicator from user."""

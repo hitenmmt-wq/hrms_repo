@@ -34,7 +34,7 @@ class AIService:
         """Process user query and generate AI response."""
 
         # Get or create conversation
-        conversation = await self._get_or_create_conversation(conversation_id)
+        conversation = await self._get_or_create_conversation(conversation_id, message)
 
         # Save user message
         await self._save_message(conversation, "user", message)
@@ -67,7 +67,7 @@ class AIService:
 
     @database_sync_to_async
     def _get_or_create_conversation(
-        self, conversation_id: str = None
+        self, conversation_id: str = None, message: str = None
     ) -> AIConversation:
         """Get existing or create new conversation."""
         if conversation_id:
@@ -78,8 +78,16 @@ class AIService:
             except AIConversation.DoesNotExist:
                 pass
 
+        title_prompt = self._generate_title_with_llm(message=message)
+        try:
+            llm = HuggingFaceLLM()
+            title_response = llm.generate(title_prompt)
+            title = title_response[0]
+        except Exception as e:
+            print("HF ERROR:", str(e))
+            title = "Default Title"
         return AIConversation.objects.create(
-            user=self.user, session_id=str(uuid.uuid4())
+            user=self.user, session_id=str(uuid.uuid4()), title=title
         )
 
     @database_sync_to_async
@@ -377,6 +385,24 @@ class AIService:
         except Exception as e:
             print("HF ERROR:", str(e))
             return "I'm having trouble generating a response right now. Please try again in a moment."
+
+    def _generate_title_with_llm(self, message: str) -> str:
+        """Generate title for user message using LLM"""
+        prompt = f"""
+           You are Generating a short title for user message.
+           Rules:
+           - Keep it short and simple
+           - Summarize user's message in few words
+           - No puntuation
+           - No emojis
+           - Title case
+           - Should not exceed more than 10 words
+           - No new lines or tab should be there
+
+           User Message : {message}
+        """
+        print(f"==>> prompt: {prompt}")
+        return prompt
 
 
 class ContextBuilder:
