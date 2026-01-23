@@ -51,7 +51,8 @@ def check_in(employee: Users) -> EmployeeAttendance:
         raise ValueError("Already checked in")
 
     attendance.check_in = timezone.now()
-    attendance.save(update_fields=["check_in"])
+    attendance.status = "incomplete_hours"
+    attendance.save(update_fields=["check_in", "status"])
     update_attendance_hours(attendance)
 
     return attendance
