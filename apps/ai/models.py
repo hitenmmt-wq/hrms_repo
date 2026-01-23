@@ -62,11 +62,12 @@ class AIQueryLog(BaseModel):
     """Log AI queries for analytics and improvement."""
 
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="ai_queries")
+    ai_message = models.ForeignKey(
+        AIMessage, on_delete=models.CASCADE, related_name="ai_message_queries"
+    )
     query = models.TextField()
     intent = models.CharField(max_length=100, null=True, blank=True)
-    data_accessed = models.JSONField(
-        default=list, blank=True
-    )  # Track what data was accessed
+    data_accessed = models.JSONField(default=list, blank=True)
     response_quality = models.IntegerField(null=True, blank=True)  # User rating 1-5
     processing_time = models.FloatField(null=True, blank=True)
 

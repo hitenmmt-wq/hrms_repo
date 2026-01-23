@@ -191,6 +191,7 @@ class AIQueryLogAdmin(admin.ModelAdmin):
 
     list_display = [
         "query_id",
+        "ai_message_id",
         "user_display",
         "intent_display",
         "quality_stars",
@@ -202,6 +203,7 @@ class AIQueryLogAdmin(admin.ModelAdmin):
     readonly_fields = [
         "user",
         "query",
+        "ai_message",
         "intent",
         "data_accessed",
         "processing_time",
@@ -231,6 +233,12 @@ class AIQueryLogAdmin(admin.ModelAdmin):
         return f"#{obj.id}"
 
     query_id.short_description = "Query ID"
+
+    def ai_message_id(self, obj):
+        """Display AI message ID"""
+        return f"#{obj.ai_message.id}"
+
+    ai_message_id.short_description = "AI Message ID"
 
     def user_display(self, obj):
         """Display user with role."""
