@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from django.utils import timezone
 
 from apps.ai.hugging_face import HuggingFaceLLM
+from apps.ai.models import AIConversation, AIMessage, AIQueryLog
 from apps.ai.utils import IntentClassifier
 from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance, PaySlip
@@ -18,8 +19,6 @@ from apps.superadmin.models import (
     Position,
     Users,
 )
-
-from .models import AIConversation, AIMessage, AIQueryLog
 
 
 class AIService:
@@ -35,7 +34,7 @@ class AIService:
         """Process user query and generate AI response."""
 
         # Get or create conversation
-        conversation = await self._get_or_create_conversation(conversation_id)
+        conversation = await self._get_or_create_conversation(conversation_id, message)
 
         # Save user message
         await self._save_message(conversation, "user", message)
@@ -56,14 +55,9 @@ class AIService:
             metadata={"intent": intent, "context_used": list(context_data.keys())},
         )
 
-        await self._ai_query_log(self.user, message, intent, list(context_data.keys()))
-        # # Log query for analytics
-        # AIQueryLog.objects.create(
-        #     user=self.user,
-        #     query=message,
-        #     intent=intent,
-        #     data_accessed=list(context_data.keys())
-        # )
+        await self._ai_query_log(
+            self.user, ai_response, ai_message, intent, list(context_data.keys())
+        )
 
         return {
             "response": ai_response,
@@ -73,7 +67,7 @@ class AIService:
 
     @database_sync_to_async
     def _get_or_create_conversation(
-        self, conversation_id: str = None
+        self, conversation_id: str = None, message: str = None
     ) -> AIConversation:
         """Get existing or create new conversation."""
         if conversation_id:
@@ -84,8 +78,16 @@ class AIService:
             except AIConversation.DoesNotExist:
                 pass
 
+        title_prompt = self._generate_title_with_llm(message=message)
+        try:
+            llm = HuggingFaceLLM()
+            title_response = llm.generate(title_prompt)
+            title = title_response[0]
+        except Exception as e:
+            print("HF ERROR:", str(e))
+            title = "Default Title"
         return AIConversation.objects.create(
-            user=self.user, session_id=str(uuid.uuid4())
+            user=self.user, session_id=str(uuid.uuid4()), title=title
         )
 
     @database_sync_to_async
@@ -93,14 +95,20 @@ class AIService:
         return AIMessage.objects.create(
             conversation=conversation,
             message_type=msg_type,
-            content=content,
+            content=content[0] if msg_type == "ai" else content,
+            response_time=content[1] if content and msg_type == "ai" else None,
             metadata=metadata or {},
         )
 
     @database_sync_to_async
-    def _ai_query_log(self, user, message, intent, context_used):
+    def _ai_query_log(self, user, message, ai_message, intent, context_used):
         return AIQueryLog.objects.create(
-            user=user, query=message, intent=intent, data_accessed=context_used
+            user=user,
+            ai_message=ai_message,
+            query=message[0] if message else None,
+            intent=intent,
+            data_accessed=context_used,
+            processing_time=message[1] if message else None,
         )
 
     def _classify_intent(self, message: str) -> str:
@@ -108,34 +116,9 @@ class AIService:
         message_lower = message.lower()
         print(f"==>> message_lower: {message_lower}")
 
-        # Simple keyword-based intent classification
-        if any(
-            word in message_lower
-            for word in IntentClassifier.INTENT_KEYWORDS["leave_inquiry"]
-        ):
-            return "leave_inquiry"
-        elif any(
-            word in message_lower
-            for word in IntentClassifier.INTENT_KEYWORDS["attendance_inquiry"]
-        ):
-            return "attendance_inquiry"
-        elif any(
-            word in message_lower
-            for word in IntentClassifier.INTENT_KEYWORDS["payroll_inquiry"]
-        ):
-            return "payroll_inquiry"
-        elif any(
-            word in message_lower
-            for word in IntentClassifier.INTENT_KEYWORDS["profile_inquiry"]
-        ):
-            return "profile_inquiry"
-        elif any(
-            word in message_lower
-            for word in IntentClassifier.INTENT_KEYWORDS["greeting"]
-        ):
-            return "greeting"
-        else:
-            return "general_inquiry"
+        intent_confidence = IntentClassifier.classify(message_lower)
+        print(f"==>> intent_confidence: {intent_confidence}")
+        return intent_confidence
 
     async def _build_context(self, message: str, intent: str) -> Dict[str, Any]:
         """Build context data based on user role and intent."""
@@ -169,9 +152,14 @@ class AIService:
             try:
                 leave_balance = LeaveBalance.objects.get(employee=self.user)
                 context["my_leave_balance"] = {
+                    "employee": leave_balance.employee,
+                    "year": leave_balance.year,
                     "pl_leave": leave_balance.pl,
                     "sl_leave": leave_balance.sl,
                     "lop_leave": leave_balance.lop,
+                    "used_pl": leave_balance.used_pl,
+                    "used_sl": leave_balance.used_sl,
+                    "used_lop": leave_balance.used_lop,
                 }
             except LeaveBalance.DoesNotExist:
                 context["my_leave_balance"] = None
@@ -189,7 +177,16 @@ class AIService:
                 employee=self.user
             ).order_by("-date")[:5]
             context["my_recent_attendance"] = [
-                {"date": att.date, "status": att.status} for att in recent_attendance
+                {
+                    "employee": att.employee,
+                    "day": att.day,
+                    "status": att.status,
+                    "check_in": att.check_in,
+                    "check_out": att.check_out,
+                    "work_hours": att.work_hours,
+                    "break_hours": att.break_hours,
+                }
+                for att in recent_attendance
             ]
         else:
             employees = EmployeeAttendance.objects.filter(
@@ -217,13 +214,51 @@ class AIService:
             # Employee's own payslips
             recent_payslips = PaySlip.objects.filter(employee=self.user).order_by(
                 "-created_at"
-            )[:3]
+            )[:5]
             context["my_recent_payslips"] = [
-                {"month": ps.month, "year": ps.year} for ps in recent_payslips
+                {
+                    "employee": ps.employee,
+                    "start_date": ps.start_date,
+                    "end_date": ps.end_date,
+                    "month": ps.month,
+                    "days": ps.days,
+                    "basic_salary": ps.basic_salary,
+                    "hr_allowance": ps.hr_allowance,
+                    "special_allowance": ps.special_allowance,
+                    "total_earnings": ps.total_earnings,
+                    "other_deductions": ps.other_deductions,
+                    "leave_deductions": ps.leave_deductions,
+                    "tax_deductions": ps.tax_deductions,
+                    "total_deductions": ps.total_deductions,
+                    "net_salary": ps.net_salary,
+                    "pdf_file": ps.pdf_file.url if ps.pdf_file else None,
+                }
+                for ps in recent_payslips
             ]
         elif self.role in ["admin", "hr"]:
             # Admin/HR summary data
             context["total_payslips_generated"] = PaySlip.objects.count()
+            recent_payslips = PaySlip.objects.all().order_by("-created_at")[:10]
+            context["my_recent_payslips"] = [
+                {
+                    "employee": ps.employee,
+                    "start_date": ps.start_date,
+                    "end_date": ps.end_date,
+                    "month": ps.month,
+                    "days": ps.days,
+                    "basic_salary": ps.basic_salary,
+                    "hr_allowance": ps.hr_allowance,
+                    "special_allowance": ps.special_allowance,
+                    "total_earnings": ps.total_earnings,
+                    "other_deductions": ps.other_deductions,
+                    "leave_deductions": ps.leave_deductions,
+                    "tax_deductions": ps.tax_deductions,
+                    "total_deductions": ps.total_deductions,
+                    "net_salary": ps.net_salary,
+                    "pdf_file": ps.pdf_file.url if ps.pdf_file else None,
+                }
+                for ps in recent_payslips
+            ]
 
         return context
 
@@ -236,7 +271,12 @@ class AIService:
             "name": f"{self.user.first_name} {self.user.last_name}",
             "email": self.user.email,
             "role": self.user.role,
-            "department": getattr(self.user, "department", None),
+            "position": self.user.position.name if self.user.position else None,
+            "department": self.user.department.name if self.user.department else None,
+            "joining_date": self.user.joining_date,
+            "birthdate": self.user.birthdate,
+            "salary_ctc": self.user.salary_ctc,
+            "profile_image": self.user.profile.url if self.user.profile else None,
         }
 
         return context
@@ -274,6 +314,9 @@ class AIService:
         - be concise and professional
         - little bit of exaggration will be good
         - Below are rules for different type of user as per their roles.
+        - Be carefull when particular intent is fetched as there are many tables from which data are being fetched.
+          So decide properly which data to use in response. That will help in better response generation.
+          Also from that table many columns select data set as needed to user question.
 
         - 'employee': You are a helpful HRMS Assistant for employees.
             You assist with:
@@ -342,6 +385,24 @@ class AIService:
         except Exception as e:
             print("HF ERROR:", str(e))
             return "I'm having trouble generating a response right now. Please try again in a moment."
+
+    def _generate_title_with_llm(self, message: str) -> str:
+        """Generate title for user message using LLM"""
+        prompt = f"""
+           You are Generating a short title for user message.
+           Rules:
+           - Keep it short and simple
+           - Summarize user's message in few words
+           - No puntuation
+           - No emojis
+           - Title case
+           - Should not exceed more than 10 words
+           - No new lines or tab should be there
+
+           User Message : {message}
+        """
+        print(f"==>> prompt: {prompt}")
+        return prompt
 
 
 class ContextBuilder:

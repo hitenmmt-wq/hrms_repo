@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
+from apps.base import constants
 from apps.superadmin.models import Users
 
 
@@ -30,12 +31,12 @@ def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:
 def _calculate_status(work_hours: Decimal) -> str:
     """Determine attendance status based on total work hours."""
     if work_hours >= 8:
-        return "present"
+        return constants.PRESENT
     if work_hours >= 4:
-        return "half_day"
+        return constants.HALFDAY_LEAVE
     if work_hours > 0:
-        return "incomplete_hours"
-    return "unpaid_leave"
+        return constants.INCOMPLETE_HOURS
+    return constants.UNPAID_LEAVE
 
 
 @transaction.atomic
@@ -51,7 +52,7 @@ def check_in(employee: Users) -> EmployeeAttendance:
         raise ValueError("Already checked in")
 
     attendance.check_in = timezone.now()
-    attendance.status = "incomplete_hours"
+    attendance.status = constants.PENDING
     attendance.save(update_fields=["check_in", "status"])
     update_attendance_hours(attendance)
 
@@ -91,7 +92,10 @@ def resume_break(attendance: EmployeeAttendance) -> AttendanceBreakLogs:
 @transaction.atomic
 def update_attendance_hours(attendance: EmployeeAttendance) -> EmployeeAttendance:
     """Recalculate and update work hours, break hours, and attendance status."""
-    if attendance.status == "paid_leave" or attendance.status == "unpaid_leave":
+    if (
+        attendance.status == constants.PAID_LEAVE
+        or attendance.status == constants.UNPAID_LEAVE
+    ):
         return attendance
     if attendance.check_out:
         total_hours = Decimal(

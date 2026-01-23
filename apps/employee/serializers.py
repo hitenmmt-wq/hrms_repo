@@ -6,6 +6,7 @@ leave balance tracking, payslip generation, and dashboard data
 for the HRMS employee module.
 """
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.attendance.models import EmployeeAttendance
@@ -49,6 +50,14 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
         user = models.Users(**validated_data)
         user.set_password(password)
         user.save()
+        try:
+            LeaveBalance.objects.get(employee=user, year=timezone.now().year)
+            print("Leave balance exists")
+        except LeaveBalance.DoesNotExist:
+            LeaveBalance.objects.create(
+                employee=user,
+                year=timezone.now().year,
+            )
         try:
             send_email_task(
                 subject="Welcome to HRMS",

@@ -7,15 +7,15 @@ class IntentClassifier:
             "vacation",
             "absent",
             "day off",
-            "pl",
-            "sl",
-            "cl",
             "leave balance",
             "how many days",
             "remaining",
             "available",
             "leave application",
             "apply for leave",
+            "my leaves",
+            "leave status",
+            "request leave",
         ],
         "attendance_inquiry": [
             "attendance",
@@ -78,7 +78,12 @@ class IntentClassifier:
         ],
         "greeting": [
             "hello",
+            "good morning",
+            "good afternoon",
+            "good evening",
             "hi",
+            "good night",
+            "good day",
             "hey",
             "help",
             "how are you",
@@ -90,15 +95,7 @@ class IntentClassifier:
 
     @classmethod
     def classify(cls, message: str) -> str:
-        """
-        Classify message intent with confidence scoring.
-
-        Args:
-            message: User's message
-
-        Returns:
-            Intent name as string
-        """
+        """Classify message intent with confidence scoring."""
         message_lower = message.lower()
         intent_scores = {}
 
@@ -109,6 +106,7 @@ class IntentClassifier:
 
         # Return intent with highest score
         best_intent = max(intent_scores, key=intent_scores.get)
+        print(f"==>> intent_scores: {intent_scores}")
 
         # If no keywords matched, return general inquiry
         if intent_scores[best_intent] == 0:

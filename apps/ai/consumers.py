@@ -1,7 +1,9 @@
 import json
 
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.ai.models import AIQueryLog
 from apps.ai.services import AIService
 
 
@@ -49,6 +51,8 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_user_message(text_data_json)
             elif message_type == "typing":
                 await self.handle_typing_indicator(text_data_json)
+            elif message_type == "response_feedback":
+                await self.handle_feedback_response(text_data_json)
 
         except json.JSONDecodeError:
             await self.send_error("Invalid message format")
@@ -56,6 +60,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     async def handle_user_message(self, data):
         """Process user message and generate AI response."""
         message = data.get("message", "").strip()
+        conversation_id = data.get("conversation_id", "").strip()
         print(f"==>> message: {message}")
 
         if not message:
@@ -68,12 +73,20 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         ai_service = AIService(self.user)
         print(f"==>> ai_service: {ai_service}")
 
-        response = await ai_service.process_query(message)
+        response = await ai_service.process_query(message, conversation_id)
         print(f"==>> response: {response}")
 
         await self.send(json.dumps({"type": "ai_typing", "is_typing": False}))
 
-        await self.send(json.dumps({"type": "ai_message", "message": response}))
+        await self.send(
+            json.dumps(
+                {
+                    "type": "ai_message",
+                    "conversation_id": response["conversation_id"],
+                    "message": response,
+                }
+            )
+        )
 
     async def handle_typing_indicator(self, data):
         """Handle typing indicator from user."""
@@ -84,6 +97,27 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps({"type": "user_typing", "is_typing": is_typing})
         )
 
+    async def handle_feedback_response(self, data):
+        """Handle user feedback on AI response."""
+        feedback = data.get("feedback")
+        ai_message_id = data.get("ai_message_id")
+
+        self.ai_feedback_save(self.user, feedback, ai_message_id)
+        # Here you can log the feedback or process it as needed
+        await self.send(
+            text_data=json.dumps(
+                {"type": "feedback_received", "message": "Thank you for your feedback!"}
+            )
+        )
+
     async def send_error(self, error_message):
         """Send error message to WebSocket."""
         return f"error handling not implemented yet : {error_message}"
+
+    @database_sync_to_async
+    def ai_feedback_save(self, user, feedback, ai_message_id):
+        """Save AI response feedback to the database."""
+        data = AIQueryLog.objects.filter(ai_message_id=ai_message_id).first()
+        data.response_quality = feedback
+        data.save()
+        return data

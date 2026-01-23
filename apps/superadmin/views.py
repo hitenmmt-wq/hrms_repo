@@ -69,12 +69,7 @@ class CustomScriptView(APIView):
         #         year = 2026
         #     )
         # employee_attendance = EmployeeAttendance.objects.create
-        from apps.chat.models import MessageStatus
 
-        msg = MessageStatus.objects.all()
-        for ab in msg:
-            ab.status = "read"
-            ab.save()
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
 
@@ -91,7 +86,7 @@ class AdminDashboardView(APIView):
         """Get comprehensive dashboard data including employee stats, attendance, and announcements."""
         try:
             today = timezone.now().date()
-            late_time = timezone.make_aware(datetime.combine(today, time(10, 5)))
+            late_time = timezone.make_aware(datetime.combine(today, time(10, 30)))
             total_employees = models.Users.objects.filter(
                 role=constants.EMPLOYEE_USER, is_active=True
             ).select_related("department", "position")
@@ -110,7 +105,9 @@ class AdminDashboardView(APIView):
             )
 
             current_birthdays = models.Users.objects.filter(
-                is_active=True, birthdate__month=today.month, birthdate__day=today.day
+                is_active=True,
+                birthdate__month=today.month,
+                birthdate__day__gte=today.day,
             ).select_related("department", "position")
 
             upcoming_leaves = (
