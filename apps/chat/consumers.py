@@ -95,6 +95,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         event = content.get("type")
         handlers = {
             "send_message": self.handle_send_message,
+            "update_message": self.handle_update_message,
             "delete_message": self.handle_delete_message,
             "typing_start": self.handle_start_typing,
             "typing_stop": self.handle_stop_typing,
@@ -110,6 +111,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if handler:
             await handler(content)
 
+    async def handle_update_message(self, content):
+        message_id = content.get("message_id", "")
+        new_text = content.get("new_text", "").strip()
+        if not message_id or not new_text:
+            return self.send_json(
+                {"type": "error", "message": "Message ID and new text are required"}
+            )
+        updated_message = await self.update_message(message_id, self.user.id, new_text)
+        await self.send_json({"type": updated_message, "message_id": message_id})
+        return updated_message
+
     async def handle_delete_message(self, content):
         message_id = content.get("message_id", "")
         if not message_id:
@@ -121,7 +133,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         return delete_message
 
     async def handle_send_message(self, content):
-        print(f"==>> content: {content}")
         """Handle sending new messages and broadcasting to conversation participants."""
         text = content.get("text", "")
         msg_type = content.get("msg_type", "text")
@@ -146,12 +157,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 )
 
     async def handle_start_typing(self, content):
-        print(f"==>> content: {content}")
         """Broadcast typing start to all participants."""
         await self.broadcast_typing(content)
 
     async def handle_stop_typing(self, content):
-        print(f"==>> content: {content}")
         """Broadcast typing stop to all participants."""
         await self.broadcast_typing(content)
 
@@ -551,7 +560,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                         },
                     )
 
-            # Return message data for broadcasting to conversation group
             return {
                 "id": message.id,
                 "text": message.text,
@@ -658,9 +666,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return []
 
     @database_sync_to_async
+    def update_message(self, message_id, user_id, new_text):
+        """Update a message's text."""
+        try:
+            message = Message.objects.filter(id=message_id).first()
+            if message and message.sender.id == user_id:
+                message.text = new_text
+                message.updated_at = timezone.now()
+                message.save()
+                return "Message updated successfully"
+            return "Unauthorized to update this message"
+        except Message.DoesNotExist:
+            return "Message does not exist"
+
+    @database_sync_to_async
     def delete_message(self, message_id, user_id):
-        print(f"==>> user_id: {user_id}")
-        print(f"==>> message_id: {message_id}")
         """Delete a message."""
         try:
             message = Message.objects.filter(id=message_id).first()
@@ -676,7 +696,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event["payload"])
 
     async def global_typing(self, event):
-        print(f"==>> event-------------------: {event}")
         if event.get("sender_id") != self.user.id:
             await self.send_json(event["payload"])
 
@@ -688,7 +707,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event["payload"])
 
     async def typing_indicator(self, event):
-        print(f"==>> event=====================: {event}")
         if event.get("sender_id") != self.user.id:
             await self.send_json(event["payload"])
 

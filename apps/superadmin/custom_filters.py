@@ -35,10 +35,11 @@ class HolidayFilter(django_filters.FilterSet):
 class AnnouncementFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
     date = django_filters.DateFilter(field_name="date", lookup_expr="exact")
+    created_at = django_filters.DateFilter(field_name="created_at", lookup_expr="exact")
 
     class Meta:
         model = models.Announcement
-        fields = ["title", "date"]
+        fields = ["title", "date", "created_at"]
 
 
 class DepartmentFilter(django_filters.FilterSet):
