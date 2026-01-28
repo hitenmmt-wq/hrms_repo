@@ -2,8 +2,9 @@ import json
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.core.serializers.json import DjangoJSONEncoder
 
-from apps.ai.models import AIQueryLog
+from apps.ai.models import AIConversation, AIMessage, AIQueryLog
 from apps.ai.services import AIService
 
 
@@ -53,6 +54,12 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_typing_indicator(text_data_json)
             elif message_type == "response_feedback":
                 await self.handle_feedback_response(text_data_json)
+            elif message_type == "get_conversation_list":
+                await self.handle_get_conversation_list(text_data_json)
+            elif message_type == "get_message_details":
+                await self.handle_get_message_details(text_data_json)
+            elif message_type == "delete_conversation":
+                await self.handle_delete_conversation(text_data_json)
 
         except json.JSONDecodeError:
             await self.send_error("Invalid message format")
@@ -114,6 +121,36 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         """Send error message to WebSocket."""
         return f"error handling not implemented yet : {error_message}"
 
+    async def handle_get_conversation_list(self):
+        """Handle request to get conversation list."""
+        conversation_list = await self.get_conversation_list()
+        await self.send(
+            text_data=json.dumps(
+                {"type": "conversation_list", "conversations": conversation_list}
+            )
+        )
+
+    async def handle_get_message_details(self, data):
+        """Handle request to get specific message details."""
+        conversation_id = data.get("conversation_id")
+        message_details = await self.get_message_details(conversation_id)
+        await self.send(
+            text_data=json.dumps(
+                {"type": "message_details", "message": message_details},
+                cls=DjangoJSONEncoder,
+            )
+        )
+
+    async def handle_delete_conversation(self, data):
+        """Handle request to delete a conversation."""
+        conversation_id = data.get("conversation_id")
+        await self.delete_conversation(conversation_id)
+        await self.send(
+            text_data=json.dumps(
+                {"type": "conversation_deleted", "conversation_id": conversation_id}
+            )
+        )
+
     @database_sync_to_async
     def ai_feedback_save(self, user, feedback, ai_message_id):
         """Save AI response feedback to the database."""
@@ -121,3 +158,32 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         data.response_quality = feedback
         data.save()
         return data
+
+    @database_sync_to_async
+    def get_conversation_list(self):
+        """Retrieve conversation list for the user."""
+        data = (
+            AIConversation.objects.filter(user=self.user)
+            .order_by("-created_at")
+            .values("id", "title", "session_id")
+        )
+        return list(data)
+
+    @database_sync_to_async
+    def get_message_details(self, conversation_id):
+        """Retrieve detailed information about messages in a conversation."""
+        data = (
+            AIMessage.objects.filter(conversation_id=conversation_id)
+            .order_by("-created_at")
+            .values(
+                "message_type", "content", "response_time", "metadata", "created_at"
+            )
+        )
+        return list(data)
+
+    @database_sync_to_async
+    def delete_conversation(self, conversation_id):
+        """Delete a conversation and its associated messages."""
+        conversation = AIConversation.objects.get(id=conversation_id)
+        conversation.delete()
+        return "Conversation Deleted Successfully"

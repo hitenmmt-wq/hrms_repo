@@ -175,7 +175,7 @@ class AIService:
             # Employee's own attendance
             recent_attendance = EmployeeAttendance.objects.filter(
                 employee=self.user
-            ).order_by("-date")[:5]
+            ).order_by("-day")[:5]
             context["my_recent_attendance"] = [
                 {
                     "employee": att.employee,
