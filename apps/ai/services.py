@@ -374,9 +374,6 @@ class AIService:
         # Placeholder for actual AI integration
         # This would integrate with OpenAI, Claude, or other LLM APIs
 
-        if intent == "greeting":
-            return f"Hello {self.user.first_name}! I'm your HRMS AI assistant. How can I help you today?"
-
         prompt = self._build_prompt(message, context)
         try:
             llm = HuggingFaceLLM()
