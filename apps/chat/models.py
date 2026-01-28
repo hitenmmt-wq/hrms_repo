@@ -119,6 +119,27 @@ class Message(BaseModel):
     def __str__(self):
         return f"Message({self.id}) from {self.sender.email} in {self.conversation.name or 'Unnamed'}"
 
+    def get_status_for_user(self, user):
+        """
+        Returns message status from POV of a user
+        """
+        if self.sender_id == user:
+            statuses = self.statuses.values_list("status", flat=True)
+
+            if not statuses:
+                return "sent"
+
+            if all(s == "read" for s in statuses):
+                return "read"
+
+            if any(s in ["delivered", "read"] for s in statuses):
+                return "delivered"
+
+            return "sent"
+
+        status_obj = self.statuses.filter(user=user).first()
+        return status_obj.status if status_obj else "sent"
+
 
 class MessageStatus(BaseModel):
     """Message delivery and read status tracking per user."""

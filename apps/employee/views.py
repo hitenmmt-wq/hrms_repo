@@ -495,7 +495,14 @@ class PaySlipViewSet(BaseViewSet):
         start_date = request.data.get("start_date")
         end_date = request.data.get("end_date")
         month_name = request.data.get("month_name")
-        days = request.data.get("days")
+        # days = request.data.get("days")
+        month = request.data.get("month")
+        year = request.data.get("year")
+        holidays = holidays_in_month(year, month)
+        working_days = weekdays_count(
+            datetime.strptime(start_date, "%Y-%m-%d").date(),
+            datetime.strptime(end_date, "%Y-%m-%d").date(),
+        ) - int(holidays)
         basic_salary = request.data.get("basic_salary")
         hr_allowance = request.data.get("hr_allowance")
         special_allowance = request.data.get("special_allowance")
@@ -522,7 +529,7 @@ class PaySlipViewSet(BaseViewSet):
                 start_date=start_date,
                 end_date=end_date,
                 month=month_name,
-                days=days,
+                days=working_days,
                 basic_salary=basic_salary,
                 hr_allowance=hr_allowance,
                 special_allowance=special_allowance,

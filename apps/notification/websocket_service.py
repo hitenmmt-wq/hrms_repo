@@ -3,7 +3,7 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from apps.notification.models import Notification
+from apps.notification.models import DeviceToken, Notification
 from apps.notification.serializers import NotificationSerializer
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,17 @@ class NotificationWebSocketService:
 
             async_to_sync(channel_layer.group_send)(group_name, payload)
             print("Notification sent successfully via WebSocket")
+
+            # Here adding real-time push notification FCM
+            tokens = DeviceToken.objects.all().values_list("token", flat=True)
+            print(f"==>> tokens: {tokens}")
+
+            if tokens:
+                for token in tokens:
+                    print(f"==>> Sending push notification to token: {token}")
+                    from apps.base.firebase import send_fcm_notification
+
+                    send_fcm_notification(token)
         except Exception as e:
             print(f"Error sending notification via WebSocket: {e}")
             import traceback

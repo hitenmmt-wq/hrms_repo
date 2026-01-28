@@ -470,3 +470,33 @@ def auto_checkout_employees():
         print(f"Auto checked out {attendance.employee.email} for {today}")
 
     return "Auto checkout completed for employees."
+
+
+@shared_task
+def notify_employee_next_holiday():
+    print("-------This function called to notify employee on next holiday----")
+    today = timezone.now().date()
+    next_day = today + timezone.timedelta(days=1)
+    next_holiday = (
+        models.Holiday.objects.filter(date__gte=today).order_by("date").first()
+    )
+
+    if next_holiday is None:
+        return "No holiday found"
+
+    if next_holiday.date != next_day:
+        return "No holiday found on next day"
+
+    if next_holiday.date == next_day:
+        receipents = models.Users.objects.filter(is_active=True)
+        notification_type = NotificationType.objects.filter(
+            code=constants.NEXT_DAY_HOLIDAY
+        ).first()
+        for receipent in receipents:
+            create_notification(
+                recipient=receipent,
+                notification_type=notification_type,
+                title="🎉 Holiday Reminder!",
+                message=f"Upcoming holiday {next_holiday.name} is on {next_holiday.date}. Make sure to make it count.",
+                related_object=next_holiday,
+            )

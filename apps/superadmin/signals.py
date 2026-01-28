@@ -51,6 +51,22 @@ def notify_on_announcement(sender, instance, created, **kwargs):
         )
 
 
+@receiver(post_save, sender=Announcement)
+def notify_on_announcement_update(sender, instance, created, **kwargs):
+    if created:
+        return
+    notification_type = NotificationType.objects.get(code=constants.ANNOUNCEMENT_NOTIFY)
+    employees = Users.objects.filter(is_active=True)
+    for employee in employees:
+        create_notification(
+            recipient=employee,
+            notification_type=notification_type,
+            title=f"Updated: {instance.title}",
+            message="An announcement has been updated. Please check the details.",
+            related_object=instance,
+        )
+
+
 @receiver(post_save, sender=Leave)
 def notify_on_leave_apply(sender, instance, created, **kwargs):
     admins = Users.objects.filter(role="admin", is_active=True)
