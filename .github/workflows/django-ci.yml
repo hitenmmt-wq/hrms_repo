@@ -91,6 +91,12 @@ jobs:
             fi
           done
 
+
+      - name: Create Firebase service account file
+        run: |
+          mkdir -p apps/config
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > apps/config/firebase-service-account.json
+
       - name: Run Django checks
         run: python manage.py check
 
