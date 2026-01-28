@@ -500,8 +500,8 @@ class PaySlipViewSet(BaseViewSet):
         year = request.data.get("year")
         holidays = holidays_in_month(year, month)
         working_days = weekdays_count(
-            datetime.strptime(start_date, "%Y-%m-%d"),
-            datetime.strptime(end_date, "%Y-%m-%d"),
+            datetime.strptime(start_date, "%Y-%m-%d").date(),
+            datetime.strptime(end_date, "%Y-%m-%d").date(),
         ) - int(holidays)
         basic_salary = request.data.get("basic_salary")
         hr_allowance = request.data.get("hr_allowance")

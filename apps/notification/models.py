@@ -13,6 +13,17 @@ from apps.base.models import BaseModel
 from apps.superadmin.models import Users
 
 
+class DeviceToken(models.Model):
+    user = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="device_tokens"
+    )
+    token = models.TextField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.email
+
+
 class NotificationType(BaseModel):
     """Notification categories and types for system alerts."""
 

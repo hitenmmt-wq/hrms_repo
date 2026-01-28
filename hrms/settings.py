@@ -17,6 +17,8 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 
+import apps.base.firebase  # noqa: F401
+
 load_dotenv()
 
 

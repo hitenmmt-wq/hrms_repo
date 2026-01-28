@@ -59,7 +59,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 )
 
         await self.accept()
-        await self.send_missed_messages()
+        # await self.send_missed_messages()
         await self.send_unread_counts()
 
         # Mark messages as read if in specific conversation
@@ -498,6 +498,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                                 "conversation_id": conversation_id,
                                 "message_id": message.id,
                                 "text": message.text,
+                                "status": message.get_status_for_user(user.id),
                                 "reader": {
                                     "id": participant.id,
                                     "first_name": participant.first_name,
@@ -518,6 +519,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                                 "conversation_id": conversation_id,
                                 "text": message.text,
                                 "message_id": message.id,
+                                "status": message.get_status_for_user(user.id),
                                 "reader": {
                                     "id": participant.id,
                                     "first_name": participant.first_name,
@@ -535,30 +537,31 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                         f"user_{participant.id}", {"type": "global.unread_update"}
                     )
 
-                    async_to_sync(self.channel_layer.group_send)(
-                        f"user_{participant.id}",
-                        {
-                            "type": "global.message",
-                            "payload": {
-                                "type": "new_message",
-                                "message_id": message.id,
-                                "conversation_id": conversation_id,
-                                "sender": {
-                                    "id": user.id,
-                                    "email": user.email,
-                                    "first_name": user.first_name,
-                                    "last_name": user.last_name,
-                                },
-                                "message": {
-                                    "id": message.id,
-                                    "text": text,
-                                    "msg_type": msg_type,
-                                    "created_at": message.created_at.isoformat(),
-                                },
-                                "timestamp": message.created_at.isoformat(),
-                            },
-                        },
-                    )
+                    # async_to_sync(self.channel_layer.group_send)(
+                    #     f"user_{participant.id}",
+                    #     {
+                    #         "type": "global.message",
+                    #         "payload": {
+                    #             "type": "new_message",
+                    #             "message_id": message.id,
+                    #             "conversation_id": conversation_id,
+                    #             "status": message.get_status_for_user(participant),
+                    #             "sender": {
+                    #                 "id": user.id,
+                    #                 "email": user.email,
+                    #                 "first_name": user.first_name,
+                    #                 "last_name": user.last_name,
+                    #             },
+                    #             "message": {
+                    #                 "id": message.id,
+                    #                 "text": text,
+                    #                 "msg_type": msg_type,
+                    #                 "created_at": message.created_at.isoformat(),
+                    #             },
+                    #             "timestamp": message.created_at.isoformat(),
+                    #         },
+                    #     },
+                    # )
 
             return {
                 "id": message.id,
@@ -572,6 +575,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 },
                 "created_at": message.created_at.isoformat(),
                 "conversation_id": conversation_id,
+                "status": "sent",
             }
 
         except (Conversation.DoesNotExist, Users.DoesNotExist):
@@ -718,7 +722,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if (
             payload.get("type") == "new_message"
             and self.is_tab_visible
-            and payload["message"]["sender"]["id"] != self.user.id
+            and payload["message"]["sender"]["id"] == self.user.id
         ):
             message_id = payload["message"]["id"]
 
@@ -734,44 +738,44 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     f"\n  Sender: {payload['message']['sender']['email']}"
                     f"\n{'-'*70}\n"
                 )
-                # notify sender
-                await self.channel_layer.group_send(
-                    f"user_{payload['message']['sender']['id']}",
-                    {
-                        "type": "global.message_read",
-                        "payload": {
-                            "type": "message_read",
-                            "conversation_id": payload["conversation_id"],
-                            "message_id": message_id,
-                            "reader": {
-                                "id": self.user.id,
-                                "first_name": self.user.first_name,
-                                "last_name": self.user.last_name,
-                            },
-                            "read_at": timezone.now().isoformat(),
-                        },
-                    },
-                )
+                # # notify sender
+                # await self.channel_layer.group_send(
+                #     f"user_{payload['message']['sender']['id']}",
+                #     {
+                #         "type": "global.message_read",
+                #         "payload": {
+                #             "type": "message_read",
+                #             "conversation_id": payload["conversation_id"],
+                #             "message_id": message_id,
+                #             "reader": {
+                #                 "id": self.user.id,
+                #                 "first_name": self.user.first_name,
+                #                 "last_name": self.user.last_name,
+                #             },
+                #             "read_at": timezone.now().isoformat(),
+                #         },
+                #     },
+                # )
 
-                # Broadcast to conversation group so all participants see the read status
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "chat.message_read",
-                        "payload": {
-                            "type": "message_read",
-                            "conversation_id": payload["conversation_id"],
-                            "message_id": message_id,
-                            "text": payload["message"]["text"],
-                            "reader": {
-                                "id": self.user.id,
-                                "first_name": self.user.first_name,
-                                "last_name": self.user.last_name,
-                            },
-                            "read_at": timezone.now().isoformat(),
-                        },
-                    },
-                )
+                # # Broadcast to conversation group so all participants see the read status
+                # await self.channel_layer.group_send(
+                #     self.room_group_name,
+                #     {
+                #         "type": "chat.message_read",
+                #         "payload": {
+                #             "type": "message_read",
+                #             "conversation_id": payload["conversation_id"],
+                #             "message_id": message_id,
+                #             "text": payload["message"]["text"] + "ffgfgfgfgfgg",
+                #             "reader": {
+                #                 "id": self.user.id,
+                #                 "first_name": self.user.first_name,
+                #                 "last_name": self.user.last_name,
+                #             },
+                #             "read_at": timezone.now().isoformat(),
+                #         },
+                #     },
+                # )
 
                 # Update unread count for this user
                 await self.channel_layer.group_send(
@@ -786,23 +790,23 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if event["payload"]["user_id"] != self.user.id:
             await self.send_json(event["payload"])
 
-    async def send_missed_messages(self):
-        """Send missed messages to user."""
-        try:
-            missed_messages = await self.get_unread_messages(self.user.id)
-            for message in missed_messages:
-                await self.send_json(
-                    {
-                        "type": "missed_message",
-                        "message_id": message.id,
-                        "conversation_id": message.conversation_id,
-                        "sender": message.sender.email,
-                        "content": message.text,
-                        "timestamp": message.created_at.isoformat(),
-                    }
-                )
-        except Exception as e:
-            print(f"Failed to load missed messages: {e}")
+    # async def send_missed_messages(self):
+    #     """Send missed messages to user."""
+    #     try:
+    #         missed_messages = await self.get_unread_messages(self.user.id)
+    #         for message in missed_messages:
+    #             await self.send_json(
+    #                 {
+    #                     "type": "missed_message",
+    #                     "message_id": message.id,
+    #                     "conversation_id": message.conversation_id,
+    #                     "sender": message.sender.email,
+    #                     "content": message.text,
+    #                     "timestamp": message.created_at.isoformat(),
+    #                 }
+    #             )
+    #     except Exception as e:
+    #         print(f"Failed to load missed messages: {e}")
 
     async def send_unread_counts(self):
         data = await self.get_unread_counts(self.user.id)
@@ -834,6 +838,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                             "sender": msg.sender.email,
                             "text": msg.text,
                             "timestamp": msg.created_at.isoformat(),
+                            "status": msg.get_status_for_user(self.user.id),
                         }
                         for msg in messages
                     ],

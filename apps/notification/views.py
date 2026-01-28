@@ -9,7 +9,7 @@ from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.notification.custom_filters import NotificationFilter, NotificationTypeFilter
-from apps.notification.models import Notification, NotificationType
+from apps.notification.models import DeviceToken, Notification, NotificationType
 from apps.notification.serializers import (
     NotificationSerializer,
     NotificationTypeSerializer,
@@ -90,3 +90,17 @@ class MarkAsReadView(APIView):
             return ApiResponse.success({"message": "Notification read"})
 
         return ApiResponse.error({"error": "Notification not found"}, status=404)
+
+
+class SaveFCMTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get("token")
+
+        if not token:
+            return ApiResponse.error({"error": "Token required"}, status=400)
+
+        DeviceToken.objects.get_or_create(user=request.user, token=token)
+
+        return ApiResponse.success({"Device token generated successfully": True})

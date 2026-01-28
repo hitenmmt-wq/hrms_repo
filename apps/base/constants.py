@@ -44,3 +44,5 @@ HALFDAY_LEAVE = "halfday_leave"
 BIRTHDAY = "birthday"
 
 LATE_COMING = "late_coming"
+
+NEXT_DAY_HOLIDAY = "holiday"

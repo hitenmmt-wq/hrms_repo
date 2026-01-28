@@ -40,4 +40,8 @@ app.conf.beat_schedule = {
         "task": "apps.employee.tasks.auto_checkout_employees",
         "schedule": crontab(minute=59, hour=23),  # Every day at 11:59 PM
     },
+    "notify_employee_next_holiday": {
+        "task": "apps.employee.tasks.notify_employee_next_holiday",
+        "schedule": crontab(minute=0, hour=11),
+    },
 }
