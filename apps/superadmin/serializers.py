@@ -342,6 +342,7 @@ class LeaveSerializer(serializers.ModelSerializer):
             "id",
             "employee",
             "leave_type",
+            "is_sandwich_applied",
             "from_date",
             "to_date",
             "total_days",

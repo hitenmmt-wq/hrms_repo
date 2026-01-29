@@ -275,3 +275,73 @@ def generate_payslip_pdf(payslip):
         return HttpResponse(
             f"PDF generation failed: {str(e)}", content_type="text/plain", status=500
         )
+
+
+def is_weekend(date):
+    return date.weekday() >= 5
+
+
+def is_non_working(date, holiday_dates):
+    return is_weekend(date) or date in holiday_dates
+
+
+def calculate_leaves_with_sandwich(leave):
+    """Calculate total leave days with sandwich rule applied."""
+    if not leave.from_date:
+        return 0, False
+
+    if not leave.to_date:
+        return 1, False
+
+    holidays = Holiday.objects.filter(
+        date__gte=leave.from_date,
+        date__lte=leave.to_date,
+        date__week_day__in=[1, 2, 3, 4, 5],
+    )
+    holiday_dates = set(h.date for h in holidays)
+
+    start = leave.from_date
+    end = leave.to_date
+    if start == end:
+        return 1, False
+
+    base_days = (end - start).days + 1
+
+    # STEP 1: Check "between" sandwich (holiday/weekend inside range)
+    current = start + timedelta(days=1)
+    between_non_working = False
+
+    while current < end:
+        if is_non_working(current, holiday_dates):
+            between_non_working = True
+            break
+        current += timedelta(days=1)
+
+    if between_non_working:
+        return base_days, True
+
+    # STEP 2: Check chain sandwich (leave on both sides of non-working days)
+    before = start - timedelta(days=1)
+    after = end + timedelta(days=1)
+
+    if is_non_working(before, holiday_dates) and is_non_working(after, holiday_dates):
+        absorbed_start = start
+        absorbed_end = end
+
+        prev_day = before
+        while is_non_working(prev_day, holiday_dates):
+            absorbed_start = prev_day
+            prev_day -= timedelta(days=1)
+
+        next_day = after
+        while is_non_working(next_day, holiday_dates):
+            absorbed_end = next_day
+            next_day += timedelta(days=1)
+
+        total_days = (absorbed_end - absorbed_start).days + 1
+        print(f"==>> total_days: {total_days}")
+        return total_days, True
+
+    # STEP 3: No sandwich
+    print(f"==>> base_days: {base_days}")
+    return base_days, False
