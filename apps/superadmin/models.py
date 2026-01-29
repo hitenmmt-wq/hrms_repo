@@ -175,7 +175,7 @@ class Leave(BaseModel):
     )
     reason = models.TextField()
     status = models.CharField(max_length=50, default="pending")
-
+    is_sandwich_applied = models.BooleanField(default=False)
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(
         Users,
@@ -196,11 +196,19 @@ class Leave(BaseModel):
         return f"{self.employee.email} - {self.leave_type} - {self.status}"
 
     def save(self, *args, **kwargs):
-        """Auto-calculate total days based on leave type and date range."""
+        """Auto-calculate total days based on leave type and date range with sandwich rule."""
+        from apps.employee.utils import calculate_leaves_with_sandwich
+
         if self.leave_type.code == constants.HALFDAY_LEAVE:
             self.total_days = 0.5
+            self.is_sandwich_applied = False
         elif not self.to_date:
             self.total_days = 1
+            self.is_sandwich_applied = False
         else:
-            self.total_days = (self.to_date - self.from_date).days + 1
+            # Calculate total days with sandwich rule
+            total_days, is_sandwich = calculate_leaves_with_sandwich(self)
+            self.total_days = total_days
+            self.is_sandwich_applied = is_sandwich
+
         super().save(*args, **kwargs)

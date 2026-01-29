@@ -178,6 +178,7 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
             "total_days",
             "day_part",
             "reason",
+            "is_sandwich_applied",
             "status",
         ]
         depth = 1
@@ -202,6 +203,7 @@ class ApplyLeaveCreateSerializer(serializers.ModelSerializer):
             "day_part",
             "total_days",
             "reason",
+            "is_sandwich_applied",
             "status",
         ]
 

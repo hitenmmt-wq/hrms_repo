@@ -1,10 +1,20 @@
 import json
+import os
 
 import firebase_admin
 import requests
 from firebase_admin import credentials
 
-cred = credentials.Certificate("apps/config/firebase-service-account.json")
+FIREBASE_CRED_PATH = os.getenv(
+    "FIREBASE_CREDENTIAL_PATH",
+    "apps/config/firebase-service-account.json",
+)
+
+if os.path.exists(FIREBASE_CRED_PATH):
+    cred = credentials.Certificate(FIREBASE_CRED_PATH)
+    firebase_admin.initialize_app(cred)
+else:
+    print("⚠️ Firebase credentials not found. Firebase disabled.")
 
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
