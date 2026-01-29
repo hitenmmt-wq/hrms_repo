@@ -55,7 +55,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             elif message_type == "response_feedback":
                 await self.handle_feedback_response(text_data_json)
             elif message_type == "get_conversation_list":
-                await self.handle_get_conversation_list(text_data_json)
+                await self.handle_get_conversation_list()
             elif message_type == "get_message_details":
                 await self.handle_get_message_details(text_data_json)
             elif message_type == "delete_conversation":
