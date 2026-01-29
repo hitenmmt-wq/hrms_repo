@@ -28,7 +28,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
-        - TZ=Asia/Kolkata
+      TZ: "Asia/Kolkata"
     env_file:
       - .env.docker
 
@@ -60,7 +60,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
-        - TZ=Asia/Kolkata
+      TZ: "Asia/Kolkata"
     env_file:
       - .env.docker
     restart: unless-stopped
@@ -84,7 +84,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
-        - TZ=Asia/Kolkata
+      TZ: "Asia/Kolkata"
     env_file:
       - .env.docker
     restart: unless-stopped
