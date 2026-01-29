@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from apps.ai.hugging_face import HuggingFaceLLM
 from apps.ai.models import AIConversation, AIMessage, AIQueryLog
-from apps.ai.utils import IntentClassifier
+from apps.ai.utils import IntentClassifier, PromptTemplates
 from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.superadmin.models import (
@@ -175,7 +175,7 @@ class AIService:
             # Employee's own attendance
             recent_attendance = EmployeeAttendance.objects.filter(
                 employee=self.user
-            ).order_by("-date")[:5]
+            ).order_by("-day")[:5]
             context["my_recent_attendance"] = [
                 {
                     "employee": att.employee,
@@ -298,83 +298,75 @@ class AIService:
                 "leave_types": list(LeaveType.objects.values("name", "code")),
                 "holidays": (list(Holiday.objects.values("name", "date"))),
             }
+        if self.role == "employee":
+            context["company_stats"] = {
+                "total_employees": (Users.objects.filter(role="employee").count)(),
+                "total_departments": (Department.objects.count)(),
+                "announcements": list(
+                    Announcement.objects.values("title", "created_at")
+                ),
+                "leave_types": list(LeaveType.objects.values("name", "code")),
+                "holidays": (list(Holiday.objects.values("name", "date"))),
+            }
 
         return context
 
-    def _build_prompt(self, message: str, context: Dict[str, Any]) -> str:
+    def _build_prompt(self, message: str, context: Dict[str, Any], intent: str) -> str:
+        """Build prompt with system context, intent-specific template, and data."""
+
+        # Get role-specific system context
+        system_context = PromptTemplates.SYSTEM_CONTEXT.get(
+            self.role, PromptTemplates.SYSTEM_CONTEXT["employee"]
+        )
+
+        # Get intent-specific template
+        intent_template = PromptTemplates.get_template_for_intent(intent)
+        print(f"==>> intent_template: {intent_template}")
+
         prompt = f"""
-        You are an  HRMS AI assistant.
-        User Role : {self.role}
-        User question : {message}
-        Relevant HRMS data (from DB) : {context}
+            {system_context}
 
-        Rules :
-        - Use only the provided data
-        - do not guess
-        - be concise and professional
-        - little bit of exaggration will be good
-        - Below are rules for different type of user as per their roles.
-        - Be carefull when particular intent is fetched as there are many tables from which data are being fetched.
-          So decide properly which data to use in response. That will help in better response generation.
-          Also from that table many columns select data set as needed to user question.
+            User Question: {message}
 
-        - 'employee': You are a helpful HRMS Assistant for employees.
-            You assist with:
-            - Leave balance and application status
-            - Attendance records and statistics
-            - Payslip information
-            - Personal profile information
-            - General HR policies and procedures
+            Intent Detected: {intent}
 
-            Rules:
-            1. Only show the user their own data
-            2. Be concise and friendly
-            3. If data is not available, suggest checking the HRMS system directly
-            4. Never provide other employees' data
-            5. Use simple, non-technical language,
+            Instruction for this response:
+            {intent_template}
 
-        - 'hr': You are an HR Assistant for HR personnel.
-            You help with:
-            - Leave management (pending, approved, rejected applications)
-            - Employee information and search
-            - Attendance tracking and analytics
-            - Payroll summaries
-            - Company policies and procedures
-            - Department and position information
+            Relevant HRMS Data from Database:
+            {context}
 
-            Rules:
-            1. You can access all employee data
-            2. Provide insights and summaries
-            3. Help with decision-making
-            4. Be professional and detail-oriented
-            5. Highlight important trends or issues,
-
-        - 'admin': You are the HRMS System Administrator Assistant.
-            You have full access to:
-            - All employee and company data
-            - System analytics and reports
-            - Configuration information
-            - Access logs and activity
-            - Performance metrics
-
-            Rules:
-            1. You have full system access
-            2. Provide comprehensive data and insights
-            3. Help with system management and optimization
-            4. Highlight critical issues
-            5. Provide technical details when relevant,
+            Response Guidelines:
+            - Do not update timezone according to UTC.
+            - Use Datetime timezone as its stored in DB only.
+            - Use only the provided data, do not guess or invent information
+            - Be concise and professional
+            - Structure your response logically
+            - Include specific numbers and facts when available
+            - If data is unavailable, suggest checking the HRMS system directly
+            - Keep responses friendly but professional
+            - You are an AI assistant integrated with HRMS system.
+            - Your purpose is to help users with HR-related queries.
+            - Always maintain professionalism and confidentiality.
+            - If unsure, ask for clarification.
+            - After getting required context data, please rectify the need of user,
+              and then show only required data or needed data to user.
+            - Don't show extra data which is not asked by user.
+            - If user is asking for specific data, then show only that data.
         """
         return prompt
 
     def _generate_response(
         self, message: str, context: Dict[str, Any], intent: str
     ) -> str:
+        """Generate AI response based on context and intent using structured templates."""
+        print(f"==>> message: {message}")
+        print(f"==>> intent: {intent}")
         print(f"==>> context: {context}")
-        """Generate AI response based on context and intent."""
-        # Placeholder for actual AI integration
-        # This would integrate with OpenAI, Claude, or other LLM APIs
 
-        prompt = self._build_prompt(message, context)
+        # Build structured prompt with templates
+        prompt = self._build_prompt(message, context, intent)
+
         try:
             llm = HuggingFaceLLM()
             response = llm.generate(prompt)
