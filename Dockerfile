@@ -9,6 +9,8 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # System dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     wkhtmltopdf \
@@ -22,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     libcairo2-dev \
     libgdk-pixbuf-2.0-0 \
     libffi-dev \
+    tzdata \
     shared-mime-info \
     build-essential \
     pkg-config \
@@ -46,3 +49,8 @@ exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+# Set container timezone
+ENV TZ=Asia/Kolkata
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone

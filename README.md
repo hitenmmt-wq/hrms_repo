@@ -11,9 +11,10 @@ A comprehensive Human Resource Management System built with Django, featuring re
 ### Core Modules
 - **👥 Employee Management**: Complete employee lifecycle management with profiles, departments, and positions
 - **📅 Attendance Tracking**: Real-time check-in/check-out with break time logging
-- **🏖️ Leave Management**: Leave applications, approvals, and balance tracking
+- **🏖️ Leave Management**: Leave applications, approvals, balance tracking, and smart deductions (sandwich rule: weekends/weekday holidays between leave days are ignored when surrounded by leave days)
 - **💰 Payroll System**: Automated payslip generation with PDF export
 - **💬 Real-time Chat**: WebSocket-based messaging system with file sharing
+- **🤖 AI Assistant**: LLM-driven HR assistant with role-aware system prompts, intent-specific templates, and fuzzy intent matching to tolerate common misspellings
 - **🔔 Notifications**: Real-time notifications for various HR activities
 - **📊 Dashboard**: Comprehensive analytics and reporting
 
@@ -21,7 +22,9 @@ A comprehensive Human Resource Management System built with Django, featuring re
 - **🔐 JWT Authentication**: Secure token-based authentication
 - **📱 REST API**: Complete RESTful API with OpenAPI documentation
 - **⚡ Real-time Updates**: WebSocket support for live notifications and chat
-- **🔄 Background Tasks**: Celery-based task processing for automated operations
+- **🤖 AI Assistant & Prompt Templates**: Structured system prompts per role and intent-specific templates used to produce accurate, role-sensitive LLM responses
+- **🔎 Fuzzy Intent Matching**: `IntentClassifier` uses fuzzy matching to handle common misspellings and reduce misclassification
+- **🔄 Background Tasks**: Celery-based task processing for automated operations (timezone-aware configuration supported)
 - **📝 Comprehensive Logging**: Structured logging with file rotation
 - **🐳 Docker Support**: Complete containerization with Docker Compose
 - **🔍 Advanced Filtering**: Django Filter integration for complex queries
@@ -156,6 +159,9 @@ Automated Celery tasks for:
 - **Birthday Notifications**: Daily birthday alerts
 - **Annual Leave Credit**: Yearly leave balance updates
 - **Payroll Processing**: Monthly payslip generation
+
+Notes on scheduling & timezone handling:
+- The project configures Celery with `CELERY_ENABLE_UTC = False` and `CELERY_TIMEZONE = "Asia/Kolkata"` to run scheduled jobs in local IST time. Containers set `TZ=Asia/Kolkata` to align OS time. The codebase still uses `USE_TZ = True` so datetimes are stored in UTC and localized for display; this is the recommended approach for accuracy across environments.
 
 ## 📝 API Endpoints
 
