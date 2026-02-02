@@ -6,7 +6,17 @@ from django.utils import timezone
 
 from apps.ai.hugging_face import HuggingFaceLLM
 from apps.ai.models import AIConversation, AIMessage, AIQueryLog
-from apps.ai.utils import IntentClassifier, PromptTemplates
+from apps.ai.utils import (
+    PromptTemplates,
+    calculate_announcement_patterns,
+    calculate_attendance_patterns,
+    calculate_employee_patterns,
+    calculate_general_patterns,
+    calculate_holiday_patterns,
+    calculate_leave_patterns,
+    calculate_payroll_patterns,
+    calculate_profile_patterns,
+)
 from apps.attendance.models import EmployeeAttendance
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.superadmin.models import (
@@ -111,14 +121,59 @@ class AIService:
             processing_time=message[1] if message else None,
         )
 
+    @database_sync_to_async
+    def get_ai_query_logs(self):
+        return AIQueryLog.objects.all().order_by("-created_at")
+
     def _classify_intent(self, message: str) -> str:
         """Classify user intent from message."""
         message_lower = message.lower()
         print(f"==>> message_lower: {message_lower}")
 
-        intent_confidence = IntentClassifier.classify(message_lower)
-        print(f"==>> intent_confidence: {intent_confidence}")
-        return intent_confidence
+        ai_query_logs = self.get_ai_query_logs()
+        prompt = f"""
+            You are going to identify users requirements and classify which intent will be there as option are:
+            - leave_inquiry
+            - attendance_inquiry
+            - payroll_inquiry
+            - profile_inquiry
+            - general_inquiry
+            - holiday_inquiry
+            - announcement_inquiry
+            - department_inquiry
+            - position_inquiry
+            - common_data_inquiry
+            - leave_type_inquiry
+            - employee_inquiry
+            - greetings
+            - other
+
+            User message: {message_lower}
+
+            Previous queries: {ai_query_logs}
+            - From these logs you can fetch detailing of each response and
+              users's feedback to response, if given by user.
+            - If user is just greeting then, greet them back. dont provide data there.
+            - Analyze user message then properly respond as required.
+            - Upgrade and better each responses after learning from logs and user message.
+            - Adapt responses but keep in mind that data would have been changed currently.
+            - If you think user is asking same question again, then give response accordingly.
+            - If you think user is asking something new, then give response accordingly.
+            - If you think user is asking something which is not in above list, then give response with genearal intent.
+            - Make sure here you are just returning intent of user as to fetch data as context data.
+
+            Classify the intent of the current query based on the user message and previous queries.
+            Return only the intent name from the above list.
+        """
+
+        try:
+            llm = HuggingFaceLLM()
+            response = llm.generate(prompt)
+            print(f"==>> intent response generated....: {response}")
+            return response[0] if response else None
+        except Exception as e:
+            print("HF ERROR:", str(e))
+            return "I'm having trouble generating a response right now. Please try again in a moment."
 
     async def _build_context(self, message: str, intent: str) -> Dict[str, Any]:
         """Build context data based on user role and intent."""
@@ -126,14 +181,30 @@ class AIService:
 
         if intent == "leave_inquiry":
             context.update(await self._get_leave_context())
-        elif intent == "attendance_inquiry":
+        if intent == "attendance_inquiry":
             context.update(await self._get_attendance_context())
-        elif intent == "payroll_inquiry":
+        if intent == "payroll_inquiry":
             context.update(await self._get_payroll_context())
-        elif intent == "profile_inquiry":
+        if intent == "profile_inquiry":
             context.update(await self._get_profile_context())
-        elif intent == "general_inquiry":
+        if intent == "general_inquiry":
             context.update(await self._get_general_context())
+        if intent == "holiday_inquiry":
+            context.update(await self._get_holiday_context())
+        if intent == "announcement_inquiry":
+            context.update(await self._get_announcement_context())
+        if intent == "department_inquiry":
+            context.update(await self._get_department_context())
+        if intent == "position_inquiry":
+            context.update(await self._get_position_context())
+        if intent == "common_data_inquiry" or intent == "commondata_inquiry":
+            context.update(await self._get_commondata_context())
+        if intent == "leave_type_inquiry":
+            context.update(await self._get_leave_type_context())
+        if intent == "employee_inquiry":
+            context.update(await self._get_employee_context())
+        if intent == "other" or not intent:
+            context.update(await self._get_default_context())
 
         return context
 
@@ -146,11 +217,39 @@ class AIService:
             # Admin/HR can see all leave data
             context["pending_leaves"] = Leave.objects.filter(status="pending").count()
             context["total_employees"] = Users.objects.filter(role="employee").count()
+            context["all_employees_leave_balances"] = (
+                {
+                    "employee": leave_balance.employee,
+                    "year": leave_balance.year,
+                    "pl_leave": leave_balance.pl,
+                    "sl_leave": leave_balance.sl,
+                    "lop_leave": leave_balance.lop,
+                    "used_pl": leave_balance.used_pl,
+                    "used_sl": leave_balance.used_sl,
+                    "used_lop": leave_balance.used_lop,
+                }
+                for leave_balance in LeaveBalance.objects.all()
+            )
+            context["all_employees_leaves"] = (
+                {
+                    "employee": leave.employee,
+                    "from_date": leave.from_date,
+                    "to_date": leave.to_date,
+                    "day_part": leave.day_part,
+                    "is_sandwich_applied": leave.is_sandwich_applied,
+                    "leave_type": leave.leave_type,
+                    "status": leave.status,
+                    "total_days": leave.total_days,
+                    "approved_by": leave.approved_by,
+                }
+                for leave in Leave.objects.all()
+            )
 
         if self.role == "employee" or self.role in ["admin", "hr"]:
             # Employee sees own data, admin/hr can see in context of specific queries
             try:
                 leave_balance = LeaveBalance.objects.get(employee=self.user)
+                leaves = Leave.objects.filter(employee=self.user)
                 context["my_leave_balance"] = {
                     "employee": leave_balance.employee,
                     "year": leave_balance.year,
@@ -161,9 +260,25 @@ class AIService:
                     "used_sl": leave_balance.used_sl,
                     "used_lop": leave_balance.used_lop,
                 }
+                context["my_leaves"] = [
+                    {
+                        "employee": leave.employee,
+                        "from_date": leave.from_date,
+                        "to_date": leave.to_date,
+                        "day_part": leave.day_part,
+                        "is_sandwich_applied": leave.is_sandwich_applied,
+                        "leave_type": leave.leave_type,
+                        "status": leave.status,
+                        "total_days": leave.total_days,
+                        "approved_by": leave.approved_by,
+                    }
+                    for leave in leaves
+                ]
+
             except LeaveBalance.DoesNotExist:
                 context["my_leave_balance"] = None
 
+        context["extra_details"] = calculate_leave_patterns()
         return context
 
     @database_sync_to_async
@@ -175,7 +290,7 @@ class AIService:
             # Employee's own attendance
             recent_attendance = EmployeeAttendance.objects.filter(
                 employee=self.user
-            ).order_by("-day")[:5]
+            ).order_by("-day")
             context["my_recent_attendance"] = [
                 {
                     "employee": att.employee,
@@ -185,10 +300,14 @@ class AIService:
                     "check_out": att.check_out,
                     "work_hours": att.work_hours,
                     "break_hours": att.break_hours,
+                    "break_logs": att.attendance_break_logs.all(),
                 }
                 for att in recent_attendance
             ]
         else:
+            employees_attendance = EmployeeAttendance.objects.filter(
+                employee__is_active=True
+            )
             employees = EmployeeAttendance.objects.filter(
                 day=timezone.now().date()
             ).values(
@@ -201,8 +320,10 @@ class AIService:
                 "employee__first_name",
                 "employee__last_name",
             )
-            context["my_recent_attendance"] = list(employees)
+            context["todays_attendance"] = list(employees)
+            context["all_attendances"] = list(employees_attendance)
 
+        context["extra_details"] = calculate_attendance_patterns()
         return context
 
     @database_sync_to_async
@@ -260,6 +381,7 @@ class AIService:
                 for ps in recent_payslips
             ]
 
+        context["extra_details"] = calculate_payroll_patterns()
         return context
 
     @database_sync_to_async
@@ -279,6 +401,7 @@ class AIService:
             "profile_image": self.user.profile.url if self.user.profile else None,
         }
 
+        context["extra_details"] = calculate_profile_patterns()
         return context
 
     @database_sync_to_async
@@ -309,6 +432,124 @@ class AIService:
                 "holidays": (list(Holiday.objects.values("name", "date"))),
             }
 
+        context["extra_details"] = calculate_general_patterns()
+        return context
+
+    @database_sync_to_async
+    def _get_holiday_context(self) -> Dict[str, Any]:
+        """Get holiday-related context."""
+        context = {}
+
+        if self.role == "employee":
+            context["holidays_data"] = list(
+                Holiday.objects.filter(date__year=timezone.now().year).values(
+                    "name", "date"
+                )
+            )
+        elif self.role in ["admin", "hr"]:
+            context["holidays_data"] = list(Holiday.objects.values("name", "date"))
+
+        context["extra_details"] = calculate_holiday_patterns()
+        return context
+
+    @database_sync_to_async
+    def _get_announcement_context(self) -> Dict[str, Any]:
+        """Get announcement-related context."""
+        context = {}
+
+        if self.role == "employee":
+            context["announcements_data"] = list(
+                Announcement.objects.values(
+                    "title", "description", "date", "created_at"
+                )
+            )
+        elif self.role in ["admin", "hr"]:
+            context["announcements_data"] = list(
+                Announcement.objects.values(
+                    "title", "description", "date", "created_at"
+                )
+            )
+
+        context["extra_details"] = calculate_announcement_patterns()
+        return context
+
+    @database_sync_to_async
+    def _get_department_context(self) -> Dict[str, Any]:
+        context = {}
+        context["department_data"] = list(Department.objects.values("name"))
+        context["department_count"] = Department.objects.count()
+        return context
+
+    @database_sync_to_async
+    def _get_position_context(self) -> Dict[str, Any]:
+        context = {}
+        context["position_data"] = list(Position.objects.values("name"))
+        context["position_count"] = Position.objects.count()
+        return context
+
+    @database_sync_to_async
+    def _get_commondata_context(self) -> Dict[str, Any]:
+        context = {}
+        context["common_data"] = list(
+            CommonData.objects.values(
+                "name",
+                "company_link",
+                "company_logo",
+                "pl_leave",
+                "sl_leave",
+                "lop_leave",
+            )
+        )
+        return context
+
+    @database_sync_to_async
+    def _get_leave_type_context(self) -> Dict[str, Any]:
+        context = {}
+        context["leave_type_data"] = list(LeaveType.objects.values("name", "code"))
+        return context
+
+    @database_sync_to_async
+    def _get_employee_context(self) -> Dict[str, Any]:
+        context = {}
+        if self.role == "employee":
+            context["employee_data"] = list(
+                Users.objects.filter(id=self.user.id).values(
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "role",
+                    "position__name",
+                    "department__name",
+                    "joining_date",
+                    "birthdate",
+                    "salary_ctc",
+                    "profile",
+                )
+            )
+        elif self.role in ["admin", "hr"]:
+            context["employee_data"] = list(
+                Users.objects.filter(role="employee").values(
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "role",
+                    "position__name",
+                    "department__name",
+                    "joining_date",
+                    "birthdate",
+                    "salary_ctc",
+                    "profile",
+                )
+            )
+
+        context["extra_details"] = calculate_employee_patterns()
+        return context
+
+    @database_sync_to_async
+    def _get_default_context(self) -> Dict[str, Any]:
+        """Get default context for unknown intents."""
+        context = {}
+        context["extra_details"] = "No specific data context available."
         return context
 
     def _build_prompt(self, message: str, context: Dict[str, Any], intent: str) -> str:
@@ -318,6 +559,7 @@ class AIService:
         system_context = PromptTemplates.SYSTEM_CONTEXT.get(
             self.role, PromptTemplates.SYSTEM_CONTEXT["employee"]
         )
+        print(f"==>> system_context: {system_context}")
 
         # Get intent-specific template
         intent_template = PromptTemplates.get_template_for_intent(intent)
@@ -340,6 +582,13 @@ class AIService:
             - Do not update timezone according to UTC.
             - Use Datetime timezone as its stored in DB only.
             - Use only the provided data, do not guess or invent information
+            - After getting required context data, please rectify the need of user,
+              and then show only required data or needed data to user.
+            - Don't show extra data which is not asked by user.
+            - If user is asking for specific data, then show only that data.
+            - Don't provide extra details to user, as context is fetching some extra data normally.
+            - you have to be clear which data needs to be passed and show to user accordingly.
+            - Keep extra data with you only, and dont overshare then what's asked for.
             - Be concise and professional
             - Structure your response logically
             - Include specific numbers and facts when available
@@ -349,10 +598,20 @@ class AIService:
             - Your purpose is to help users with HR-related queries.
             - Always maintain professionalism and confidentiality.
             - If unsure, ask for clarification.
-            - After getting required context data, please rectify the need of user,
-              and then show only required data or needed data to user.
-            - Don't show extra data which is not asked by user.
-            - If user is asking for specific data, then show only that data.
+
+            - Also after generating response, add follow-up questions
+              whose requirement goes like:
+                1. Generate exactly 3-4 questions accordingly as you feel need.
+                2. Each question should be on a new line
+                3. Questions should be relevant to the user's message
+                4. It should be of same intent as well.
+                5. Questions should be in simple format, not complex.
+                6. Numbering or bullet points.
+                7. Just plain text questions, separated by new lines.
+                8. Also be prepared with their answers as well. as question are being setup by us only.
+                9. Dont provide answers in this response, but be prepared if user is going to ask for the same.
+
+
         """
         return prompt
 

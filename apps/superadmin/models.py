@@ -23,6 +23,16 @@ class CommonData(BaseModel):
     sl_leave = models.IntegerField(default=4, null=True, blank=True)
     lop_leave = models.IntegerField(default=0, null=True, blank=True)
 
+    policy_file = models.FileField(null=True, blank=True, upload_to="policy_file")
+    policy_content = models.TextField(null=True, blank=True)
+    policy_content_html = models.TextField(null=True, blank=True)
+    policy_last_updated = models.DateTimeField(auto_now=True)
+
+    handbook_file = models.FileField(null=True, blank=True, upload_to="handbook_file")
+    handbook_content = models.TextField(null=True, blank=True)
+    handbook_content_html = models.TextField(null=True, blank=True)
+    handbook_last_updated = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return self.name
 

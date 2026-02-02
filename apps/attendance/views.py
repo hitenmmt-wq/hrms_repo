@@ -108,6 +108,16 @@ class AttendanceViewSet(BaseViewSet):
             "Logged out successfully", AttendanceSerializer(attendance).data
         )
 
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def get_attendance_summary(self, request):
+        context = {}
+        attendance_id = request.query_params.get("attendance_id")
+        attendance = EmployeeAttendance.objects.filter(id=attendance_id).first()
+        break_logs = AttendanceBreakLogs.objects.filter(attendance=attendance)
+        context["break_log"] = BreakLogSerializer(break_logs, many=True).data
+        context["attendance_detail"] = AttendanceSerializer(attendance).data
+        return ApiResponse.success("Attendance Summary", data=context)
+
 
 # class IdleStatusView(APIView):
 #     """API endpoint for receiving idle status updates from desktop application."""

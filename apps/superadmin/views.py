@@ -39,6 +39,8 @@ from apps.superadmin.custom_filters import (
 )
 from apps.superadmin.tasks import send_email_task
 from apps.superadmin.utils import (
+    delete_old_file,
+    extract_file_data,
     general_team_monthly_data,
     notify_employee_leave_approved,
     notify_employee_leave_rejected,
@@ -446,12 +448,24 @@ class CommonDataViewSet(BaseViewSet):
                 message="Common Data already exists. You can update it.", status=400
             )
         else:
+            policy_file = request.FILES.get("policy_file")
+            handbook_file = request.FILES.get("handbook_file")
+
+            policy_content = extract_file_data(policy_file) if policy_file else ""
+            print(f"==>> policy_content: {policy_content}")
+            handbook_content = extract_file_data(handbook_file) if handbook_file else ""
+            print(f"==>> handbook_content: {handbook_content}")
+
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+
+            instance = serializer.save(
+                policy_content=policy_content,
+                handbook_content=handbook_content,
+            )
             return ApiResponse.success(
                 message="Common Data created successfully",
-                data=serializer.data,
+                data=self.serializer_class(instance).data,
                 status=201,
             )
 
@@ -463,9 +477,22 @@ class CommonDataViewSet(BaseViewSet):
                 message="Common Data not available to update", status=404
             )
         else:
+            if "policy_file" in request.FILES:
+                delete_old_file(instance, "policy_file")
+
+            if "handbook_file" in request.FILES:
+                delete_old_file(instance, "handbook_file")
+
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            if "policy_file" in request.FILES:
+                instance.policy_content = extract_file_data(instance.policy_file)
+
+            if "handbook_file" in request.FILES:
+                instance.handbook_content = extract_file_data(instance.handbook_file)
+
+            instance.save()
             return ApiResponse.success(
                 message="Common Data updated successfully", data=serializer.data
             )
@@ -478,6 +505,8 @@ class CommonDataViewSet(BaseViewSet):
                 message="Common Data not available to delete", status=404
             )
         else:
+            delete_old_file(instance, "handbook_file")
+            delete_old_file(instance, "policy_file")
             instance.delete()
             return ApiResponse.success(message="Common Data deleted successfully")
 
