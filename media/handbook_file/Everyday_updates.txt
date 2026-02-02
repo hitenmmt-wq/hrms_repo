@@ -1,0 +1,228 @@
+Everyday Updates :-
+
+--> Update of 10/12/2025 (Wednesday):
+- Setup of HRMS project
+- Configured database, Prepared Database schema, Rest-APIs, Email connection
+- Completed base CRUD api for Leave and Department
+- Completed Login and registration with email sending activation link from Admin side
+
+
+--> Update of 11/12/2025 (Thursday) :
+- Updated Holiday and Department CRUD with ordering, filtering, Pagination : 1hr
+- Completed Authentication Apis - Admin_register, change_password, reset_password, refresh_token, user_data : 3hr
+- Completed Profile apis : 1hr
+- Updated whole project with PEP8 configuration : 2hr
+- Setted up project with github : 1hr
+
+
+--> Update of 12/12/2025 (Friday) :
+- Completed Position CRUD, Employee CRUD, Leave Balance CRUD, Apply Leave CRUD : 4hr
+- Completed Leave aprrove/reject from admin side : 1hr
+- Implemented celery task for mail sending as common function, and cronjob for Apply leave with celery-beat : 3hr
+
+=======================================================================================================================
+
+--> Update of 15/12/2025 (Monday) :
+- Completed Announcement CRUD, Employee attendance CRUD setup : 2hr
+- Completed Reset_password flow's api : 1hr
+- Working on Cronjob for automating tasks for setting up leaves : 1hr
+- Applied Constants global values and Created Custom script for updating database : 2hr
+- Working on Chat functionality : 2hr
+
+
+--> Update of 16/12/2025 (Tuesday) :
+- Completed Employee Attendance CRUD with checkin, checkout, working hours, break hours : 2hr
+- Refactored whole project and code cleaning with proper naming convention : 2hr
+- Updated whole DB with new migrations accordingly : 1hr
+- Working on chat functionality module : 2hr
+
+
+--> Update of 17/12/2025 (Wednesday) :
+- Completed Dashboard api for employee : 1hr
+- Completed CRUD api for Common-data, Setting-data : 2hr
+- Working on Chat module : 2hr
+- Implemented pre-commit git in project : 1hr
+- Worked on changes/improvised in some apis as FE needed (data-set) : 2hr
+
+-->> Update of 18/12/2025 (Thursday) :
+- Completed Payslip module CRUD API : 2hr
+- Integrated Logic for payslip with leave_calculation (yearly) : 2hr
+- Worked on Chat Module : 2hr
+- Updated some apis as changes reflected : 1hr
+- Implementing CI/CD integration in project : 1hr
+
+
+--> Update of 19/12/2025 (Friday) :
+- Completed Notification and Notification Type CRUD apis : 2hr
+- Updated Dashboard, Attendance, Get payslip for employee(single) Apis : 1hr
+- Implemented Docker : 3hr
+- Working on CI/CD pipeline flow : 2hr
+
+=======================================================================================================================
+
+--> Update of 22/12/2025 (Monday) :
+- Implemented DRF-Swagger in project : 1hr
+- Implemented CI/CD flow completely : 3hr
+- Worked on Docker, resolved some issues : 2hr
+- Updated some apis : 10min
+- Working on PDF generate for payslip of employees : implemented weasyprint(windows os issue), xhtml2pdf : 2hr
+
+
+--> Update of 23/12/2025 (Tuesday) :
+- Implemeted Notification module : 3hr
+- Worked on signals for each notification carried out : 1hr
+- Implemented new cron jobs for daily birthday notification and daily employee attendance notification : 1hr
+- Working on PDF generation : trying to get best result in pdf as xhtml2pdf isnt supporting(background-image),
+  playwright package, weasyprint(wsl version) : 3hr
+
+
+--> Update of 24/12/2025 (Wednesday) :
+- Changed Python version to 3.11.9 : 2hr
+- Working on Design of PDF with pdfkit and wkhtmltopdf : 1 hr
+- Implemented Command functionality for intializing project's dummy data : 2hr
+- Working on employee dashboard calculation : 1hr
+
+
+--> Update of 26/12/2025 (Friday) :
+- Completed PDF payslip generation : 2hr
+- Updated some API's : 0.5hr
+- Resolving nginx, redis, celery connection error with Docker integration : 3hr
+
+=======================================================================================================================
+
+--> Update of 29/12/2025 (Monday) :
+- Worked on some API changes : 1.5hr
+- Worked on CD pipeline flow : 2hr
+- Added new management Commands to Update DB accordingly : 1.5hr
+- Setup Custom Script for checking any functionality first : 1hr
+- Added Admin's CRUD and activation link, also Updated email while sending as any new employee joins : 2hr
+
+
+--> Update of 30/12/2025 (Tuesday) :
+- Worked on implementation of reply-back of particular message in chat module : 3hr
+- Implemeted dynamically mail sending whenever employees, payslip is generated : 1hr
+- Working on Notifying employees and admins regarding their respective modules : 2hr
+- Resolving the issue, while handling redis, celery, nginx with docker functionality : 2hr
+
+
+--> Update of 31/12/2025 (Wednesday) :
+- Worked on Leave-Type CRUD, added FK to Leave(dynamically) : 1hr
+- Handled Halfday-Leave scenerio and its calculation : 2.5hr
+- Worked on Mutliple days leave-generating and simultaneously creating employee's attendance : 2.5hr
+- Working on Websockets triggering for chat, Notification async : 2hr
+
+
+--> Update of 1/1/2026 (Thursday) :
+- Worked on Notification module regarding some edge cases : 2hr
+- Optimizing queries to reduce DB load time : 1hr
+- Implementing in Chat module for status of message : 3hr
+- Checked all API's working and work-flow (end-to-end) : 2hr
+
+
+--> Update of 2/1/2026 (Friday) :
+- Implemented changes in some API's : 1hr
+- Integrated Soft-delete functionality : 2hr
+- Worked on Notification module's read/unread scenerio : 2hr
+- Prepared new setup with fresh DB for demo and rechecked each API : 2hr
+- Explored new things to implement in project : 1hr
+
+=======================================================================================================================
+
+--> Update of 5/1/2026 (Monday) :
+- Resolved some API changes : 1hr
+- Refactored Notication handling for Employee attendance : 2hr
+- Setted up by Websocket : 1hr
+- Implemented new things in notification signals : 2hr
+- Implemeted Soft-delete functionality : 2hr
+
+
+--> Update of 6/1/2026 (Tuesday) :
+- Some changes in API's : 1.5 hr
+- Worked on implementing SSL security and tried various methods : 6.5 hr (Explored and tried from mentioned methods)
+	- nginx
+	- uvicorn
+	- docker.production.yml (creating different config files)
+	- ngrok
+	- cloudflare
+	- aws/railway/render
+	- frontend-wss-config
+
+--> Update of 7/1/2026 (Wednesday) :
+- Resolved issue of SSL server : 2hr
+- Resolved Docker DB issue handling : 1hr
+- Configured Chat and notification module for wss server : 2hr
+- Using cloudflare's configuration for using backend live with temp domain name : 2hr
+- Implemeting new funcitonality in Chat module of adding reactions : 1hr
+
+--> Update of 8/1/2026 (Thursday) :
+- Worked on chat module : 2hr
+- Fixed download PDF issue : 3hr (As this needed to update docker config with wkhtmltopdf)
+- Fixed Announcement API : 1hr
+- Resolved double Notification issue: 1hr
+- Added Salary CTC while adding employee initially : 1hr (as to continue in flow)
+
+
+--> Update of 9/1/2026 (Friday) :
+- Worked on Auto calculation for Leave deduction Flow : 3hr
+- Updated Forgot Password/ Confirm Password Flow : 1.5hr
+- Some API changes as required (present_users_list, absent_users_list, chat_remainig_users) : 1.5hr
+- Updating Chat Issues and further on it : 1hr
+- Worked on Manual API to generate payslip : 1hr
+
+=======================================================================================================================
+
+--> Update of 12/1/2026 (Monday) :
+- Worked on Chat module (Reaction on message) : 3hr
+- Worked on Leaves calulations for manual and auto generation : 1.5hr
+- Created new APIs as FE required : 1hr
+- Worked on Auto-generating Payslips : 1.5hr
+- Resolved notifcation double notification was called(admin and receipent) : 1hr
+
+
+--> Update of 13/1/2026 (Tuesday) :
+- Worked on Leave data calculation : 1hr
+- Updated miscalculation of PL,SL in Auto generated payslip : 2hr
+- Updated new API for monthly and yearly calculation : 0.5 hr
+- Worked on Group chatting in chat (CRUD) : 4.5hr
+
+
+--> Update of 15/1/2026 (Thursday) :
+- Resolved Attendance Issue : 1.5hr
+- Testing of All flows in portal : 2hr
+- Working on implementation of new feature in Employee Activity : 4hr
+- Updated some minor changes in fetching data properly (media_url, FK datas) : 0.5hr
+
+
+--> Update of 16/1/2026 (Friday) :
+- Worked on Chat module for message mark_as_seen (Different scenerios) : 3hr
+- Worked on Chat module for Updating "Typing" status : 1hr
+- Worked on Chat module for fetching unread_count via API as well in websocket for real-time update : 1hr
+- R&D on AI chatbot Integration (Key Learnings are noted down) : 3hr
+
+=======================================================================================================================
+
+--> Update of 19/1/2026 (Monday) :
+- Worked on Chat module for last seen message(ws) : 2hr
+- Worked on global connection for send_message, typing_start, typing_stop, read_receipt : 4hr
+- Working on R&D of AI integration (Ollama/Hugging Face model) : 2hr
+
+
+--> Update of 20/1/2026 (Tuesday) :
+- Worked on AI chatbot Integration (API keys-setup, basic structure) - 3.5hr
+- Worked on Chat module - real-time message count update, Mark_as_read, read_receipt, connection - 3.5 hr
+- Worked on Auto checkout of employees(if forgot to do so) - 1hr
+
+
+--> Update of 21/1/2026 (Wednesday) :
+- Worked on Chat module to Global update response and message_count : 2hr
+- Completed setup on AI chatbot : 2hr
+- Done R&D on AI chatbot architecture setup properly : 1hr
+- Integrating LLM models with hugging face like : 3hr
+	- mistralai/Mistral-7B-Instruct-v0.2
+	- meta-llama/Llama-3.1-8B-Instruct
+	- google/gemma-7b-it
+	- microsoft/Phi-3-mini-4k-instruct
+
+→ Update of 22/1/2026 (Thursday) :
+- Worked on AI chat Integration : 7.5hr
+- Worked on Chat message delete functionality: 0.5hr

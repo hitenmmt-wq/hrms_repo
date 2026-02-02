@@ -1,7 +1,9 @@
 import calendar
 from datetime import date
 
+import pdfplumber
 from django.utils import timezone
+from docx import Document
 
 from apps.attendance.models import EmployeeAttendance
 from apps.base import constants
@@ -127,3 +129,59 @@ def notify_employee_leave_rejected(employee, leave):
         title="Leave Rejected",
         message="Your leave has been rejected.",
     )
+
+
+def extract_pdf_content(file):
+    text_blocks = []
+
+    with pdfplumber.open(file) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_blocks.append(text)
+
+    print("done with extraction")
+    data = "\n\n".join(text_blocks)
+    return data
+
+
+def extract_docx_content(file):
+    doc = Document(file)
+    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+    print("done with extraction")
+    return "\n".join(paragraphs)
+
+
+def extract_text_content(file):
+    print(f"==>> file: {file}")
+    return file.read().decode("utf-8")
+
+
+def extract_file_data(file):
+    file.seek(0)
+    print(f"==>> handbook_file: {file}")
+    file_type = file.name.split(".")[-1].lower()
+    print(f"==>> file_type: {file_type}")
+
+    ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"]
+
+    if not file.name.lower().endswith(tuple(ALLOWED_EXTENSIONS)):
+        return "Unsupported file format"
+
+    if file_type == "pdf":
+        data = extract_pdf_content(file)
+        return data
+    elif file_type == "docx":
+        data = extract_docx_content(file)
+        return data
+    elif file_type == "txt":
+        data = extract_text_content(file)
+        return data
+    else:
+        return "File type not allowed"
+
+
+def delete_old_file(instance, field_name):
+    field = getattr(instance, field_name, None)
+    if field and field.name:
+        field.delete(save=False)
