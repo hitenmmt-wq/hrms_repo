@@ -98,6 +98,88 @@ class IntentClassifier:
             "introduce yourself",
             "greetings",
         ],
+        "irrelevent": [
+            "what is weather today",
+            "weather",
+            "gold rate",
+            "silver rate",
+            "global updates",
+            "news",
+            "love",
+            "girlfriend",
+            "boyfriend",
+            "football",
+            "cricket",
+            "soccer",
+            "movie",
+            "song",
+            "music",
+            "tv",
+            "show",
+            "celebrity",
+            "fashion",
+            "travel",
+            "food",
+            "restaurant",
+            "recipe",
+            "health",
+            "fitness",
+            "exercise",
+            "diet",
+            "medical",
+            "doctor",
+            "hospital",
+            "insurance",
+            "finance",
+            "stock",
+            "investment",
+            "banking",
+            "loan",
+            "credit card",
+            "debit card",
+            "exchange rate",
+            "economy",
+            "market",
+            "business",
+            "entrepreneurship",
+            "startup",
+            "career",
+            "collaboration",
+            "deadline",
+            "news",
+            "broadcast",
+            "study",
+            "education",
+            "learning",
+            "training",
+            "course",
+            "certification",
+            "degree",
+            "diploma",
+            "transfer",
+            "resignation",
+            "termination",
+            "retirement",
+            "onboarding",
+            "offboarding",
+            "orientation",
+            "conference",
+            "seminar",
+            "workshop",
+            "training session",
+            "webinar",
+            "presentation",
+            "showcase",
+            "exhibition",
+            "fair",
+            "trade show",
+            "convention",
+            "summit",
+            "forum",
+            "roundtable",
+            "panel discussion",
+            "debate",
+        ],
     }
 
     @classmethod
@@ -132,16 +214,7 @@ class IntentClassifier:
 
     @classmethod
     def _fuzzy_match(cls, text: str, keyword: str, threshold: float = 0.75) -> float:
-        """Perform fuzzy matching between text and keyword.
-
-        Args:
-            text: The text to search in (words separated by spaces)
-            keyword: The keyword to match against
-            threshold: Minimum similarity ratio (0-1)
-
-        Returns:
-            Highest similarity ratio found
-        """
+        """Perform fuzzy matching between text and keyword."""
         # Split text into words for better matching
         words = text.split()
         print(f"==>> words: {words}")
@@ -161,21 +234,6 @@ class IntentClassifier:
 
         print(f"==>> max_ratio: {max_ratio}")
         return max_ratio
-
-    @classmethod
-    def get_intent_description(cls, intent: str) -> str:
-        """Get human-readable description of intent."""
-        descriptions = {
-            "leave_inquiry": "Leave Balance & Applications",
-            "attendance_inquiry": "Attendance Records",
-            "payroll_inquiry": "Salary & Payslips",
-            "profile_inquiry": "Personal Profile",
-            "hr_analytics": "HR Analytics & Reports",
-            "company_info": "Company Information",
-            "greeting": "Greeting",
-            "general_inquiry": "General Question",
-        }
-        return descriptions.get(intent, intent)
 
 
 class PromptTemplates:
@@ -273,6 +331,13 @@ class PromptTemplates:
         - Ask how you can help
         - Keep it friendly and professional"""
 
+    IRRELEVENT = """
+        - This are irrelevent question.
+        - Questions should be avoided and tell to ask regarding HRMS portal.
+        - Explain that you are not answerable to that and ask for some relevent question only.
+        - Tell user to be clear with their questions.
+    """
+
     @classmethod
     def get_template_for_intent(cls, intent: str) -> str:
         """Get the appropriate prompt template for an intent."""
@@ -283,6 +348,7 @@ class PromptTemplates:
             "profile_inquiry": cls.PROFILE_INQUIRY,
             "general_inquiry": cls.GENERAL_INQUIRY,
             "greeting": cls.GREETING,
+            "irrelevent": cls.IRRELEVENT,
             "hr_analytics": """Based on the provided HR data:
                 - Provide comprehensive analytics
                 - Highlight trends and patterns

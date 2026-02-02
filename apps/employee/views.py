@@ -30,6 +30,7 @@ from apps.employee.custom_filters import (
 )
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.employee.serializers import (
+    AnnouncementMiniSerializer,
     ApplyLeaveCreateSerializer,
     ApplyLeaveSerializer,
     EmployeeCreateSerializer,
@@ -116,7 +117,9 @@ class EmployeeDashboardView(APIView):
             )
 
             monthly_working_hours_data = employee_monthly_working_hours(request.user)
-
+            announcements = models.Announcement.objects.filter(
+                date__gte=today
+            ).order_by("-id")[:5]
             # total_pl = employee_leave.pl if employee_leave.pl else common_data.pl_leave if common_data else None
             # total_sl = employee_leave.sl if employee_leave.sl else common_data.sl_leave if common_data else None
             return ApiResponse.success(
@@ -157,6 +160,9 @@ class EmployeeDashboardView(APIView):
                         upcoming_approved_leaves, many=True
                     ).data,
                     "leave_history": LeaveMiniSerializer(leave_history, many=True).data,
+                    "announcements": AnnouncementMiniSerializer(
+                        announcements, many=True
+                    ).data,
                 },
                 message="Employee dashboard data fetched successfully",
             )
@@ -474,7 +480,9 @@ class PaySlipViewSet(BaseViewSet):
                 float(leave.total_days or 0) for leave in leaves_in_month
             )
             holidays = holidays_in_month(start_date.year, start_date.month)
+            print(f"==>> holidays: {holidays}")
             working_days = weekdays_count(start_date, end_date) - int(holidays)
+            print(f"==>> working_days: {working_days}")
             return ApiResponse.success(
                 data={
                     "working_days": working_days,

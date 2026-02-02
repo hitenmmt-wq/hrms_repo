@@ -236,6 +236,15 @@ class LeaveMiniSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class AnnouncementMiniSerializer(serializers.ModelSerializer):
+    """Minimal serializer for announcement information in dashboard displays."""
+
+    class Meta:
+        model = models.Announcement
+        fields = ["id", "title", "date", "description", "created_at"]
+        depth = 1
+
+
 class TodayAttendanceSerializer(serializers.ModelSerializer):
     """Serializer for today's attendance information in employee dashboard."""
 
