@@ -111,11 +111,11 @@ class AIChatConsumer(AsyncWebsocketConsumer):
 
         self.ai_feedback_save(self.user, feedback, ai_message_id)
         # Here you can log the feedback or process it as needed
-        await self.send(
-            text_data=json.dumps(
-                {"type": "feedback_received", "message": "Thank you for your feedback!"}
-            )
-        )
+        # await self.send(
+        #     text_data=json.dumps(
+        #         {"type": "feedback_received", "message": "Thank you for your feedback!"}
+        #     )
+        # )
 
     async def send_error(self, error_message):
         """Send error message to WebSocket."""

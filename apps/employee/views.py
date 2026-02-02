@@ -312,6 +312,8 @@ class ApplyLeaveViewSet(BaseViewSet):
         """Return appropriate serializer based on action."""
         if self.action == "create":
             return ApplyLeaveCreateSerializer
+        elif self.action == "update":
+            return ApplyLeaveCreateSerializer
         return ApplyLeaveSerializer
 
     @action(detail=False, methods=["get"], url_path="employee_leave_list")
