@@ -52,7 +52,9 @@ class AIService:
         # Classify intent and build context
         intent = self._classify_intent(message)
         print(f"==>> intent: {intent}")
+        # intent = ('attendance_inquiry', 'payroll_inquiry', 1.297)
         context_data = await self._build_context(message, intent)
+        print(f"==>> context_data: {context_data}")
 
         # Generate AI response (placeholder for actual AI integration)
         ai_response = self._generate_response(message, context_data, intent)
@@ -112,6 +114,9 @@ class AIService:
 
     @database_sync_to_async
     def _ai_query_log(self, user, message, ai_message, intent, context_used):
+        print(
+            f"==>> intent before saving -----------------------------------: {intent}"
+        )
         return AIQueryLog.objects.create(
             user=user,
             ai_message=ai_message,
@@ -124,6 +129,12 @@ class AIService:
     @database_sync_to_async
     def get_ai_query_logs(self):
         return AIQueryLog.objects.all().order_by("-created_at")
+
+    @database_sync_to_async
+    def get_handbook_details(self):
+        data = CommonData.objects.values("handbook_content")
+        print(f"==>> data: {data}")
+        return data
 
     def _classify_intent(self, message: str) -> str:
         """Classify user intent from message."""
@@ -161,9 +172,14 @@ class AIService:
             - If you think user is asking something new, then give response accordingly.
             - If you think user is asking something which is not in above list, then give response with genearal intent.
             - Make sure here you are just returning intent of user as to fetch data as context data.
+            - Intents can be multiple from the given list, dont just take first as default, check whole list properly.
+            - There can be multiple intents like user might want to fetch attendance and payroll data simultaneously.
+              so pass those multiple intents in tuple like ['attendance_inquiry', 'payroll_inquiry']
+            - While returning intent list, only pass that only like , ['attendance_inquiry', 'payroll_inquiry'].
+            - As im getting whole text suggesting how it came to conclusion, which  is not necessary.
 
             Classify the intent of the current query based on the user message and previous queries.
-            Return only the intent name from the above list.
+            Return only the intent name list as recognized from the above list.
         """
 
         try:
@@ -175,35 +191,35 @@ class AIService:
             print("HF ERROR:", str(e))
             return "I'm having trouble generating a response right now. Please try again in a moment."
 
-    async def _build_context(self, message: str, intent: str) -> Dict[str, Any]:
+    async def _build_context(self, message: str, intent: list) -> Dict[str, Any]:
         """Build context data based on user role and intent."""
         context = {}
 
-        if intent == "leave_inquiry":
+        if "leave_inquiry" in intent:
             context.update(await self._get_leave_context())
-        if intent == "attendance_inquiry":
+        if "attendance_inquiry" in intent:
             context.update(await self._get_attendance_context())
-        if intent == "payroll_inquiry":
+        if "payroll_inquiry" in intent:
             context.update(await self._get_payroll_context())
-        if intent == "profile_inquiry":
+        if "profile_inquiry" in intent:
             context.update(await self._get_profile_context())
-        if intent == "general_inquiry":
+        if "general_inquiry" in intent:
             context.update(await self._get_general_context())
-        if intent == "holiday_inquiry":
+        if "holiday_inquiry" in intent:
             context.update(await self._get_holiday_context())
-        if intent == "announcement_inquiry":
+        if "announcement_inquiry" in intent:
             context.update(await self._get_announcement_context())
-        if intent == "department_inquiry":
+        if "department_inquiry" in intent:
             context.update(await self._get_department_context())
-        if intent == "position_inquiry":
+        if "position_inquiry" in intent:
             context.update(await self._get_position_context())
-        if intent == "common_data_inquiry" or intent == "commondata_inquiry":
+        if "common_data_inquiry" in intent or intent == "commondata_inquiry":
             context.update(await self._get_commondata_context())
-        if intent == "leave_type_inquiry":
+        if "leave_type_inquiry" in intent:
             context.update(await self._get_leave_type_context())
-        if intent == "employee_inquiry":
+        if "employee_inquiry" in intent:
             context.update(await self._get_employee_context())
-        if intent == "other" or not intent:
+        if "other" in intent or not intent:
             context.update(await self._get_default_context())
 
         return context
@@ -293,8 +309,8 @@ class AIService:
             ).order_by("-day")
             context["my_recent_attendance"] = [
                 {
-                    "employee": att.employee,
-                    "day": att.day,
+                    "employee": att.employee.email,
+                    "day": str(att.day),
                     "status": att.status,
                     "check_in": att.check_in,
                     "check_out": att.check_out,
@@ -304,9 +320,18 @@ class AIService:
                 }
                 for att in recent_attendance
             ]
-        else:
+        if self.role in ["admin", "hr"]:
             employees_attendance = EmployeeAttendance.objects.filter(
                 employee__is_active=True
+            ).values(
+                "check_in",
+                "check_out",
+                "status",
+                "work_hours",
+                "break_hours",
+                "day",
+                "employee__first_name",
+                "employee__last_name",
             )
             employees = EmployeeAttendance.objects.filter(
                 day=timezone.now().date()
@@ -498,6 +523,12 @@ class AIService:
                 "pl_leave",
                 "sl_leave",
                 "lop_leave",
+                "policy_file",
+                "policy_content",
+                "policy_last_updated",
+                "handbook_file",
+                "handbook_content",
+                "handbook_last_updated",
             )
         )
         return context
@@ -565,6 +596,10 @@ class AIService:
         intent_template = PromptTemplates.get_template_for_intent(intent)
         print(f"==>> intent_template: {intent_template}")
 
+        query_logs = self.get_ai_query_logs()
+        handbook_data = self.get_handbook_details()
+        print(f"==>> handbook_data: {handbook_data}")
+
         prompt = f"""
             {system_context}
 
@@ -577,6 +612,18 @@ class AIService:
 
             Relevant HRMS Data from Database:
             {context}
+
+            This is handbook of HRMS company which consists data of all policies information.
+            I would be needing to add that for each response, this will be having data regarding
+            leave process, sandwich leave rule  and many more. So this is main reliable thing
+            before anything. So carefully read and analyze its data for getting proper and good response.
+            {handbook_data}
+
+            Previous Conversation Details to know relevancy for new prompt:
+            {query_logs}
+            - This are previous logs, create new response learning from it.
+            - Depending on user's feedback give them priority of consideration(like from 5 to 1).
+            - Analyze thier intent, response time and eveything to better new responses.
 
             Response Guidelines:
             - Do not update timezone according to UTC.
@@ -593,11 +640,16 @@ class AIService:
             - Structure your response logically
             - Include specific numbers and facts when available
             - If data is unavailable, suggest checking the HRMS system directly
-            - Keep responses friendly but professional
+            - Keep responses friendly, politely but professional
             - You are an AI assistant integrated with HRMS system.
             - Your purpose is to help users with HR-related queries.
             - Always maintain professionalism and confidentiality.
             - If unsure, ask for clarification.
+            - Try to respond as soon as possible, to reduce user's waiting time.
+            - Always answer politely, until there's totally fucked up question from user.
+            - If there's any unsual or illogical or illegal request from user then suggest user a
+              proper way for that, and politely address him whatever he's suggesting is not
+              right thing to do. and Hoping he will not pursue wrong ways in future.
 
             - Also after generating response, add follow-up questions
               whose requirement goes like:

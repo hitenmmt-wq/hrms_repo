@@ -8,241 +8,6 @@ from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.superadmin import models
 
-# class IntentClassifier:
-#     """Enhanced intent classification with keywords and patterns and fuzzy matching."""
-
-#     INTENT_KEYWORDS = {
-#         "leave_inquiry": [
-#             "leave",
-#             "vacation",
-#             "absent",
-#             "day off",
-#             "leave balance",
-#             "how many days",
-#             "remaining",
-#             "available",
-#             "leave application",
-#             "apply for leave",
-#             "my leaves",
-#             "leave status",
-#             "request leave",
-#         ],
-#         "attendance_inquiry": [
-#             "attendance",
-#             "attendance details",
-#             "attandance",
-#             "employee attedance",
-#             "all attendance",
-#             "present",
-#             "absent",
-#             "check-in",
-#             "check-out",
-#             "punch",
-#             "punctuality",
-#             "marking",
-#             "attendance report",
-#             "how many days present",
-#             "absent count",
-#         ],
-#         "payroll_inquiry": [
-#             "salary",
-#             "payslip",
-#             "pay",
-#             "payment",
-#             "ctc",
-#             "net salary",
-#             "gross salary",
-#             "deduction",
-#             "payout",
-#             "how much",
-#             "earning",
-#         ],
-#         "profile_inquiry": [
-#             "profile",
-#             "personal",
-#             "profile information",
-#             "department",
-#             "position",
-#             "designation",
-#             "who am i",
-#         ],
-#         "general_inquiry": [
-#             "birthday",
-#             "joining date",
-#             "number of employees",
-#             "count",
-#             "employee birthday" "company",
-#             "holiday",
-#             "policy",
-#             "department",
-#             "position",
-#             "organization",
-#             "structure",
-#             "rules",
-#             "procedures",
-#             "analytics",
-#             "report",
-#             "summary",
-#             "statistics",
-#             "trends",
-#             "insights",
-#             "data",
-#             "how many",
-#             "total",
-#             "average",
-#         ],
-#         "greeting": [
-#             "hello",
-#             "good morning",
-#             "good afternoon",
-#             "good evening",
-#             "hi",
-#             "good night",
-#             "good day",
-#             "hey",
-#             "help",
-#             "how are you",
-#             "what can you do",
-#             "introduce yourself",
-#             "greetings",
-#         ],
-#         "irrelevent": [
-#             "what is weather today",
-#             "weather",
-#             "gold rate",
-#             "silver rate",
-#             "global updates",
-#             "news",
-#             "love",
-#             "girlfriend",
-#             "boyfriend",
-#             "football",
-#             "cricket",
-#             "soccer",
-#             "movie",
-#             "song",
-#             "music",
-#             "tv",
-#             "show",
-#             "celebrity",
-#             "fashion",
-#             "travel",
-#             "food",
-#             "restaurant",
-#             "recipe",
-#             "health",
-#             "fitness",
-#             "exercise",
-#             "diet",
-#             "medical",
-#             "doctor",
-#             "hospital",
-#             "insurance",
-#             "finance",
-#             "stock",
-#             "investment",
-#             "banking",
-#             "loan",
-#             "credit card",
-#             "debit card",
-#             "exchange rate",
-#             "economy",
-#             "market",
-#             "business",
-#             "entrepreneurship",
-#             "startup",
-#             "career",
-#             "collaboration",
-#             "deadline",
-#             "news",
-#             "broadcast",
-#             "study",
-#             "education",
-#             "learning",
-#             "training",
-#             "course",
-#             "certification",
-#             "degree",
-#             "diploma",
-#             "transfer",
-#             "resignation",
-#             "termination",
-#             "retirement",
-#             "onboarding",
-#             "offboarding",
-#             "orientation",
-#             "conference",
-#             "seminar",
-#             "workshop",
-#             "training session",
-#             "webinar",
-#             "presentation",
-#             "showcase",
-#             "exhibition",
-#             "fair",
-#             "trade show",
-#             "convention",
-#             "summit",
-#             "forum",
-#             "roundtable",
-#             "panel discussion",
-#             "debate",
-#         ],
-#     }
-
-#     @classmethod
-#     def classify(cls, message: str) -> str:
-#         """Classify message intent with confidence scoring and fuzzy matching."""
-#         message_lower = message.lower()
-#         intent_scores = {}
-
-#         # Score each intent based on keyword matches (exact + fuzzy)
-#         for intent, keywords in cls.INTENT_KEYWORDS.items():
-#             score = 0
-#             for keyword in keywords:
-#                 # Exact match
-#                 if keyword in message_lower:
-#                     score += 1
-#                 else:
-#                     # Fuzzy match for handling typos/misspellings (similarity > 0.75)
-#                     fuzzy_score = cls._fuzzy_match(message_lower, keyword)
-#                     if fuzzy_score > 0.75:
-#                         score += 0.5  # Lower weight for fuzzy matches
-#             intent_scores[intent] = score
-
-#         # Return intent with highest score
-#         best_intent = max(intent_scores, key=intent_scores.get)
-#         print(f"==>> intent_scores: {intent_scores}")
-
-#         # If no keywords matched, return general inquiry
-#         if intent_scores[best_intent] == 0:
-#             return "general_inquiry"
-
-#         return best_intent
-
-#     @classmethod
-#     def _fuzzy_match(cls, text: str, keyword: str, threshold: float = 0.75) -> float:
-#         """Perform fuzzy matching between text and keyword."""
-#         # Split text into words for better matching
-#         words = text.split()
-#         print(f"==>> words: {words}")
-#         max_ratio = 0
-
-#         # Check similarity against individual words and phrases
-#         for word in words:
-#             ratio = SequenceMatcher(None, word, keyword).ratio()
-#             if ratio > max_ratio:
-#                 max_ratio = ratio
-
-#         # Also check the keyword against the full text
-#         ratio = SequenceMatcher(None, text, keyword).ratio()
-#         print(f"==>> ratio: {ratio}")
-#         if ratio > max_ratio:
-#             max_ratio = ratio
-
-#         print(f"==>> max_ratio: {max_ratio}")
-#         return max_ratio
-
 
 class PromptTemplates:
     """Collection of prompt templates for different intents and roles."""
@@ -600,7 +365,7 @@ def calculate_payroll_patterns():
     missing_months = [m for m in range(1, 13) if m not in payroll_months]
 
     earnings = payrolls.aggregate(
-        total_earnings=Sum("total_earnings"),
+        total_earning=Sum("total_earnings"),
         avg_earnings=Avg("total_earnings"),
         total_net=Sum("net_salary"),
         avg_net=Avg("net_salary"),
@@ -608,9 +373,9 @@ def calculate_payroll_patterns():
     )
 
     deduction_percentage = None
-    if earnings["total_earnings"] and earnings["total_deductions"]:
+    if earnings["total_earning"] and earnings["total_deductions"]:
         deduction_percentage = round(
-            (earnings["total_deductions"] / earnings["total_earnings"]) * 100, 2
+            (earnings["total_deductions"] / earnings["total_earning"]) * 100, 2
         )
 
     structure = payrolls.aggregate(
@@ -621,7 +386,7 @@ def calculate_payroll_patterns():
     )
 
     high_deduction_payslips = payrolls.filter(
-        total_deductions__gt=0.4 * (earnings["avg_earnings"] or 1)
+        total_deductions__gt=0.4 * float((earnings["avg_earnings"] or 1))
     ).count()
 
     zero_net_salary = payrolls.filter(net_salary__lte=0).count()
@@ -633,9 +398,7 @@ def calculate_payroll_patterns():
         "missing_payroll_months": missing_months,
         "earnings_summary": {
             "total_earnings": (
-                round(earnings["total_earnings"], 2)
-                if earnings["total_earnings"]
-                else 0
+                round(earnings["total_earning"], 2) if earnings["total_earning"] else 0
             ),
             "average_earnings": (
                 round(earnings["avg_earnings"], 2) if earnings["avg_earnings"] else 0

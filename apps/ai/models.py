@@ -66,7 +66,7 @@ class AIQueryLog(BaseModel):
         AIMessage, on_delete=models.CASCADE, related_name="ai_message_queries"
     )
     query = models.TextField()
-    intent = models.CharField(max_length=255, null=True, blank=True)
+    intent = models.TextField(null=True, blank=True)
     data_accessed = models.JSONField(default=list, blank=True)
     response_quality = models.IntegerField(null=True, blank=True)  # User rating 1-5
     processing_time = models.FloatField(null=True, blank=True)
