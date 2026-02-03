@@ -109,7 +109,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         feedback = data.get("feedback")
         ai_message_id = data.get("ai_message_id")
 
-        self.ai_feedback_save(self.user, feedback, ai_message_id)
+        await self.ai_feedback_save(self.user, feedback, ai_message_id)
         # Here you can log the feedback or process it as needed
         # await self.send(
         #     text_data=json.dumps(
@@ -154,7 +154,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def ai_feedback_save(self, user, feedback, ai_message_id):
         """Save AI response feedback to the database."""
-        data = AIQueryLog.objects.filter(ai_message_id=ai_message_id).first()
+        data = AIQueryLog.objects.filter(ai_message=ai_message_id).first()
         data.response_quality = feedback
         data.save()
         return data

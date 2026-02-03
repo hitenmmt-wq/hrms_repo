@@ -1,4 +1,5 @@
 from calendar import monthrange
+from datetime import time
 from decimal import Decimal
 
 from celery import shared_task
@@ -425,10 +426,12 @@ def get_leave_balance_details(employee, start_date, end_date):
 def notify_frequent_late_comings():
     print("this function of frequent late comings triggered.....")
     today = timezone.now().date()
-    office_time = timezone.timedelta(hours=10, minutes=30)
+    office_time = time(hour=10, minute=30)
     print(f"==>> office_time: {office_time}")
     late_coming_employees = (
-        EmployeeAttendance.objects.filter(day=today, check_in__gt=office_time)
+        EmployeeAttendance.objects.filter(
+            day=today, check_in__time__gt=str(office_time)
+        )
         .select_related("employee")
         .values_list("employee", flat=True)
         .distinct()
