@@ -40,6 +40,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    environment:
+      TZ: "Asia/Kolkata"
 
   celery:
     build: .

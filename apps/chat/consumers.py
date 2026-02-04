@@ -7,13 +7,15 @@ from datetime import timedelta
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from django.contrib.contenttypes.models import ContentType
+
+# from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from django.utils import timezone
 
 from apps.chat.connection_tracker import chat_tracker
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
-from apps.notification.models import Notification, NotificationType
+
+# from apps.notification.models import Notification, NotificationType
 from apps.superadmin.models import Users
 
 
@@ -369,13 +371,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 user_id=user_id, status__in=["sent", "delivered"]
             )
             .exclude(message__sender_id=user_id)
-            .values("message__conversation_id")
+            .values("message__conversation_id", "message__text")
             .annotate(count=Count("id"))
         )
 
         by_conversation = {
             str(row["message__conversation_id"]): {
                 "conversation_id": str(row["message__conversation_id"]),
+                "text": str(row["message__text"]),
                 "count": row["count"],
             }
             for row in qs
@@ -530,39 +533,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                         },
                     )
 
-                if not (is_connected and is_visible):
-                    self._create_chat_notification(message, participant)
-
-                    async_to_sync(self.channel_layer.group_send)(
-                        f"user_{participant.id}", {"type": "global.unread_update"}
-                    )
-
-                    # async_to_sync(self.channel_layer.group_send)(
-                    #     f"user_{participant.id}",
-                    #     {
-                    #         "type": "global.message",
-                    #         "payload": {
-                    #             "type": "new_message",
-                    #             "message_id": message.id,
-                    #             "conversation_id": conversation_id,
-                    #             "status": message.get_status_for_user(participant),
-                    #             "sender": {
-                    #                 "id": user.id,
-                    #                 "email": user.email,
-                    #                 "first_name": user.first_name,
-                    #                 "last_name": user.last_name,
-                    #             },
-                    #             "message": {
-                    #                 "id": message.id,
-                    #                 "text": text,
-                    #                 "msg_type": msg_type,
-                    #                 "created_at": message.created_at.isoformat(),
-                    #             },
-                    #             "timestamp": message.created_at.isoformat(),
-                    #         },
-                    #     },
-                    # )
-
             return {
                 "id": message.id,
                 "text": message.text,
@@ -580,28 +550,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         except (Conversation.DoesNotExist, Users.DoesNotExist):
             return None
-
-    def _create_chat_notification(self, message, recipient):
-        """Create notification for new chat message."""
-        try:
-            notification_type, _ = NotificationType.objects.get_or_create(
-                code="new_message", defaults={"name": "New Message"}
-            )
-
-            content_type = ContentType.objects.get_for_model(Message)
-
-            Notification.objects.create(
-                recipient=recipient,
-                actor=message.sender,
-                notification_type=notification_type,
-                content_type=content_type,
-                object_id=message.id,
-                title=f"New message from {message.sender.first_name} {message.sender.last_name}",
-                message=message.text[:100] if message.text else "Sent a file",
-                is_read=False,
-            )
-        except Exception as e:
-            print(f"Error creating notification: {e}")
 
     @database_sync_to_async
     def update_message_status(self, message_id, user_id, status):
@@ -690,6 +638,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             message = Message.objects.filter(id=message_id).first()
             if message and message.sender.id == user_id:
                 message.delete()
+
+                async_to_sync(self.channel_layer.group_send)(
+                    f"chat_{message.conversation.id}",
+                    {
+                        "type": "chat.delete_message",
+                        "payload": {
+                            "type": "delete_message",
+                            "conversation_id": message.conversation.id,
+                            "message_id": message.id,
+                            "deleted_at": timezone.now().isoformat(),
+                        },
+                    },
+                )
                 return "Message deleted successfully"
             return "Unauthorized to delete this message"
         except Message.DoesNotExist:
