@@ -137,3 +137,13 @@ def check_out(attendance: EmployeeAttendance) -> EmployeeAttendance:
 
     attendance.save(update_fields=["check_out", "work_hours", "break_hours", "status"])
     return attendance
+
+
+def decimal_hours_to_hm(hours: Decimal) -> str:
+    if hours is None:
+        return "00:00"
+
+    total_minutes = int(hours * 60)
+    h = total_minutes // 60
+    m = total_minutes % 60
+    return f"{h:02d}:{m:02d}"

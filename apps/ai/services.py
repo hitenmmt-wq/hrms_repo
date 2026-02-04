@@ -132,7 +132,7 @@ class AIService:
 
     @database_sync_to_async
     def get_handbook_details(self):
-        data = CommonData.objects.values("handbook_content")
+        data = CommonData.objects.values_list("handbook_content")
         print(f"==>> data: {data}")
         return data
 
@@ -156,6 +156,7 @@ class AIService:
             - common_data_inquiry
             - leave_type_inquiry
             - employee_inquiry
+            - handbook_inquiry
             - greetings
             - other
 
@@ -177,6 +178,20 @@ class AIService:
               so pass those multiple intents in tuple like ['attendance_inquiry', 'payroll_inquiry']
             - While returning intent list, only pass that only like , ['attendance_inquiry', 'payroll_inquiry'].
             - As im getting whole text suggesting how it came to conclusion, which  is not necessary.
+            - when user want information regarding handbook, then give precise data and information, as this
+              information should not be misunderstood. and give pproper response as mentioned in handbook details.
+              nothing extra or out of the context or out of the box is required to be given.
+            - Intent should always be one word or list of mutliple words only. should not add extra text anywhere.
+            - Analyze intent properly on whole message provided because based on that
+              further data will be fetched from DB.
+            - Also if in same conversation ID, then get previous message/response's intent as well.
+              Because next question or follow up question might be of same intent as well.
+            - There might be chance where in same conversation responsd to follow up question as YES or NO.
+              so based on that again update intent as it was in previous ones.
+            - And if there's different conceptual intent added then we need to update intent
+              with new and old accordingly.
+            - At many points only new intent, only old intent or both combinely after adding/sunstracting
+              will be forwarded to fetch context as per user's intentions.
 
             Classify the intent of the current query based on the user message and previous queries.
             Return only the intent name list as recognized from the above list.
@@ -219,6 +234,8 @@ class AIService:
             context.update(await self._get_leave_type_context())
         if "employee_inquiry" in intent:
             context.update(await self._get_employee_context())
+        if "handbook_inquiry" in intent:
+            context.update(await self._get_handbook_context())
         if "other" in intent or not intent:
             context.update(await self._get_default_context())
 
@@ -526,9 +543,6 @@ class AIService:
                 "policy_file",
                 "policy_content",
                 "policy_last_updated",
-                "handbook_file",
-                "handbook_content",
-                "handbook_last_updated",
             )
         )
         return context
@@ -574,6 +588,19 @@ class AIService:
             )
 
         context["extra_details"] = calculate_employee_patterns()
+        return context
+
+    @database_sync_to_async
+    def _get_handbook_context(self) -> Dict[str, Any]:
+        context = {}
+        context["handbook_data"] = list(
+            CommonData.objects.values(
+                "handbook_file",
+                "handbook_content",
+                "handbook_content_html",
+                "handbook_last_updated",
+            )
+        )
         return context
 
     @database_sync_to_async
@@ -650,6 +677,21 @@ class AIService:
             - If there's any unsual or illogical or illegal request from user then suggest user a
               proper way for that, and politely address him whatever he's suggesting is not
               right thing to do. and Hoping he will not pursue wrong ways in future.
+            - If there's general_inquiry or greeting, then you should ask that you can provide a positive or
+              motivational quotes if needed. can also deliver a short inspiring story if user asks for it.
+            - These motivational line, quotes or short story need to be fetched by you only.
+            - Here you will be getting multiple intent's, multiple context data. So please be clear afterwards
+              as which data needs to setup for response and which data needs to hidden as per user's ask.
+            - You have to detect in which manner, intention a user is asking. based on that, you need to answer
+              properly in that context only. but our manner should polite only. But yes, you can answer in a
+              smart way like humurously, frankly, joyously. this type emotions can be reflected with
+              professionalism maintained.
+            - Adding emojis to response would be great to have as that will enhance response attractiveness.
+            - Put emojis appropriately, not too less not too much. i hope you get it.
+            - After reading user's message, you need to act and respond accordingly, as many times user will ask
+              irrelevant things which has nothing to do with our HRMS employee management portal.
+              if anything like this occurs then you should directly refrain and explain that its a invalid request
+              to process.
 
             - Also after generating response, add follow-up questions
               whose requirement goes like:

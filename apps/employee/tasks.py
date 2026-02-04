@@ -467,7 +467,14 @@ def auto_checkout_employees():
     employees_to_checkout = EmployeeAttendance.objects.filter(
         day=today, check_in__isnull=False, check_out__isnull=True
     )
+    previous_employee_tocheckout = EmployeeAttendance.objects.filter(
+        day__lt=today, check_in__isnull=False, check_out__isnull=True
+    )
     print(f"==>> employees_to_checkout: {employees_to_checkout}")
+    print(f"==>> previous_employee_tocheckout: {previous_employee_tocheckout}")
+    for attendance in previous_employee_tocheckout:
+        check_out(attendance)
+        print(f"Auto checked out {attendance.employee.email} for previous pending days")
     for attendance in employees_to_checkout:
         check_out(attendance)
         print(f"Auto checked out {attendance.employee.email} for {today}")

@@ -55,15 +55,27 @@ class NotificationWebSocketService:
             print("Notification sent successfully via WebSocket")
 
             # Here adding real-time push notification FCM
-            tokens = DeviceToken.objects.all().values_list("token", flat=True)
+            tokens = DeviceToken.objects.filter(
+                user=notification.recipient
+            ).values_list("token", flat=True)
             print(f"==>> tokens: {tokens}")
 
             if tokens:
                 for token in tokens:
                     print(f"==>> Sending push notification to token: {token}")
+                    from firebase_admin import messaging
+
                     from apps.base.firebase import send_fcm_notification
 
-                    send_fcm_notification(token)
+                    message = messaging.Message(
+                        token=token,
+                        notification=messaging.Notification(
+                            title=notification.title,
+                            body=notification.message,
+                        ),
+                    )
+                    # Pass message here for real-time notification
+                    send_fcm_notification(message)
         except Exception as e:
             print(f"Error sending notification via WebSocket: {e}")
             import traceback
