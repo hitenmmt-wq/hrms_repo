@@ -133,7 +133,8 @@ def generate_monthly_payslips():
             if attendance.status in ["paid_leave", "present", "incomplete_hours"]:
                 present_days += 1
             elif attendance.status in ["half_day"]:
-                present_days += 0.5
+                if attendance.is_halfday_paid:
+                    present_days += 0.5
         print(f"==>> present_days: {present_days}")
 
         basic_salary = employee.salary_ctc * Decimal("0.5")

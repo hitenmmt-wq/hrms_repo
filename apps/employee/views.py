@@ -457,6 +457,25 @@ class PaySlipViewSet(BaseViewSet):
                     message="Payslip already exists for this period", status=400
                 )
 
+            attandance_data = EmployeeAttendance.objects.filter(
+                employee=employee, day__month=start_date.month
+            )
+            print(f"==>> attandance_data: {attandance_data}")
+            print(f"==>> attandance_data counts: {attandance_data.count()}")
+            present_days_count = 0
+            for attendance in attandance_data:
+                if attendance.status == "half_day":
+                    if attendance.is_halfday_paid:
+                        present_days_count += 0.5
+                elif attendance.status in ["present", "paid_leave", "incomplete_hours"]:
+                    present_days_count += 1
+                elif attendance.status in ["unpaid_leave", "pending"]:
+                    pass
+                else:
+                    continue
+
+            print(f"==>> present_days_count: {present_days_count}")
+
             # Get leave balance
             leave_balance = LeaveBalance.objects.filter(employee=employee).first()
             if not leave_balance:
@@ -485,9 +504,11 @@ class PaySlipViewSet(BaseViewSet):
             print(f"==>> holidays: {holidays}")
             working_days = weekdays_count(start_date, end_date) - int(holidays)
             print(f"==>> working_days: {working_days}")
+            absent_days = working_days - present_days_count
+            print(f"==>> absent_days: {absent_days}")
             return ApiResponse.success(
                 data={
-                    "working_days": working_days,
+                    "working_days": present_days_count,
                     "total_leave_taken": total_leave_taken,
                     "total_leave_deducted": deductible_days,
                     "leave_deduction": leave_deduction,
