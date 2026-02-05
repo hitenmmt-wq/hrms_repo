@@ -1,4 +1,5 @@
 import calendar
+import math
 from datetime import date
 
 import pdfplumber
@@ -185,3 +186,95 @@ def delete_old_file(instance, field_name):
     field = getattr(instance, field_name, None)
     if field and field.name:
         field.delete(save=False)
+
+
+def determine_attendance_type(leave_data):
+    """Determine single attendance status based on leave type and available balances."""
+    if not leave_data or not leave_data.leave_type:
+        return constants.UNPAID_LEAVE
+
+    leave_code = leave_data.leave_type.code
+    leave_balance = LeaveBalance.objects.filter(
+        employee=leave_data.employee, year=leave_data.from_date.year
+    ).first()
+
+    if leave_code == constants.HALFDAY_LEAVE:
+        return "half_day"
+
+    if leave_code == constants.SICK_LEAVE:
+        if leave_balance and leave_balance.remaining_sl > 0:
+            return constants.PAID_LEAVE
+        return constants.UNPAID_LEAVE
+
+    if leave_code == constants.PRIVILEGE_LEAVE:
+        if not leave_balance:
+            return constants.UNPAID_LEAVE
+
+        current_month = leave_data.from_date.month
+        monthly_pl_available = min(current_month, leave_balance.pl or 0)
+        pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+        if pending_pl > 0:
+            return constants.PAID_LEAVE
+        return constants.UNPAID_LEAVE
+
+    return constants.UNPAID_LEAVE
+
+
+def is_halfday_paid_leave(leave_data):
+    """Check whether a half-day leave should be paid based on available PL."""
+    if not leave_data or not leave_data.leave_type:
+        return False
+
+    leave_balance = LeaveBalance.objects.filter(
+        employee=leave_data.employee, year=leave_data.from_date.year
+    ).first()
+    if not leave_balance:
+        return False
+
+    current_month = leave_data.from_date.month
+    monthly_pl_available = min(current_month, leave_balance.pl or 0)
+    pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+    return pending_pl >= 0.5
+
+
+def determine_attendance_statuses(leave_data, total_days):
+    """
+    Determine attendance status per day for a leave request.
+
+    For PL, if partial balance is available, mark earliest days as paid and
+    remaining days as unpaid.
+    """
+    day_count = int(math.ceil(float(total_days or 0)))
+    if not leave_data or not leave_data.leave_type:
+        return [constants.UNPAID_LEAVE] * day_count
+
+    leave_code = leave_data.leave_type.code
+
+    if leave_code == constants.HALFDAY_LEAVE:
+        return ["half_day"] * day_count
+
+    if leave_code != constants.PRIVILEGE_LEAVE:
+        return [determine_attendance_type(leave_data)] * day_count
+
+    leave_balance = LeaveBalance.objects.filter(
+        employee=leave_data.employee, year=leave_data.from_date.year
+    ).first()
+    if not leave_balance:
+        return [constants.UNPAID_LEAVE] * float(total_days)
+
+    current_month = leave_data.from_date.month
+    monthly_pl_available = min(current_month, leave_balance.pl or 0)
+    pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+    pending_pl = max(0, pending_pl)
+
+    statuses = []
+    remaining_days = float(total_days)
+    while remaining_days > 0:
+        if pending_pl >= 1:
+            statuses.append(constants.PAID_LEAVE)
+            pending_pl -= 1
+        else:
+            statuses.append(constants.UNPAID_LEAVE)
+        remaining_days -= 1
+
+    return statuses

@@ -61,7 +61,7 @@ class LeaveBalance(BaseModel):
     @property
     def remaining_lop(self):
         """Calculate remaining loss of pay balance."""
-        return max(self.lop - self.used_lop, 0)
+        return max(self.used_lop, 0)
 
 
 class PaySlip(BaseModel):

@@ -40,8 +40,10 @@ from apps.superadmin.custom_filters import (
 from apps.superadmin.tasks import send_email_task
 from apps.superadmin.utils import (
     delete_old_file,
+    determine_attendance_statuses,
     extract_file_data,
     general_team_monthly_data,
+    is_halfday_paid_leave,
     notify_employee_leave_approved,
     notify_employee_leave_rejected,
     update_leave_balance,
@@ -57,20 +59,6 @@ class CustomScriptView(APIView):
 
     def get(self, request):
         """Execute custom scripts for data migration or testing purposes."""
-        # from apps.employee.models import LeaveBalance
-
-        # employees = models.Users.objects.filter(
-        #     is_active = True
-        # )
-        # for employee in employees:
-        #     leave_balance = LeaveBalance.objects.create(
-        #         employee=employee,
-        #         pl = 12,
-        #         sl = 4,
-        #         lop = 0,
-        #         year = 2026
-        #     )
-        # employee_attendance = EmployeeAttendance.objects.create
 
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -792,12 +780,6 @@ class LeaveApprovalViewSet(BaseViewSet):
             leave_data.save(
                 update_fields=["status", "approved_by", "approved_at", "response_text"]
             )
-            update_leave_balance(
-                leave_data.employee,
-                leave_data.leave_type,
-                leave_data.status,
-                leave_data.total_days,
-            )
 
             leave_entries = []
             initial_date = leave_data.from_date
@@ -805,23 +787,44 @@ class LeaveApprovalViewSet(BaseViewSet):
                 leave_data.to_date if leave_data.to_date else leave_data.from_date
             )
             # Determine attendance status based on leave type
-            attendance_status = (
-                constants.PAID_LEAVE
-                if leave_data.leave_type.code
-                in [constants.SICK_LEAVE, constants.PRIVILEGE_LEAVE]
-                else constants.UNPAID_LEAVE
-            )
+            total_days = float(leave_data.total_days or 0)
+            attendance_statuses = determine_attendance_statuses(leave_data, total_days)
+            print(f"==>> attendance_statuses: {attendance_statuses}")
 
+            is_halfday_paid = False
+            if (
+                leave_data.leave_type
+                and leave_data.leave_type.code == constants.HALFDAY_LEAVE
+            ):
+                is_halfday_paid = is_halfday_paid_leave(leave_data)
+
+            idx = 0
             while initial_date <= last_date:
+                status_data = (
+                    attendance_statuses[idx]
+                    if idx < len(attendance_statuses)
+                    else constants.UNPAID_LEAVE
+                )
                 leave_entries.append(
                     EmployeeAttendance(
                         employee=leave_data.employee,
                         day=initial_date,
-                        status=attendance_status,
+                        status=status_data,
+                        is_halfday_paid=(
+                            is_halfday_paid if status_data == "half_day" else False
+                        ),
                     )
                 )
                 initial_date += timedelta(days=1)
+                idx += 1
             EmployeeAttendance.objects.bulk_create(leave_entries)
+
+            update_leave_balance(
+                leave_data.employee,
+                leave_data.leave_type,
+                leave_data.status,
+                leave_data.total_days,
+            )
 
             notify_employee_leave_approved(leave_data.employee, leave_data)
 

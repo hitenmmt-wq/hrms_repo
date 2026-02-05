@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.attendance.models import EmployeeAttendance
+from apps.attendance.utils import decimal_hours_to_hm
 from apps.employee.models import LeaveBalance
 from apps.superadmin.models import CommonData, Holiday, Leave
 from apps.superadmin.tasks import send_email_task
@@ -149,7 +150,7 @@ def employee_monthly_working_hours(employee):
         working_days_till_today - (holidays_till_today + leaves_till_today), 0
     )
 
-    total_working_hours_till_date = (
+    total_working_hours_till_date = decimal_hours_to_hm(
         EmployeeAttendance.objects.filter(
             employee_id=employee.id,
             day__year=year,
@@ -162,7 +163,7 @@ def employee_monthly_working_hours(employee):
 
     remaining_working_days = max(total_working_days - total_working_days_till_date, 0)
 
-    daily_average_hours = (
+    daily_average_hours = decimal_hours_to_hm(
         total_working_hours_till_date / total_working_days_till_date
         if total_working_days_till_date > 0
         else 0
