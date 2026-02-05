@@ -16,7 +16,6 @@ from apps.attendance.models import EmployeeAttendance
 from apps.attendance.utils import decimal_hours_to_hm
 from apps.employee.models import LeaveBalance
 from apps.superadmin.models import CommonData, Holiday, Leave
-from apps.superadmin.tasks import send_email_task
 
 # from io import BytesIO
 
@@ -150,7 +149,7 @@ def employee_monthly_working_hours(employee):
         working_days_till_today - (holidays_till_today + leaves_till_today), 0
     )
 
-    total_working_hours_till_date = decimal_hours_to_hm(
+    total_working_hours_till_date = (
         EmployeeAttendance.objects.filter(
             employee_id=employee.id,
             day__year=year,
@@ -174,16 +173,20 @@ def employee_monthly_working_hours(employee):
         if total_working_hours > 0
         else 0
     )
-
+    pending_hours = decimal_hours_to_hm(
+        int(total_working_hours) - int(total_working_hours_till_date)
+    )
+    print(f"==>> pending_hours: {pending_hours}")
     return {
         "employee_email": employee.email,
         "first_name": employee.first_name,
         "last_name": employee.last_name,
         "total_working_hours": total_working_hours,
-        "worked_hours": total_working_hours_till_date,
+        "pending_hours": pending_hours,
+        "worked_hours": decimal_hours_to_hm(total_working_hours_till_date),
         "total_working_days": total_working_days,
         "remaining_working_days": remaining_working_days,
-        "daily_average_hours": round(daily_average_hours, 2),
+        "daily_average_hours": daily_average_hours,
         "progress_percentage": round(progress_percentage, 2),
     }
 
@@ -251,17 +254,17 @@ def generate_payslip_pdf(payslip):
         if not pdf:
             raise Exception("PDF generation failed - empty content")
 
-        send_email_task(
-            subject=f"Payment-Slip Generated for {payslip.month}",
-            to_email=payslip.employee.email,
-            text_body=(
-                f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
-                f"\n\nYour Payment-slip has been generated for {payslip.month}."
-                "\n\nYou can Download it from here."
-            ),
-            pdf_bytes=pdf,
-            filename=f"payslip_{payslip.id}.pdf",
-        )
+        # send_email_task(
+        #     subject=f"Payment-Slip Generated for {payslip.month}",
+        #     to_email=payslip.employee.email,
+        #     text_body=(
+        #         f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
+        #         f"\n\nYour Payment-slip has been generated for {payslip.month}."
+        #         "\n\nYou can Download it from here."
+        #     ),
+        #     pdf_bytes=pdf,
+        #     filename=f"payslip_{payslip.id}.pdf",
+        # )
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
