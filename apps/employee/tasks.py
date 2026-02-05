@@ -99,8 +99,6 @@ def generate_monthly_payslips():
     end_date = timezone.datetime(
         prev_year, prev_month, monthrange(prev_year, prev_month)[1]
     ).date()
-    holidays = holidays_in_month(prev_month, prev_year)
-    days = (weekdays_count(start_date, end_date)) - int(holidays)
     month_name = start_date.strftime("%B %Y")
     common_data = models.CommonData.objects.first()
     employees = models.Users.objects.filter(
@@ -108,6 +106,7 @@ def generate_monthly_payslips():
     )
 
     for employee in employees:
+        present_days = 0
         if PaySlip.objects.filter(employee=employee, month=month_name).exists():
             continue
 
@@ -125,6 +124,17 @@ def generate_monthly_payslips():
             employee, start_date, end_date, leave_balance
         )
         print(f"==>> leave_deduction: {leave_deduction}")
+        attendance_data = EmployeeAttendance.objects.filter(
+            employee=employee, day__month=current_month
+        )
+        print(f"==>> attendance_data: {attendance_data}")
+        print(f"==>> attendance_data count: {attendance_data.count()}")
+        for attendance in attendance_data:
+            if attendance.status in ["paid_leave", "present", "incomplete_hours"]:
+                present_days += 1
+            elif attendance.status in ["half_day"]:
+                present_days += 0.5
+        print(f"==>> present_days: {present_days}")
 
         basic_salary = employee.salary_ctc * Decimal("0.5")
         hr_allowance = basic_salary * Decimal("0.6")
@@ -142,7 +152,7 @@ def generate_monthly_payslips():
             start_date=start_date,
             end_date=end_date,
             month=month_name,
-            days=days,
+            days=present_days,
             basic_salary=basic_salary,
             hr_allowance=hr_allowance,
             special_allowance=special_allowance,
@@ -443,7 +453,7 @@ def notify_frequent_late_comings():
     recipients = models.Users.objects.filter(is_active=True, role="admin")
     print(f"==>> recipients: {recipients}")
     for late_coming_employee in late_coming_employees:
-        for recipient in recipients.exclude(id=late_coming_employee.id):
+        for recipient in recipients.exclude(id=late_coming_employee):
             notification_type = NotificationType.objects.filter(
                 code=constants.LATE_COMING
             ).first()

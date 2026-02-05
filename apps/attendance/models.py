@@ -32,6 +32,7 @@ class EmployeeAttendance(BaseModel):
     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     break_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
+    is_halfday_paid = models.BooleanField(default=False)
 
     class Meta:
         indexes = [
