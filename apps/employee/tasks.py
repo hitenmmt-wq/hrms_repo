@@ -165,6 +165,20 @@ def generate_monthly_payslips():
             net_salary=net_salary,
         )
 
+        # Add sending email to users when generating payslip
+        # payslip_pdf = generate_payslip_pdf(payslip)
+        # send_email_task(
+        #     subject=f"Payment-Slip Generated for {payslip.month}",
+        #     to_email=payslip.employee.email,
+        #     text_body=(
+        #         f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
+        #         f"\n\nYour Payment-slip has been generated for {payslip.month}."
+        #         "\n\nYou can Download it from here."
+        #     ),
+        #     pdf_bytes=payslip_pdf,
+        #     filename=f"payslip_{payslip.id}.pdf",
+        # )
+
         print(f"Payslip generated for {employee.email} - {month_name}")
 
     return f"Payslips generated successfully for {month_name}"

@@ -572,6 +572,20 @@ class PaySlipViewSet(BaseViewSet):
                 net_salary=net_salary,
             )
 
+            # Add sending mail when generating payslip for user
+            # payslip_pdf = generate_payslip_pdf(payslip)
+            # send_email_task(
+            #     subject=f"Payment-Slip Generated for {payslip.month}",
+            #     to_email=payslip.employee.email,
+            #     text_body=(
+            #         f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
+            #         f"\n\nYour Payment-slip has been generated for {payslip.month}."
+            #         "\n\nYou can Download it from here."
+            #     ),
+            #     pdf_bytes=payslip_pdf,
+            #     filename=f"payslip_{payslip.id}.pdf",
+            # )
+
             return ApiResponse.success(
                 data=PaySlipSerializer(payslip).data,
                 message="Payslip generated successfully",
