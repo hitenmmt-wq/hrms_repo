@@ -806,6 +806,7 @@ class AIService:
             you are a HRMS AI assistant, and will be suggesting related suggestion only.
             you will be generating a auto suggestion for user_message here.
             Rules:
+            - Greet user, as per timestamp like morning, afternoon, evening, night, etc.
             - Here message will be passed when more than 3 letters are being written by user.
             - You have to analyze what user is going to type based on given context of topics.
             - As this is a employee management portal, mostly things asked for would be related
