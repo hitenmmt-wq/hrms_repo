@@ -47,10 +47,12 @@ from apps.employee.tasks import get_leave_deduction_preview
 from apps.employee.utils import (
     employee_monthly_working_hours,
     generate_payslip_pdf,
+    generate_payslip_pdf_bytes,
     holidays_in_month,
     weekdays_count,
 )
 from apps.superadmin import models
+from apps.superadmin.tasks import send_email_task
 
 
 class EmployeeDashboardView(APIView):
@@ -573,18 +575,21 @@ class PaySlipViewSet(BaseViewSet):
             )
 
             # Add sending mail when generating payslip for user
-            # payslip_pdf = generate_payslip_pdf(payslip)
-            # send_email_task(
-            #     subject=f"Payment-Slip Generated for {payslip.month}",
-            #     to_email=payslip.employee.email,
-            #     text_body=(
-            #         f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
-            #         f"\n\nYour Payment-slip has been generated for {payslip.month}."
-            #         "\n\nYou can Download it from here."
-            #     ),
-            #     pdf_bytes=payslip_pdf,
-            #     filename=f"payslip_{payslip.id}.pdf",
-            # )
+            try:
+                payslip_pdf = generate_payslip_pdf_bytes(payslip)
+                send_email_task(
+                    subject=f"Payment-Slip Generated for {payslip.month}",
+                    to_email=payslip.employee.email,
+                    text_body=(
+                        f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
+                        f"\n\nYour Payment-slip has been generated for {payslip.month}."
+                        "\n\nYou can Download it from here."
+                    ),
+                    pdf_bytes=payslip_pdf,
+                    filename=f"payslip_{payslip.id}.pdf",
+                )
+            except Exception as e:
+                print(f"Payslip email failed for {employee.email}: {e}")
 
             return ApiResponse.success(
                 data=PaySlipSerializer(payslip).data,
