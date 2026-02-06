@@ -50,7 +50,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
 
             if message_type == "user_message":
                 await self.handle_user_message(text_data_json)
-            elif message_type == "typing":
+            elif message_type == "user_typing":
                 await self.handle_typing_indicator(text_data_json)
             elif message_type == "response_feedback":
                 await self.handle_feedback_response(text_data_json)
@@ -97,11 +97,16 @@ class AIChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_typing_indicator(self, data):
         """Handle typing indicator from user."""
-        is_typing = data.get("is_typing", False)
+        message = data.get("message", False)
+        ai_service = AIService(self.user)
+        auto_suggestion = await ai_service.get_auto_suggestions(message)
+        print(f"==>> auto_suggestion: {auto_suggestion}")
 
         # Broadcast typing status back to user
         await self.send(
-            text_data=json.dumps({"type": "user_typing", "is_typing": is_typing})
+            text_data=json.dumps(
+                {"type": "auto_suggestion", "auto_suggestion": auto_suggestion}
+            )
         )
 
     async def handle_feedback_response(self, data):

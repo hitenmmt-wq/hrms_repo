@@ -203,7 +203,7 @@ def imagefield_to_base64(image_field):
         return None
 
 
-def generate_payslip_pdf(payslip):
+def generate_payslip_pdf_bytes(payslip):
     company = CommonData.objects.first()
     company_logo_base64 = imagefield_to_base64(
         company.company_logo if company else None
@@ -248,24 +248,17 @@ def generate_payslip_pdf(payslip):
             config = pdfkit.configuration(wkhtmltopdf=path)
             break
 
+    pdf = pdfkit.from_string(html, False, options=options, configuration=config)
+
+    if not pdf:
+        raise Exception("PDF generation failed - empty content")
+
+    return pdf
+
+
+def generate_payslip_pdf(payslip):
     try:
-        pdf = pdfkit.from_string(html, False, options=options, configuration=config)
-
-        if not pdf:
-            raise Exception("PDF generation failed - empty content")
-
-        # send_email_task(
-        #     subject=f"Payment-Slip Generated for {payslip.month}",
-        #     to_email=payslip.employee.email,
-        #     text_body=(
-        #         f"Hi {payslip.employee.first_name} {payslip.employee.last_name},"
-        #         f"\n\nYour Payment-slip has been generated for {payslip.month}."
-        #         "\n\nYou can Download it from here."
-        #     ),
-        #     pdf_bytes=pdf,
-        #     filename=f"payslip_{payslip.id}.pdf",
-        # )
-
+        pdf = generate_payslip_pdf_bytes(payslip)
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
             f'attachment; filename="payslip_{payslip.id}.pdf"'
