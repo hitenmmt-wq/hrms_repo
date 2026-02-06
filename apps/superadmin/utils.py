@@ -20,7 +20,7 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
     print(f"==>> leave_type: {leave_type}")
     today = timezone.now()
     year = today.year
-    current_month = today.month
+    # current_month = today.month
 
     leave_balance = LeaveBalance.objects.filter(employee=employee, year=year).first()
 
@@ -32,44 +32,22 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
 
     elif status == constants.APPROVED:
         if leave_type and leave_type.code == constants.PRIVILEGE_LEAVE:
-            # Calculate monthly PL allocation (1 per month)
-            monthly_pl_available = min(current_month, leave_balance.pl)
-            current_available_pl = monthly_pl_available - leave_balance.used_pl
-
-            if current_available_pl >= count:
-                # Sufficient PL available - all paid
-                leave_balance.used_pl += count
-            else:
-                # Partial PL available - use available PL and rest as LOP
-                if current_available_pl > 0:
-                    leave_balance.used_pl += current_available_pl
-                    leave_balance.used_lop += count - current_available_pl
-                else:
-                    # No PL available - all goes to LOP
-                    leave_balance.used_lop += count
+            pending_pl = get_pending_monthly_pl(leave_balance, today.date())
+            apply_pl_usage(leave_balance, pending_pl, count)
 
         elif leave_type and leave_type.code == constants.SICK_LEAVE:
-            # Check if sufficient SL balance exists
-            if leave_balance.remaining_sl >= count:
+            pending_sl = get_pending_quarter_sl(leave_balance, today.date())
+            if pending_sl >= count:
                 leave_balance.used_sl += count
             else:
-                # Use available SL and rest as LOP
-                available_sl = leave_balance.remaining_sl
-                leave_balance.used_sl += available_sl
-                leave_balance.used_lop += count - available_sl
-        elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
-            # Calculate monthly PL allocation for half day
-            monthly_pl_available = min(current_month, leave_balance.pl)
-            current_available_pl = monthly_pl_available - leave_balance.used_pl
-
-            if current_available_pl >= count:
-                leave_balance.used_pl += count
-            else:
-                if current_available_pl > 0:
-                    leave_balance.used_pl += current_available_pl
-                    leave_balance.used_lop += count - current_available_pl
+                if pending_sl > 0:
+                    leave_balance.used_sl += pending_sl
+                    leave_balance.used_lop += count - pending_sl
                 else:
                     leave_balance.used_lop += count
+        elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
+            pending_pl = get_pending_monthly_pl(leave_balance, today.date())
+            apply_pl_usage(leave_balance, pending_pl, count)
         else:
             # Other leave types go to LOP
             leave_balance.used_lop += count
@@ -194,30 +172,32 @@ def determine_attendance_type(leave_data):
         return constants.UNPAID_LEAVE
 
     leave_code = leave_data.leave_type.code
-    leave_balance = LeaveBalance.objects.filter(
-        employee=leave_data.employee, year=leave_data.from_date.year
-    ).first()
+    leave_balance = get_leave_balance_for_date(
+        leave_data.employee, leave_data.from_date
+    )
 
     if leave_code == constants.HALFDAY_LEAVE:
         return "half_day"
 
     if leave_code == constants.SICK_LEAVE:
-        if leave_balance and leave_balance.remaining_sl > 0:
-            return constants.PAID_LEAVE
+        if leave_balance:
+            pending_sl = get_pending_quarter_sl(leave_balance, leave_data.from_date)
+            if pending_sl > 0:
+                return constants.PAID_LEAVE
         return constants.UNPAID_LEAVE
 
-    if leave_code == constants.PRIVILEGE_LEAVE:
-        if not leave_balance:
-            return constants.UNPAID_LEAVE
+    # if leave_code == constants.PRIVILEGE_LEAVE:
+    #     if not leave_balance:
+    #         return constants.UNPAID_LEAVE
 
-        current_month = leave_data.from_date.month
-        monthly_pl_available = min(current_month, leave_balance.pl or 0)
-        pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
-        if pending_pl > 0:
-            return constants.PAID_LEAVE
-        return constants.UNPAID_LEAVE
+    #     current_month = leave_data.from_date.month
+    #     monthly_pl_available = min(current_month, leave_balance.pl or 0)
+    #     pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+    #     if pending_pl > 0:
+    #         return constants.PAID_LEAVE
+    #     return constants.UNPAID_LEAVE
 
-    return constants.UNPAID_LEAVE
+    # return constants.UNPAID_LEAVE
 
 
 def is_halfday_paid_leave(leave_data):
@@ -225,15 +205,13 @@ def is_halfday_paid_leave(leave_data):
     if not leave_data or not leave_data.leave_type:
         return False
 
-    leave_balance = LeaveBalance.objects.filter(
-        employee=leave_data.employee, year=leave_data.from_date.year
-    ).first()
+    leave_balance = get_leave_balance_for_date(
+        leave_data.employee, leave_data.from_date
+    )
     if not leave_balance:
         return False
 
-    current_month = leave_data.from_date.month
-    monthly_pl_available = min(current_month, leave_balance.pl or 0)
-    pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+    pending_pl = get_pending_monthly_pl(leave_balance, leave_data.from_date)
     return pending_pl >= 0.5
 
 
@@ -253,19 +231,35 @@ def determine_attendance_statuses(leave_data, total_days):
     if leave_code == constants.HALFDAY_LEAVE:
         return ["half_day"] * day_count
 
+    if leave_code == constants.SICK_LEAVE:
+        leave_balance = get_leave_balance_for_date(
+            leave_data.employee, leave_data.from_date
+        )
+        if not leave_balance:
+            return [constants.UNPAID_LEAVE] * day_count
+
+        pending_sl = get_pending_quarter_sl(leave_balance, leave_data.from_date)
+        statuses = []
+        remaining_days = float(total_days)
+        while remaining_days > 0:
+            if pending_sl >= 1 or (pending_sl > 0 and remaining_days <= pending_sl):
+                statuses.append(constants.PAID_LEAVE)
+                pending_sl -= 1
+            else:
+                statuses.append(constants.UNPAID_LEAVE)
+            remaining_days -= 1
+        return statuses
+
     if leave_code != constants.PRIVILEGE_LEAVE:
         return [determine_attendance_type(leave_data)] * day_count
 
-    leave_balance = LeaveBalance.objects.filter(
-        employee=leave_data.employee, year=leave_data.from_date.year
-    ).first()
+    leave_balance = get_leave_balance_for_date(
+        leave_data.employee, leave_data.from_date
+    )
     if not leave_balance:
         return [constants.UNPAID_LEAVE] * float(total_days)
 
-    current_month = leave_data.from_date.month
-    monthly_pl_available = min(current_month, leave_balance.pl or 0)
-    pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
-    pending_pl = max(0, pending_pl)
+    pending_pl = get_pending_monthly_pl(leave_balance, leave_data.from_date)
 
     statuses = []
     remaining_days = float(total_days)
@@ -278,3 +272,33 @@ def determine_attendance_statuses(leave_data, total_days):
         remaining_days -= 1
 
     return statuses
+
+
+def get_pending_quarter_sl(leave_balance, leave_date):
+    current_month = leave_date.month
+    quarter = (current_month - 1) // 3 + 1
+    allowed_sl = min(quarter, leave_balance.sl or 0)
+    pending_sl = allowed_sl - (leave_balance.used_sl or 0)
+    return max(0, pending_sl)
+
+
+def get_leave_balance_for_date(employee, leave_date):
+    return LeaveBalance.objects.filter(employee=employee, year=leave_date.year).first()
+
+
+def get_pending_monthly_pl(leave_balance, leave_date):
+    current_month = leave_date.month
+    monthly_pl_available = min(current_month, leave_balance.pl or 0)
+    pending_pl = monthly_pl_available - (leave_balance.used_pl or 0)
+    return max(0, pending_pl)
+
+
+def apply_pl_usage(leave_balance, pending_pl, count):
+    if pending_pl >= count:
+        leave_balance.used_pl += count
+    else:
+        if pending_pl > 0:
+            leave_balance.used_pl += pending_pl
+            leave_balance.used_lop += count - pending_pl
+        else:
+            leave_balance.used_lop += count
