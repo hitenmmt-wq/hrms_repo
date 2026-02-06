@@ -50,14 +50,16 @@ class AIService:
         await self._save_message(conversation, "user", message)
 
         # Classify intent and build context
-        intent = self._classify_intent(message)
+        intent = self._classify_intent(message, conversation)
         print(f"==>> intent: {intent}")
         # intent = ('attendance_inquiry', 'payroll_inquiry', 1.297)
         context_data = await self._build_context(message, intent)
         print(f"==>> context_data: {context_data}")
 
         # Generate AI response (placeholder for actual AI integration)
-        ai_response = self._generate_response(message, context_data, intent)
+        ai_response = self._generate_response(
+            message, context_data, intent, conversation
+        )
 
         # Save AI response
         ai_message = await self._save_message(
@@ -76,6 +78,19 @@ class AIService:
             "conversation_id": conversation.session_id,
             "message_id": ai_message.id,
         }
+
+    async def get_auto_suggestions(self, message: str):
+        """Getting Auto suggestions here for AI chatbot"""
+        if message and len(message) > 5:
+            auto_suggestion_prompt = self._generate_auto_suggestion_with_llm(message)
+            try:
+                llm = HuggingFaceLLM()
+                response = llm.generate(auto_suggestion_prompt)
+                auto_suggestion = response[0]
+            except Exception as e:
+                print("HF ERROR:", str(e))
+                auto_suggestion = ""
+            return auto_suggestion
 
     @database_sync_to_async
     def _get_or_create_conversation(
@@ -131,17 +146,23 @@ class AIService:
         return AIQueryLog.objects.all().order_by("-created_at")
 
     @database_sync_to_async
+    def get_conversation_data(self, conversation_id):
+        data = AIMessage.objects.filter(conversation=conversation_id)
+        return data
+
+    @database_sync_to_async
     def get_handbook_details(self):
         data = CommonData.objects.values_list("handbook_content")
         print(f"==>> data: {data}")
         return data
 
-    def _classify_intent(self, message: str) -> str:
+    def _classify_intent(self, message: str, conversation: str) -> str:
         """Classify user intent from message."""
         message_lower = message.lower()
         print(f"==>> message_lower: {message_lower}")
 
         ai_query_logs = self.get_ai_query_logs()
+        conversation_data = self.get_conversation_data(conversation)
         prompt = f"""
             You are going to identify users requirements and classify which intent will be there as option are:
             - leave_inquiry
@@ -161,6 +182,15 @@ class AIService:
             - other
 
             User message: {message_lower}
+
+            Conversation data of having same ID, means older messgaes within same conversation :
+            {conversation_data}
+            - Do analyze them perfectly and predict intent based on previous data as well,
+              because this is in continuous chat between user and AI assistant(you).
+            - So that will be very helpful as maybe user's next prompt/message will be related to
+              previous one. and user haven't mentioned it again and again but user is referring to
+              reference only.
+            - Do identify this properly and give proper intent accordingly.
 
             Previous queries: {ai_query_logs}
             - From these logs you can fetch detailing of each response and
@@ -610,7 +640,9 @@ class AIService:
         context["extra_details"] = "No specific data context available."
         return context
 
-    def _build_prompt(self, message: str, context: Dict[str, Any], intent: str) -> str:
+    def _build_prompt(
+        self, message: str, context: Dict[str, Any], intent: str, conversation: str
+    ) -> str:
         """Build prompt with system context, intent-specific template, and data."""
 
         # Get role-specific system context
@@ -625,6 +657,7 @@ class AIService:
 
         query_logs = self.get_ai_query_logs()
         handbook_data = self.get_handbook_details()
+        conversation_data = self.get_conversation_data(conversation)
         print(f"==>> handbook_data: {handbook_data}")
 
         prompt = f"""
@@ -652,7 +685,18 @@ class AIService:
             - Depending on user's feedback give them priority of consideration(like from 5 to 1).
             - Analyze thier intent, response time and eveything to better new responses.
 
+            Here im providing related data of user and AI, if same conversation_id is going on:
+            {conversation_data}
+            - This data consists of same conversation goinng on. So you can identify previous chats,
+              or information you have provided.
+            - Also what user is trying to fetch  information will be more clear.
+            - It will be working like a conversational history, that will eventually help to respond
+              better in further or new prompt that are passed within same conversation_id.
+
             Response Guidelines:
+            - You are an AI assistant integrated with HRMS system.
+            - Respond like you are and advanced LLM model, which responds perfectly what is asked for.
+              as you will be having a large dataset of context, but will respond with needed data only.
             - Do not update timezone according to UTC.
             - Use Datetime timezone as its stored in DB only.
             - Use only the provided data, do not guess or invent information
@@ -668,7 +712,6 @@ class AIService:
             - Include specific numbers and facts when available
             - If data is unavailable, suggest checking the HRMS system directly
             - Keep responses friendly, politely but professional
-            - You are an AI assistant integrated with HRMS system.
             - Your purpose is to help users with HR-related queries.
             - Always maintain professionalism and confidentiality.
             - If unsure, ask for clarification.
@@ -677,9 +720,12 @@ class AIService:
             - If there's any unsual or illogical or illegal request from user then suggest user a
               proper way for that, and politely address him whatever he's suggesting is not
               right thing to do. and Hoping he will not pursue wrong ways in future.
-            - If there's general_inquiry or greeting, then you should ask that you can provide a positive or
-              motivational quotes if needed. can also deliver a short inspiring story if user asks for it.
+            - If there's general_inquiry or greeting, then you should ask that if user want you can provide
+              a positive or motivational quotes if needed. can also deliver a short inspiring story
+              if user asks for it.
             - These motivational line, quotes or short story need to be fetched by you only.
+            - Always give new lines of motivstional, dont repeat for same user. or i'll say
+              provide new motivational lines a there are plenty of them.
             - Here you will be getting multiple intent's, multiple context data. So please be clear afterwards
               as which data needs to setup for response and which data needs to hidden as per user's ask.
             - You have to detect in which manner, intention a user is asking. based on that, you need to answer
@@ -687,11 +733,20 @@ class AIService:
               smart way like humurously, frankly, joyously. this type emotions can be reflected with
               professionalism maintained.
             - Adding emojis to response would be great to have as that will enhance response attractiveness.
-            - Put emojis appropriately, not too less not too much. i hope you get it.
             - After reading user's message, you need to act and respond accordingly, as many times user will ask
               irrelevant things which has nothing to do with our HRMS employee management portal.
               if anything like this occurs then you should directly refrain and explain that its a invalid request
               to process.
+            - You can also give suggestion related to user's previous question or statement.
+              For example. suggest to display next months leaves if any exists, if earlier user asked
+              something related to leave_inquiry.
+            - You can appriciate and compliment user for asking a good question or anything like : nice thought,
+              good thinking, etc. this will boost users confidence in you.
+            - If you are getting new user_message in same conversation_id, then retrieve data of
+              previous user_message and ai_message. this will help to identify previous conversation. so that
+              after analyzing previous intent and user requirement, respond to new user_message keeping old
+              conversation message in mind. that will help you exactly what and how to respond.
+            - So user will ask for particular day's data, month's data, or anything like that
 
             - Also after generating response, add follow-up questions
               whose requirement goes like:
@@ -710,7 +765,7 @@ class AIService:
         return prompt
 
     def _generate_response(
-        self, message: str, context: Dict[str, Any], intent: str
+        self, message: str, context: Dict[str, Any], intent: str, conversation: str
     ) -> str:
         """Generate AI response based on context and intent using structured templates."""
         print(f"==>> message: {message}")
@@ -718,7 +773,7 @@ class AIService:
         print(f"==>> context: {context}")
 
         # Build structured prompt with templates
-        prompt = self._build_prompt(message, context, intent)
+        prompt = self._build_prompt(message, context, intent, conversation)
 
         try:
             llm = HuggingFaceLLM()
@@ -743,7 +798,48 @@ class AIService:
 
            User Message : {message}
         """
-        print(f"==>> prompt: {prompt}")
+        return prompt
+
+    def _generate_auto_suggestion_with_llm(self, message: str) -> str:
+        """Generate auto sugesstion with LLM"""
+        prompt = f"""
+            you are a HRMS AI assistant, and will be suggesting related suggestion only.
+            you will be generating a auto suggestion for user_message here.
+            Rules:
+            - Here message will be passed when more than 3 letters are being written by user.
+            - You have to analyze what user is going to type based on given context of topics.
+            - As this is a employee management portal, mostly things asked for would be related
+              to employee queries only with HR or managemenr team.
+            - User can ask for something related to leaves detail, leaves inquiry, attendance
+              details or inquiry, any holidays related information, any annoucements, or
+              any event as that will be mentioned in announcement only. Leave balance of particular
+              employee, payslip related questions, any new notification, chat module is there
+              as well. Employees data would be asked for, any general inquiry might be there.
+            - There are department, position section for employees which will taken in consideration.
+            - after that you will be updating new suggestion as user enters next letters as their
+              need. keep updating suggestions to users.
+            - Always provide 4-5 suggestions to user which will be easier for user to go with
+              particular suggestion.
+            - Now about responding back to user, you must send this suggestions in a list only like:
+              message = "How can i"
+              [
+                "How can i apply for leaves ?",
+                "How can i know about my attendance details ?",
+                "How can i know about company policy ?",
+                "How can i know about payslip details ?",
+                "How can i prefer leave so that sandwich leave is avoided ?",
+              ]
+            - The response provided in upper list, should be only format of any  response.
+            - Also if user have provided new updated message then you should provide updated
+              response by avoiding previous message.
+            - Response should be in list of objects only where only suggestions will be passed.
+            - No extra text or paras needed here. No explaination as you are providing. Just pass
+              string suggestions to user in a list.
+            - Respond as earlier as possible, as user needs tobe reflected with suggestion ASAP.
+              meanwhile its taking almost more than 5s.
+
+            Here is user's message : {message}
+        """
         return prompt
 
 
