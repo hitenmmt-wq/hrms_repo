@@ -62,4 +62,6 @@ urlpatterns = [
         views.LeaveApprovalViewSet.as_view({"get": "leave_balance_details"}),
         name="leave_balance_details",
     ),
+    path("activity-log/", views.ActivityLogAPI.as_view(), name="activity-log"),
+    path("device/register/", views.DeviceRegisterAPI.as_view(), name="device-register"),
 ]

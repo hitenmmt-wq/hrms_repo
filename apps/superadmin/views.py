@@ -59,6 +59,47 @@ class CustomScriptView(APIView):
 
     def get(self, request):
         """Execute custom scripts for data migration or testing purposes."""
+        import time
+
+        from pynput import keyboard, mouse
+
+        last_activity_time = time.time()
+
+        def on_move(x, y):
+            global last_activity_time
+            last_activity_time = time.time()
+            print(f"==>> last_activity_time on move: {last_activity_time}")
+
+        def on_click(x, y, button, pressed):
+            global last_activity_time
+            last_activity_time = time.time()
+            print(f"==>> last_activity_time on click: {last_activity_time}")
+
+        def on_press(key):
+            global last_activity_time
+            last_activity_time = time.time()
+            print(f"==>> last_activity_time on press: {last_activity_time}")
+
+        mouse_action = mouse.Listener(on_move=on_move, on_click=on_click).start()
+        print(f"==>> mouse_action: {mouse_action}")
+        keyboard_action = keyboard.Listener(on_press=on_press).start()
+        print(f"==>> keyboard_action: {keyboard_action}")
+
+        while True:
+            idle_time = time.time() - last_activity_time
+            print(f"==>> idle_time: {idle_time}")
+            if mouse_action or keyboard_action:
+                idle_time = 0
+            else:
+                continue
+            if idle_time > 60:
+                print("User is idle")
+                break
+            else:
+                last_activity_time = 0
+                print("User is active")
+
+            time.sleep(5)
 
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -898,3 +939,71 @@ class LeaveApprovalViewSet(BaseViewSet):
             return ApiResponse.error("Invalid date format. Use YYYY-MM-DD", status=400)
         except Exception as exc:
             return ApiResponse.error(str(exc), status=400)
+
+
+class ActivityLogAPI(APIView):
+    def post(self, request):
+        token = request.data.get("tracking_token")
+        if not token:
+            return Response(
+                {"status": "error", "message": "tracking_token is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        device = models.UserDeviceToken.objects.filter(tracking_token=token).first()
+        if not device or not device.is_active:
+            return Response(
+                {"status": "error", "message": "invalid or inactive tracking_token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        models.DeviceActivity.objects.create(
+            employee=device.user,
+            is_active=bool(request.data.get("is_active")),
+            idle_seconds=int(request.data.get("idle_seconds") or 0),
+        )
+
+        return Response({"status": "ok"})
+
+
+class DeviceRegisterAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = serializers.DeviceRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        device_name = serializer.validated_data.get("device_name") or None
+
+        existing = None
+        if device_name:
+            existing = models.UserDeviceToken.objects.filter(
+                user=request.user,
+                device_name=device_name,
+                is_active=True,
+            ).first()
+
+        if existing:
+            return Response(
+                {
+                    "status": "ok",
+                    "tracking_token": str(existing.tracking_token),
+                    "device_id": existing.id,
+                    "device_name": existing.device_name,
+                }
+            )
+
+        device = models.UserDeviceToken.objects.create(
+            user=request.user,
+            device_name=device_name,
+            is_active=True,
+        )
+        return Response(
+            {
+                "status": "ok",
+                "tracking_token": str(device.tracking_token),
+                "device_id": device.id,
+                "device_name": device.device_name,
+            },
+            status=status.HTTP_201_CREATED,
+        )

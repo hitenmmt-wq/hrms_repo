@@ -6,6 +6,8 @@ leave management, and system configuration. These models form the
 foundation of the HRMS system.
 """
 
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -222,3 +224,24 @@ class Leave(BaseModel):
             self.is_sandwich_applied = is_sandwich
 
         super().save(*args, **kwargs)
+
+
+class UserDeviceToken(BaseModel):
+    user = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="user_device_token"
+    )
+    device_name = models.CharField(max_length=255, null=True, blank=True)
+    tracking_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    fcm_token = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.device_name}"
+
+
+class DeviceActivity(BaseModel):
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="employee_device_activity"
+    )
+    is_active = models.BooleanField(default=True)
+    idle_seconds = models.IntegerField()
