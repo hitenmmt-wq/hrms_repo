@@ -1,4 +1,6 @@
 import uuid
+
+# import ast
 from typing import Any, Dict
 
 from channels.db import database_sync_to_async
@@ -52,6 +54,21 @@ class AIService:
         # Classify intent and build context
         intent = self._classify_intent(message, conversation)
         print(f"==>> intent: {intent}")
+        # if isinstance(intent, str):
+        #     intent = ast.literal_eval(intent)
+
+        # Here deciding that which table to be used for CRUD
+        if any(
+            i.startswith("create") or i.startswith("update") or i.startswith("delete")
+            for i in intent
+        ):
+
+            schema_data = await self.get_db_schema(intent)
+        else:
+            print("getting here -+++++++++++++++++++++++++++++++++++++++++++++++++++")
+            schema_data = None
+        print(f"==>> schema_data: {schema_data}")
+
         # intent = ('attendance_inquiry', 'payroll_inquiry', 1.297)
         context_data = await self._build_context(message, intent)
         print(f"==>> context_data: {context_data}")
@@ -78,6 +95,41 @@ class AIService:
             "conversation_id": conversation.session_id,
             "message_id": ai_message.id,
         }
+
+    # -------------------------------------------------------------------------------
+
+    def get_db_schema(self) -> str:
+        """
+        Return database schema details (tables, columns, types, relations)
+        formatted as LLM-friendly readable text.
+        """
+        from django.apps import apps
+
+        schema_lines = []
+
+        for model in apps.get_models():
+            table_name = model._meta.db_table
+            model_name = model.__name__
+
+            schema_lines.append(f"\nTable: {table_name} (Model: {model_name})")
+
+            for field in model._meta.get_fields():
+                if hasattr(field, "attname"):
+                    field_name = field.attname
+                    field_type = field.get_internal_type()
+
+                    relation = ""
+                    if field.is_relation:
+                        if field.many_to_one:
+                            relation = " -> FK"
+                        elif field.one_to_one:
+                            relation = " -> OneToOne"
+                        elif field.many_to_many:
+                            relation = " -> M2M"
+
+                    schema_lines.append(f"  - {field_name} ({field_type}){relation}")
+
+        return "\n".join(schema_lines)
 
     async def get_auto_suggestions(self, message: str):
         """Getting Auto suggestions here for AI chatbot"""
@@ -163,8 +215,14 @@ class AIService:
 
         ai_query_logs = self.get_ai_query_logs()
         conversation_data = self.get_conversation_data(conversation)
+        db_schema = self.get_db_schema()
         prompt = f"""
-            You are going to identify users requirements and classify which intent will be there as option are:
+            You are an HRMS AI intent classifier.
+
+            Your job is to identify the user's intent(s) from the message and return ONLY the
+            matching intent name(s) from the list below.
+
+            AVAILABLE INTENTS:
             - leave_inquiry
             - attendance_inquiry
             - payroll_inquiry
@@ -180,51 +238,75 @@ class AIService:
             - handbook_inquiry
             - greetings
             - other
+            - create_
+            - update_
+            - delete_
 
-            User message: {message_lower}
+            USER MESSAGE:
+            {message_lower}
 
-            Conversation data of having same ID, means older messgaes within same conversation :
+            CONVERSATION HISTORY (same conversation ID):
             {conversation_data}
-            - Do analyze them perfectly and predict intent based on previous data as well,
-              because this is in continuous chat between user and AI assistant(you).
-            - So that will be very helpful as maybe user's next prompt/message will be related to
-              previous one. and user haven't mentioned it again and again but user is referring to
-              reference only.
-            - Do identify this properly and give proper intent accordingly.
 
-            Previous queries: {ai_query_logs}
-            - From these logs you can fetch detailing of each response and
-              users's feedback to response, if given by user.
-            - If user is just greeting then, greet them back. dont provide data there.
-            - Analyze user message then properly respond as required.
-            - Upgrade and better each responses after learning from logs and user message.
-            - Adapt responses but keep in mind that data would have been changed currently.
-            - If you think user is asking same question again, then give response accordingly.
-            - If you think user is asking something new, then give response accordingly.
-            - If you think user is asking something which is not in above list, then give response with genearal intent.
-            - Make sure here you are just returning intent of user as to fetch data as context data.
-            - Intents can be multiple from the given list, dont just take first as default, check whole list properly.
-            - There can be multiple intents like user might want to fetch attendance and payroll data simultaneously.
-              so pass those multiple intents in tuple like ['attendance_inquiry', 'payroll_inquiry']
-            - While returning intent list, only pass that only like , ['attendance_inquiry', 'payroll_inquiry'].
-            - As im getting whole text suggesting how it came to conclusion, which  is not necessary.
-            - when user want information regarding handbook, then give precise data and information, as this
-              information should not be misunderstood. and give pproper response as mentioned in handbook details.
-              nothing extra or out of the context or out of the box is required to be given.
-            - Intent should always be one word or list of mutliple words only. should not add extra text anywhere.
-            - Analyze intent properly on whole message provided because based on that
-              further data will be fetched from DB.
-            - Also if in same conversation ID, then get previous message/response's intent as well.
-              Because next question or follow up question might be of same intent as well.
-            - There might be chance where in same conversation responsd to follow up question as YES or NO.
-              so based on that again update intent as it was in previous ones.
-            - And if there's different conceptual intent added then we need to update intent
-              with new and old accordingly.
-            - At many points only new intent, only old intent or both combinely after adding/sunstracting
-              will be forwarded to fetch context as per user's intentions.
+            PREVIOUS QUERY LOGS:
+            {ai_query_logs}
 
-            Classify the intent of the current query based on the user message and previous queries.
-            Return only the intent name list as recognized from the above list.
+            DB_SCHEMA:
+            {db_schema}
+
+            CLASSIFICATION RULES:
+
+            CONTEXT AWARENESS:
+            - Never avoid previous conversation messages while creating data as it can mislead.
+              So create a thread type of linking within those messages, so it can easy to identify
+              dataset-up or any problems arising there.
+            - Analyze previous conversation messages to understand continuity.
+            - If the current message is a follow-up (like "yes", "no", "that one", etc.), use previous intent.
+            - If user continues the same topic, keep the previous intent.
+            - If a new topic is added, include both old and new intents where relevant.
+
+            MULTI-INTENT SUPPORT:
+            - A message can have multiple intents.
+            - Example: user asking for payroll + attendance → return both.
+            - Always analyze the full message before deciding.
+
+            CREATE ENTRY LOGIC:
+            - If the user wants to apply/add/create/update/delete something in the database:
+            - here prefix will be action that user wants like create, update or delete.
+              and suffix will be name of the model that needs to be updated accordingly as
+              per requirement.
+            - This applies to cases like:
+                - Apply for leave
+                - Add data
+                - Submit request
+            - after analyzing user_message determine that which table needs to be changed.
+            - Example: user asking to add Leave then intent = ['create_leave']
+            - Example: user asking to update Leave then intent = ['update_leave']
+            - Example: user asking to delete Leave then intent = ['delete_leave']
+
+            SPECIAL CASES:
+            - If user is greeting → return: ['greetings']
+            - If intent is unclear but HR-related → return: ['general_inquiry']
+            - If outside HRMS scope → return: ['other']
+            - If asking about handbook/policies → return: ['handbook_inquiry']
+
+            LEARNING FROM HISTORY:
+            - Use previous logs to improve accuracy.
+            - If the user is repeating the same question → keep same intent.
+            - If user adds new information → merge intents accordingly.
+
+            OUTPUT RULES (VERY STRICT):
+            - Return ONLY a Python list.
+            - No explanation.
+            - No text before or after.
+            - No reasoning.
+            - Example outputs:
+            ['leave_inquiry']
+            ['attendance_inquiry', 'payroll_inquiry']
+            ['create_']
+
+            IMPORTANT:
+            - Intent detection accuracy is critical because DB context will be fetched based on this.
         """
 
         try:
@@ -643,123 +725,120 @@ class AIService:
     def _build_prompt(
         self, message: str, context: Dict[str, Any], intent: str, conversation: str
     ) -> str:
-        """Build prompt with system context, intent-specific template, and data."""
+        """Build prompt using system context, intent template, HRMS data, and conversation history."""
 
-        # Get role-specific system context
+        # Role-based system context
         system_context = PromptTemplates.SYSTEM_CONTEXT.get(
             self.role, PromptTemplates.SYSTEM_CONTEXT["employee"]
         )
-        print(f"==>> system_context: {system_context}")
 
-        # Get intent-specific template
-        intent_template = PromptTemplates.get_template_for_intent(intent)
-        print(f"==>> intent_template: {intent_template}")
+        # Intent-specific instructions
+        intent_template = PromptTemplates.get_template_for_intent(str(intent))
 
+        # Additional knowledge sources
         query_logs = self.get_ai_query_logs()
         handbook_data = self.get_handbook_details()
         conversation_data = self.get_conversation_data(conversation)
-        print(f"==>> handbook_data: {handbook_data}")
+        db_schema = self.get_db_schema()
 
         prompt = f"""
-            {system_context}
+        {system_context}
 
-            User Question: {message}
+        USER INPUT
+        User Question: {message}
+        Detected Intent: {intent}
 
-            Intent Detected: {intent}
+        INTENT-SPECIFIC INSTRUCTION
+        {intent_template}
 
-            Instruction for this response:
-            {intent_template}
+        HRMS DATABASE CONTEXT
+        Relevant HRMS Data:
+        {context}
 
-            Relevant HRMS Data from Database:
-            {context}
+        Company HRMS Handbook (Policies, Leave Rules, Sandwich Leave, etc.):
+        {handbook_data}
 
-            This is handbook of HRMS company which consists data of all policies information.
-            I would be needing to add that for each response, this will be having data regarding
-            leave process, sandwich leave rule  and many more. So this is main reliable thing
-            before anything. So carefully read and analyze its data for getting proper and good response.
-            {handbook_data}
+        DB SCHEMA
+        This refers to database schema. and make understand the structure and
+        architecture to LLM model.
+        {db_schema}
 
-            Previous Conversation Details to know relevancy for new prompt:
-            {query_logs}
-            - This are previous logs, create new response learning from it.
-            - Depending on user's feedback give them priority of consideration(like from 5 to 1).
-            - Analyze thier intent, response time and eveything to better new responses.
+        PREVIOUS LEARNING DATA
+        Previous Query Logs:
+        {query_logs}
 
-            Here im providing related data of user and AI, if same conversation_id is going on:
-            {conversation_data}
-            - This data consists of same conversation goinng on. So you can identify previous chats,
-              or information you have provided.
-            - Also what user is trying to fetch  information will be more clear.
-            - It will be working like a conversational history, that will eventually help to respond
-              better in further or new prompt that are passed within same conversation_id.
+        - Learn from past responses
+        - Consider user feedback priority (5 to 1 scale)
+        - Improve clarity, accuracy, and response quality
 
-            Response Guidelines:
-            - You are an AI assistant integrated with HRMS system.
-            - Respond like you are and advanced LLM model, which responds perfectly what is asked for.
-              as you will be having a large dataset of context, but will respond with needed data only.
-            - Do not update timezone according to UTC.
-            - Use Datetime timezone as its stored in DB only.
-            - Use only the provided data, do not guess or invent information
-            - After getting required context data, please rectify the need of user,
-              and then show only required data or needed data to user.
-            - Don't show extra data which is not asked by user.
-            - If user is asking for specific data, then show only that data.
-            - Don't provide extra details to user, as context is fetching some extra data normally.
-            - you have to be clear which data needs to be passed and show to user accordingly.
-            - Keep extra data with you only, and dont overshare then what's asked for.
-            - Be concise and professional
-            - Structure your response logically
-            - Include specific numbers and facts when available
-            - If data is unavailable, suggest checking the HRMS system directly
-            - Keep responses friendly, politely but professional
-            - Your purpose is to help users with HR-related queries.
-            - Always maintain professionalism and confidentiality.
-            - If unsure, ask for clarification.
-            - Try to respond as soon as possible, to reduce user's waiting time.
-            - Always answer politely, until there's totally fucked up question from user.
-            - If there's any unsual or illogical or illegal request from user then suggest user a
-              proper way for that, and politely address him whatever he's suggesting is not
-              right thing to do. and Hoping he will not pursue wrong ways in future.
-            - If there's general_inquiry or greeting, then you should ask that if user want you can provide
-              a positive or motivational quotes if needed. can also deliver a short inspiring story
-              if user asks for it.
-            - These motivational line, quotes or short story need to be fetched by you only.
-            - Always give new lines of motivstional, dont repeat for same user. or i'll say
-              provide new motivational lines a there are plenty of them.
-            - Here you will be getting multiple intent's, multiple context data. So please be clear afterwards
-              as which data needs to setup for response and which data needs to hidden as per user's ask.
-            - You have to detect in which manner, intention a user is asking. based on that, you need to answer
-              properly in that context only. but our manner should polite only. But yes, you can answer in a
-              smart way like humurously, frankly, joyously. this type emotions can be reflected with
-              professionalism maintained.
-            - Adding emojis to response would be great to have as that will enhance response attractiveness.
-            - After reading user's message, you need to act and respond accordingly, as many times user will ask
-              irrelevant things which has nothing to do with our HRMS employee management portal.
-              if anything like this occurs then you should directly refrain and explain that its a invalid request
-              to process.
-            - You can also give suggestion related to user's previous question or statement.
-              For example. suggest to display next months leaves if any exists, if earlier user asked
-              something related to leave_inquiry.
-            - You can appriciate and compliment user for asking a good question or anything like : nice thought,
-              good thinking, etc. this will boost users confidence in you.
-            - If you are getting new user_message in same conversation_id, then retrieve data of
-              previous user_message and ai_message. this will help to identify previous conversation. so that
-              after analyzing previous intent and user requirement, respond to new user_message keeping old
-              conversation message in mind. that will help you exactly what and how to respond.
-            - So user will ask for particular day's data, month's data, or anything like that
+        CONVERSATION HISTORY
+        Same Conversation Context:
+        {conversation_data}
 
-            - Also after generating response, add follow-up questions
-              whose requirement goes like:
-                1. Generate exactly 3-4 questions accordingly as you feel need.
-                2. Each question should be on a new line
-                3. Questions should be relevant to the user's message
-                4. It should be of same intent as well.
-                5. Questions should be in simple format, not complex.
-                6. Numbering or bullet points.
-                7. Just plain text questions, separated by new lines.
-                8. Also be prepared with their answers as well. as question are being setup by us only.
-                9. Dont provide answers in this response, but be prepared if user is going to ask for the same.
+        - Use this to maintain continuity
+        - Understand user's ongoing requirement
+        - Avoid repeating previously provided information
 
+        RESPONSE GUIDELINES
+
+        ROLE & PURPOSE:
+        - You are an AI assistant integrated into an HRMS system.
+        - Your job is to help users with HR-related queries professionally.
+
+        DATA USAGE RULES:
+        - Use ONLY provided data. Never guess or invent.
+        - Show only the information the user asked for.
+        - Do not expose extra data from context.
+        - Keep unused data internal.
+        - If data is missing, suggest checking the HRMS system.
+
+        TIME & DATE:
+        - Do NOT convert timezone to UTC.
+        - Use datetime exactly as stored in the database.
+
+        COMMUNICATION STYLE:
+        - Be concise, polite, and professional.
+        - Structure responses clearly.
+        - Use facts, numbers, and exact values when available.
+        - Maintain confidentiality.
+        - Add emojis where suitable to enhance readability.
+        - Tone can be friendly, smart, or light-humorous while staying professional.
+
+        INTENT HANDLING:
+        - Detect user's intention carefully before answering.
+        - If request is unrelated to HRMS → politely refuse.
+        - If request is illegal/illogical → guide user toward proper action.
+        - If unsure → ask for clarification.
+
+        GENERAL INTERACTIONS:
+        - For greeting/general inquiries:
+        - Offer motivational quotes or short inspiring stories (only if user wants).
+        - Always provide new quotes/stories; avoid repetition.
+
+        CONTEXT AWARENESS:
+        - If message belongs to same conversation:
+        - Use previous user/AI messages for better understanding.
+        - Maintain continuity.
+        - If there's start_date and no end_date for leave or anything, then its easy
+          guessing that it must be for one day only.
+        - Suggest helpful next steps based on previous queries.
+        (Example: suggest next month's leaves after leave inquiry.)
+
+        USER EXPERIENCE ENHANCEMENTS:
+        - Appreciate thoughtful questions.
+        - Offer relevant suggestions connected to past queries.
+        - Respond quickly and efficiently.
+
+        FOLLOW-UP QUESTIONS (MANDATORY):
+        After generating the response:
+        - Provide exactly 3–4 follow-up questions
+        - Same intent as user's query
+        - Simple and relevant
+        - One question per line
+        - Use numbering or bullet format
+        - Plain text only
+        - Do NOT provide answers
+        - Be prepared with answers internally
 
         """
         return prompt
@@ -784,62 +863,76 @@ class AIService:
             return "I'm having trouble generating a response right now. Please try again in a moment."
 
     def _generate_title_with_llm(self, message: str) -> str:
-        """Generate title for user message using LLM"""
-        prompt = f"""
-           You are Generating a short title for user message.
-           Rules:
-           - Keep it short and simple
-           - Summarize user's message in few words
-           - No puntuation
-           - No emojis
-           - Title case
-           - Should not exceed more than 10 words
-           - No new lines or tab should be there
+        """Generate a concise title from the user's message using LLM"""
 
-           User Message : {message}
+        prompt = f"""
+        You are an AI that generates a short, clean title from a user's message.
+
+        RULES:
+        - Keep it short and simple
+        - Summarize the core intent of the message
+        - Maximum 10 words
+        - Use Title Case
+        - No punctuation
+        - No emojis
+        - No new lines or tabs
+        - Output only the title text
+
+        User Message:
+        {message}
         """
         return prompt
 
     def _generate_auto_suggestion_with_llm(self, message: str) -> str:
-        """Generate auto sugesstion with LLM"""
-        prompt = f"""
-            you are a HRMS AI assistant, and will be suggesting related suggestion only.
-            you will be generating a auto suggestion for user_message here.
-            Rules:
-            - Greet user, as per timestamp like morning, afternoon, evening, night, etc.
-            - Here message will be passed when more than 3 letters are being written by user.
-            - You have to analyze what user is going to type based on given context of topics.
-            - As this is a employee management portal, mostly things asked for would be related
-              to employee queries only with HR or managemenr team.
-            - User can ask for something related to leaves detail, leaves inquiry, attendance
-              details or inquiry, any holidays related information, any annoucements, or
-              any event as that will be mentioned in announcement only. Leave balance of particular
-              employee, payslip related questions, any new notification, chat module is there
-              as well. Employees data would be asked for, any general inquiry might be there.
-            - There are department, position section for employees which will taken in consideration.
-            - after that you will be updating new suggestion as user enters next letters as their
-              need. keep updating suggestions to users.
-            - Always provide 4-5 suggestions to user which will be easier for user to go with
-              particular suggestion.
-            - Now about responding back to user, you must send this suggestions in a list only like:
-              message = "How can i"
-              [
-                "How can i apply for leaves ?",
-                "How can i know about my attendance details ?",
-                "How can i know about company policy ?",
-                "How can i know about payslip details ?",
-                "How can i prefer leave so that sandwich leave is avoided ?",
-              ]
-            - The response provided in upper list, should be only format of any  response.
-            - Also if user have provided new updated message then you should provide updated
-              response by avoiding previous message.
-            - Response should be in list of objects only where only suggestions will be passed.
-            - No extra text or paras needed here. No explaination as you are providing. Just pass
-              string suggestions to user in a list.
-            - Respond as earlier as possible, as user needs tobe reflected with suggestion ASAP.
-              meanwhile its taking almost more than 5s.
+        """Generate real-time auto suggestions based on partial user input"""
 
-            Here is user's message : {message}
+        prompt = f"""
+        You are an HRMS AI assistant generating real-time typing suggestions.
+
+        CONTEXT:
+        - The input is a partial message typed by the user (usually after 3+ characters).
+        - Predict what the user is trying to ask.
+        - Most queries will be related to HRMS topics such as:
+        - Leave application / leave balance / sandwich leave
+        - Attendance details
+        - Holidays
+        - Announcements / events / notifications
+        - Payslip queries
+        - Employee details
+        - Department / position information
+        - General HR inquiries
+        - Chat-related actions
+
+        BEHAVIOR RULES:
+        - Start suggestions considering a time-based greeting (morning/afternoon/evening/night) if naturally fitting.
+        - Continuously refine suggestions as the user types more characters.
+        - Always generate 4–5 relevant suggestions.
+        - Suggestions must be easy, clear, and HRMS-related.
+        - Avoid repeating outdated suggestions when the input changes.
+
+        STRICT OUTPUT FORMAT:
+        - Return ONLY a list of suggestion strings.
+        - No explanation.
+        - No paragraph text.
+        - No extra metadata.
+        - No greeting text outside suggestions.
+        - No objects, only a list of plain strings.
+
+        Example format:
+        [
+        "How can I apply for leave",
+        "How can I check my attendance",
+        "How can I view my payslip",
+        "How can I see company holidays",
+        "How can I avoid sandwich leave"
+        ]
+
+        PERFORMANCE:
+        - Keep suggestions concise.
+        - Generate quickly for real-time UX.
+
+        User Partial Message:
+        {message}
         """
         return prompt
 

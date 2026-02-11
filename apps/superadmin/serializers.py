@@ -362,3 +362,15 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeaveBalance
         fields = ["year", "pl", "sl", "lop"]
+
+
+class DeviceRegisterSerializer(serializers.ModelSerializer):
+    """Serializer for device registration."""
+
+    class Meta:
+        model = models.UserDeviceToken
+        fields = ["device_name"]
+
+        # device_name = serializers.CharField(
+        #     max_length=255, required=False, allow_null=True, allow_blank=True
+        # )
