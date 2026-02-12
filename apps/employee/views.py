@@ -510,6 +510,7 @@ class PaySlipViewSet(BaseViewSet):
             print(f"==>> absent_days: {absent_days}")
             return ApiResponse.success(
                 data={
+                    "monthly_working_days": working_days,
                     "working_days": present_days_count,
                     "total_leave_taken": total_leave_taken,
                     "total_leave_deducted": deductible_days,
@@ -530,12 +531,12 @@ class PaySlipViewSet(BaseViewSet):
         month_name = request.data.get("month_name")
         # days = request.data.get("days")
         month = request.data.get("month")
-        year = request.data.get("year")
-        holidays = holidays_in_month(year, month)
-        working_days = weekdays_count(
-            datetime.strptime(start_date, "%Y-%m-%d").date(),
-            datetime.strptime(end_date, "%Y-%m-%d").date(),
-        ) - int(holidays)
+        # year = request.data.get("year")
+        # holidays = holidays_in_month(year, month)
+        # working_days = weekdays_count(
+        #     datetime.strptime(start_date, "%Y-%m-%d").date(),
+        #     datetime.strptime(end_date, "%Y-%m-%d").date(),
+        # ) - int(holidays)
         basic_salary = request.data.get("basic_salary")
         hr_allowance = request.data.get("hr_allowance")
         special_allowance = request.data.get("special_allowance")
@@ -549,6 +550,25 @@ class PaySlipViewSet(BaseViewSet):
         employee = models.Users.objects.filter(id=employee_id).first()
         if not employee:
             return ApiResponse.error(message="Employee not found", status=404)
+        attandance_data = EmployeeAttendance.objects.filter(
+            employee=employee, day__month=month
+        )
+        print(f"==>> attandance_data: {attandance_data}")
+        print(f"==>> attandance_data counts: {attandance_data.count()}")
+        present_days_count = 0
+        for attendance in attandance_data:
+            if attendance.status == "half_day":
+                if attendance.is_halfday_paid:
+                    present_days_count += 0.5
+            elif attendance.status in ["present", "paid_leave", "incomplete_hours"]:
+                present_days_count += 1
+            elif attendance.status in ["unpaid_leave", "pending"]:
+                pass
+            else:
+                continue
+
+        print(f"==>> present_days_count: {present_days_count}")
+
         try:
             if PaySlip.objects.filter(
                 employee=employee, start_date=start_date, end_date=end_date
@@ -562,7 +582,7 @@ class PaySlipViewSet(BaseViewSet):
                 start_date=start_date,
                 end_date=end_date,
                 month=month_name,
-                days=working_days,
+                days=present_days_count,
                 basic_salary=basic_salary,
                 hr_allowance=hr_allowance,
                 special_allowance=special_allowance,

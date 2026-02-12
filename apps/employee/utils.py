@@ -209,11 +209,11 @@ def generate_payslip_pdf_bytes(payslip):
         company.company_logo if company else None
     )
 
-    gross_salary = (
+    gross_salary = float(
         (payslip.basic_salary or 0)
         + (payslip.hr_allowance or 0)
         + (payslip.special_allowance or 0)
-    ) - payslip.total_deductions
+    ) - float(payslip.total_deductions)
 
     context = {
         "payslip": payslip,
