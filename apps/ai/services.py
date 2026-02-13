@@ -935,27 +935,3 @@ class AIService:
         {message}
         """
         return prompt
-
-
-class ContextBuilder:
-    """Helper class for building AI context from database."""
-
-    @staticmethod
-    def get_user_accessible_data(user, data_type: str) -> Dict[str, Any]:
-        """Get data accessible to user based on their role."""
-
-        if data_type == "employees" and user.role in ["admin", "hr"]:
-            return {
-                "total_employees": Users.objects.filter(role="employee").count(),
-                "departments": list(Department.objects.values("name")),
-            }
-
-        elif data_type == "company_info":
-            return {
-                "holidays": list(
-                    Holiday.objects.filter(date__year=2024).values("name", "date")
-                ),
-                "departments": list(Department.objects.values("name")),
-            }
-
-        return {}
