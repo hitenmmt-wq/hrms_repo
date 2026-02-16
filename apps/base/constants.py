@@ -46,3 +46,21 @@ BIRTHDAY = "birthday"
 LATE_COMING = "late_coming"
 
 NEXT_DAY_HOLIDAY = "holiday"
+
+NOTIFICATION_URL_MAP_ADMIN = {
+    CHAT_NOTIFY: "/chat",
+    LEAVE_APPLY: "/leaveapproval",
+    ANNOUNCEMENT_NOTIFY: "/common-data/announcement",
+    ATTENDANCE_REMINDER: "/attendance",
+    ATTENDANCE_REJECTED: "/attendance",
+    PAYSLIP_GENERATED: "/payslip",
+}
+
+NOTIFICATION_URL_MAP = {
+    CHAT_NOTIFY: "/chat",
+    LEAVE_APPLY: "/leave",
+    ANNOUNCEMENT_NOTIFY: "/announcements",
+    ATTENDANCE_REMINDER: "/my-attendance",
+    ATTENDANCE_REJECTED: "/my-attendance",
+    PAYSLIP_GENERATED: "/my-payslips",
+}

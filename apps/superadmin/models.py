@@ -231,7 +231,9 @@ class UserDeviceToken(BaseModel):
         Users, on_delete=models.CASCADE, related_name="user_device_token"
     )
     device_name = models.CharField(max_length=255, null=True, blank=True)
-    tracking_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    tracking_token = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, null=True, blank=True
+    )
     fcm_token = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
