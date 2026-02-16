@@ -61,6 +61,7 @@ class Notification(BaseModel):
 
     title = models.CharField(max_length=255)
     message = models.TextField(blank=True, null=True)
+    url = models.CharField(max_length=500, default="/", blank=True)
 
     is_read = models.BooleanField(default=False)
 

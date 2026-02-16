@@ -104,3 +104,16 @@ class SaveFCMTokenView(APIView):
         DeviceToken.objects.get_or_create(user=request.user, token=token)
 
         return ApiResponse.success({"Device token generated successfully": True})
+
+
+class DeleteFCMTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get("token")
+
+        if not token:
+            return ApiResponse.error({"error": "Token required"}, status=400)
+
+        DeviceToken.objects.filter(user=request.user, token=token).delete()
+        return ApiResponse.success({"Device token deleted successfully": True})
