@@ -7,6 +7,7 @@ calculation, and break time logging for payroll and compliance.
 
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.base.models import BaseModel
 from apps.superadmin.models import Users
@@ -66,6 +67,16 @@ class EmployeeAttendance(BaseModel):
             return "paused"
 
         return "ongoing"
+
+    @property
+    def get_current_time(self):
+        if self.check_in:
+            diff = timezone.now() - self.check_in
+            total_seconds = int(diff.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            return f"{hours}:{minutes:02d}"
+        return None
 
 
 class AttendanceBreakLogs(BaseModel):

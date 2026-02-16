@@ -16,6 +16,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
     """Serializer for employee attendance records with employee details and status tracking."""
 
     employee = EmployeeListSerializer()
+    get_current_time = serializers.CharField(read_only=True)
     track_current_status = serializers.CharField(read_only=True)
     work_hours = serializers.SerializerMethodField()
     break_hours = serializers.SerializerMethodField()

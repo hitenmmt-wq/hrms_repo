@@ -45,14 +45,33 @@ def update_employee_absent_leaves():
     present_employee_ids = EmployeeAttendance.objects.filter(day=today).values_list(
         "employee_id", flat=True
     )
-    employees_left = models.Users.objects.filter(is_active=True).exclude(
-        id__in=present_employee_ids
+    employees_left = (
+        models.Users.objects.filter(is_active=True)
+        .exclude(id__in=present_employee_ids)
+        .exclude(role="admin")
     )
     attendance_objects = [
         EmployeeAttendance(employee=employee, day=today, status=constants.UNPAID_LEAVE)
         for employee in employees_left
     ]
     EmployeeAttendance.objects.bulk_create(attendance_objects)
+
+    # Create Leave Entry for same
+    leave_type = models.LeaveType.objects.filter(code=constants.UNPAID_LEAVE).first()
+    leave_objects = [
+        models.Leave(
+            employee=employee,
+            leave_type=leave_type,
+            from_date=today,
+            total_days=1,
+            status=constants.APPROVED,
+            reason="Uninformed Leave",
+        )
+        for employee in employees_left
+    ]
+    absent_leave = models.Leave.objects.bulk_create(leave_objects)
+    print(f"==>> absent_leave: {absent_leave}")
+
     print("done------------==============")
     return "Absent Employees attendance added successfully..."
 
@@ -332,6 +351,24 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
     print(f"==>> pl_days: {pl_days}, sl_days: {sl_days}, other_days: {other_days}")
 
     deductible_days = 0
+    attandance_data = EmployeeAttendance.objects.filter(
+        employee=employee, day__month=start_date.month
+    )
+    print(f"==>> attandance_data: {attandance_data}")
+    print(f"==>> attandance_data counts: {attandance_data.count()}")
+    present_days_count = 0
+    for attendance in attandance_data:
+        if attendance.status == "half_day":
+            if not attendance.is_halfday_paid:
+                present_days_count += 0.5
+        elif attendance.status in ["present", "paid_leave", "incomplete_hours"]:
+            pass
+        elif attendance.status in ["unpaid_leave", "pending"]:
+            present_days_count += 1
+        else:
+            continue
+
+    print(f"==>> present_days_count: {present_days_count}")
 
     if sl_days > 0:
         if available_sl >= sl_days:
