@@ -9,12 +9,13 @@ from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.notification.custom_filters import NotificationFilter, NotificationTypeFilter
-from apps.notification.models import DeviceToken, Notification, NotificationType
+from apps.notification.models import Notification, NotificationType
 from apps.notification.serializers import (
     NotificationSerializer,
     NotificationTypeSerializer,
 )
 from apps.notification.websocket_service import NotificationWebSocketService
+from apps.superadmin.models import UserDeviceToken
 
 # from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -96,24 +97,62 @@ class SaveFCMTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.data.get("token")
+        token = (
+            request.data.get("token") or request.data.get("fcm_token") or ""
+        ).strip()
 
-        if not token:
-            return ApiResponse.error({"error": "Token required"}, status=400)
+        device, created = UserDeviceToken.objects.get_or_create(
+            user=request.user,
+            fcm_token=token,
+            is_active=True,
+        )
 
-        DeviceToken.objects.get_or_create(user=request.user, token=token)
+        if not device:
+            return ApiResponse.error(
+                {"error": "Invalid or inactive tracking_token"},
+                status=404,
+            )
 
-        return ApiResponse.success({"Device token generated successfully": True})
+        if not created:
+            device.fcm_token = token
+            device.save(update_fields=["fcm_token", "tracking_token"])
+
+        return ApiResponse.success(
+            {
+                "success": "Device token saved successfully",
+            }
+        )
 
 
 class DeleteFCMTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.data.get("token")
+        token = (
+            request.data.get("token") or request.data.get("fcm_token") or ""
+        ).strip()
+        tracking_token = request.data.get("tracking_token") or request.data.get(
+            "tracking_code"
+        )
 
-        if not token:
-            return ApiResponse.error({"error": "Token required"}, status=400)
+        if tracking_token:
+            device = UserDeviceToken.objects.filter(
+                user=request.user,
+                tracking_token=tracking_token,
+            ).first()
+        else:
+            device = UserDeviceToken.objects.filter(
+                user=request.user, fcm_token=token
+            ).first()
 
-        DeviceToken.objects.filter(user=request.user, token=token).delete()
-        return ApiResponse.success({"Device token deleted successfully": True})
+        if not device:
+            return ApiResponse.error({"error": "Device not found"}, status=404)
+
+        if token and device.fcm_token and device.fcm_token != token:
+            return ApiResponse.error(
+                {"error": "Token does not match device"}, status=400
+            )
+
+        device.fcm_token = None
+        device.save(update_fields=["fcm_token"])
+        return ApiResponse.success({"device_token_deleted": True})

@@ -127,6 +127,7 @@ class AdminDashboardView(APIView):
 
             present_employee = EmployeeAttendance.objects.filter(
                 day=today,
+                check_in__isnull=False,
                 employee__role=constants.EMPLOYEE_USER,
                 employee__is_active=True,
             ).select_related("employee__department", "employee__position")
@@ -943,7 +944,9 @@ class LeaveApprovalViewSet(BaseViewSet):
 
 class ActivityLogAPI(APIView):
     def post(self, request):
+        print("Activity log received:", request.data)
         token = request.data.get("tracking_token")
+        print(f"==>> token: {token}")
         if not token:
             return Response(
                 {"status": "error", "message": "tracking_token is required"},
@@ -962,8 +965,44 @@ class ActivityLogAPI(APIView):
             is_active=bool(request.data.get("is_active")),
             idle_seconds=int(request.data.get("idle_seconds") or 0),
         )
+        print("Activity log saved for user:", device.user.email)
+        return ApiResponse.success({"status": "ok"})
 
-        return Response({"status": "ok"})
+
+class DeviceConfigAPI(APIView):
+    def get(self, request):
+        token = request.query_params.get("tracking_token")
+        if not token:
+            return Response(
+                {"status": "error", "message": "tracking_token is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        device = models.UserDeviceToken.objects.filter(tracking_token=token).first()
+        if not device or not device.is_active:
+            return Response(
+                {"status": "error", "message": "invalid or inactive tracking_token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        policy, _ = models.DeviceConfigPolicy.objects.get_or_create(key="default")
+        config_data = {
+            "server_url": policy.server_url,
+            "idle_threshold_seconds": policy.idle_threshold_seconds,
+            "heartbeat_seconds": policy.heartbeat_seconds,
+            "send_interval_seconds": policy.send_interval_seconds,
+            "timeout_seconds": policy.timeout_seconds,
+            "config_reload_seconds": policy.config_reload_seconds,
+            "remote_config_refresh_seconds": policy.remote_config_refresh_seconds,
+        }
+        return Response(
+            {
+                "status": "ok",
+                "version": policy.version,
+                "updated_at": policy.updated_at,
+                "config": config_data,
+            }
+        )
 
 
 class DeviceRegisterAPI(APIView):

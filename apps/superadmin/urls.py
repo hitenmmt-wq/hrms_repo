@@ -63,5 +63,6 @@ urlpatterns = [
         name="leave_balance_details",
     ),
     path("activity-log/", views.ActivityLogAPI.as_view(), name="activity-log"),
+    path("device/config/", views.DeviceConfigAPI.as_view(), name="device-config"),
     path("device/register/", views.DeviceRegisterAPI.as_view(), name="device-register"),
 ]

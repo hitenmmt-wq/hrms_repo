@@ -247,3 +247,18 @@ class DeviceActivity(BaseModel):
     )
     is_active = models.BooleanField(default=True)
     idle_seconds = models.IntegerField()
+
+
+class DeviceConfigPolicy(BaseModel):
+    key = models.CharField(max_length=50, unique=True, default="default")
+    server_url = models.TextField(null=True, blank=True)
+    version = models.PositiveIntegerField(default=1)
+    idle_threshold_seconds = models.IntegerField(default=60)
+    heartbeat_seconds = models.IntegerField(default=60)
+    send_interval_seconds = models.IntegerField(default=5)
+    timeout_seconds = models.IntegerField(default=5)
+    config_reload_seconds = models.IntegerField(default=30)
+    remote_config_refresh_seconds = models.IntegerField(default=60)
+
+    def __str__(self):
+        return f"{self.key} v{self.version}"
