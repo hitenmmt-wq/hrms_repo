@@ -5,6 +5,7 @@ from apps.base import constants
 from apps.chat.connection_tracker import ChatConnectionTracker
 from apps.chat.models import Message
 from apps.notification.models import Notification, NotificationType
+from apps.notification.services import get_notification_url
 from apps.notification.websocket_service import NotificationWebSocketService
 
 
@@ -82,12 +83,32 @@ def _create_notification_without_websocket(
         content_type = ContentType.objects.get_for_model(related_object.__class__)
         object_id = related_object.id
 
+    # For chat-related objects, keep creation idempotent so duplicate task/signal
+    # execution does not fan out duplicate push notifications.
+    if content_type and object_id:
+        notification, created = Notification.objects.get_or_create(
+            recipient=recipient,
+            notification_type=notification_type,
+            content_type=content_type,
+            object_id=object_id,
+            defaults={
+                "actor": actor,
+                "title": title,
+                "message": message,
+                "url": get_notification_url(notification_type, recipient),
+            },
+        )
+        if created:
+            send_notification_websocket.delay(notification.id)
+        return notification
+
     notification = Notification.objects.create(
         recipient=recipient,
         actor=actor,
         notification_type=notification_type,
         title=title,
         message=message,
+        url=get_notification_url(notification_type, recipient),
         content_type=content_type,
         object_id=object_id,
     )

@@ -3,8 +3,9 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from apps.notification.models import DeviceToken, Notification
+from apps.notification.models import Notification
 from apps.notification.serializers import NotificationSerializer
+from apps.superadmin.models import UserDeviceToken
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +56,16 @@ class NotificationWebSocketService:
             print("Notification sent successfully via WebSocket")
 
             # Here adding real-time push notification FCM
-            tokens = DeviceToken.objects.filter(
-                user=notification.recipient
-            ).values_list("token", flat=True)
+            tokens = (
+                UserDeviceToken.objects.filter(
+                    user=notification.recipient,
+                    is_active=True,
+                )
+                .exclude(fcm_token__isnull=True)
+                .exclude(fcm_token__exact="")
+                .values_list("fcm_token", flat=True)
+                .distinct()
+            )
             print(f"==>> tokens: {tokens}")
 
             if tokens:
@@ -69,11 +77,13 @@ class NotificationWebSocketService:
 
                     message = messaging.Message(
                         token=token,
-                        notification=messaging.Notification(
-                            title=notification.title,
-                            body=notification.message,
-                        ),
+                        data={
+                            "title": notification.title or "",
+                            "body": notification.message or "",
+                            "url": notification.url or "/",
+                        },
                     )
+                    print(f"==>> message: {message}")
                     # Pass message here for real-time notification
                     send_fcm_notification(message)
         except Exception as e:

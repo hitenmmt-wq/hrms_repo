@@ -517,14 +517,15 @@ def notify_frequent_late_comings():
             notification_type = NotificationType.objects.filter(
                 code=constants.LATE_COMING
             ).first()
+            employee_data = models.Users.objects.filter(id=late_coming_employee).first()
             create_notification(
                 recipient=recipient,
                 actor=late_coming_employee,
                 notification_type=notification_type,
                 title="🚨 Late Coming Alert!",
                 message=(
-                    f"{late_coming_employee.employee.first_name} "
-                    f"{late_coming_employee.employee.last_name} is late today.",
+                    f"{employee_data.first_name}"
+                    f"{employee_data.last_name} is late today.",
                 ),
                 related_object=late_coming_employee,
             )

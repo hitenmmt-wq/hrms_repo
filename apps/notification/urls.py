@@ -12,4 +12,5 @@ router.register("notifications", views.NotificationViewSet, basename="notificati
 urlpatterns = router.urls + [
     path("notifications/<int:pk>/read/", views.MarkAsReadView.as_view()),
     path("save-fcm-token/", views.SaveFCMTokenView.as_view()),
+    path("delete-fcm-token/", views.DeleteFCMTokenView.as_view()),
 ]

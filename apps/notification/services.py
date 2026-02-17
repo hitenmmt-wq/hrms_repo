@@ -1,7 +1,16 @@
 from django.contrib.contenttypes.models import ContentType
 
+from apps.base import constants
+
 from .models import Notification
 from .websocket_service import NotificationWebSocketService
+
+
+def get_notification_url(notification_type, recipient):
+    code = getattr(notification_type, "code", None)
+    if recipient.role == constants.ADMIN_USER:
+        return constants.NOTIFICATION_URL_MAP_ADMIN.get(code, "/")
+    return constants.NOTIFICATION_URL_MAP.get(code, "/")
 
 
 def create_notification(
@@ -20,6 +29,7 @@ def create_notification(
         notification_type=notification_type,
         title=title,
         message=message,
+        url=get_notification_url(notification_type, recipient),
         content_type=content_type,
         object_id=object_id,
     )

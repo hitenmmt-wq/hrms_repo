@@ -8,6 +8,7 @@ Handles data validation and transformation for API responses.
 
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.attendance.models import EmployeeAttendance
@@ -236,8 +237,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         """Add user profile data to token response."""
-        data = super().validate(attrs)
         request = self.context.get("request")
+        email = attrs.get("email")
+        password = attrs.get("password")
+        user = models.Users.objects.filter(email=email).first()
+        print(f"==>> user: {user}")
+
+        if not user:
+            raise AuthenticationFailed("User with this email does not exist.")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("Incorrect password.")
+
+        if not user.is_active:
+            raise AuthenticationFailed("Your account is disabled. Contact admin.")
+
+        data = super().validate(attrs)
 
         data["user"] = {
             "id": self.user.id,

@@ -95,6 +95,7 @@ def notify_employee_leave_approved(employee, leave):
         notification_type=notification_type,
         title="Leave Approved",
         message="Your leave has been approved.",
+        related_object=leave,
     )
 
 
@@ -107,6 +108,7 @@ def notify_employee_leave_rejected(employee, leave):
         notification_type=notification_type,
         title="Leave Rejected",
         message="Your leave has been rejected.",
+        related_object=leave,
     )
 
 

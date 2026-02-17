@@ -14,18 +14,17 @@ from apps.attendance.serializers import (  # , IdleStatusSerializer
     BreakLogSerializer,
 )
 from apps.attendance.utils import check_in, check_out, pause_break, resume_break
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
 from apps.superadmin.models import Users
 
-# from rest_framework.views import APIView
-# from rest_framework import status
-
 
 class AttendanceViewSet(BaseViewSet):
     """Attendance management ViewSet for employee time tracking operations."""
 
+    pagination_class = CustomPageNumberPagination
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     queryset = EmployeeAttendance.objects.select_related(
@@ -54,9 +53,14 @@ class AttendanceViewSet(BaseViewSet):
         attendance = self.queryset.filter(
             employee=employee, day__lte=timezone.now().date()
         ).order_by("-day")
+        page = self.paginate_queryset(attendance)
+        if page is not None:
+            serializer = AttendanceSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = AttendanceSerializer(attendance, many=True)
         return ApiResponse.success(
-            "Particular Employee's Attendance list",
-            AttendanceSerializer(attendance, many=True).data,
+            "Particular Employee's Attendance list", serializer.data
         )
 
     @action(detail=False, methods=["get"])

@@ -25,6 +25,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "recipient",
             "title",
             "message",
+            "url",
             "actor",
             "is_read",
             "created_at",

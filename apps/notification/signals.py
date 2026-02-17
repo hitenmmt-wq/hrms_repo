@@ -4,7 +4,11 @@ from django.dispatch import receiver
 from apps.chat.models import Message
 
 
-@receiver(post_save, sender=Message)
+@receiver(
+    post_save,
+    sender=Message,
+    dispatch_uid="notification_notify_on_message_post_save",
+)
 def notify_on_message(sender, instance, created, **kwargs):
     if not created:
         return
