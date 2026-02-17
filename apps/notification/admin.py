@@ -6,4 +6,3 @@ from apps.notification import models
 
 admin.site.register(models.NotificationType)
 admin.site.register(models.Notification)
-admin.site.register(models.DeviceToken)

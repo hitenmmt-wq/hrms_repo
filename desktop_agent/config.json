@@ -1,0 +1,13 @@
+{
+  "server_url": "https://margin-trace-elimination-msg.trycloudflare.com/",
+  "activity_endpoint": "/superadmin/activity-log/",
+  "remote_config_endpoint": "/superadmin/device/config/",
+  "remote_config_enabled": true,
+  "remote_config_refresh_seconds": 60,
+  "tracking_token": "8bb46fdc-b1b1-4fd7-a995-e3de6de457aa",
+  "device_name": "My Windows PC",
+  "idle_threshold_seconds": 120,
+  "heartbeat_seconds": 300,
+  "send_interval_seconds": 5,
+  "timeout_seconds": 5
+}
