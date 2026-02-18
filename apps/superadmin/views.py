@@ -165,7 +165,9 @@ class AdminDashboardView(APIView):
                 .order_by("-id")[:3]
             )
 
-            announcement = models.Announcement.objects.all().order_by("-id")[:5]
+            announcement = models.Announcement.objects.filter(date__gte=today).order_by(
+                "-date"
+            )[:5]
 
             total_employees_active = total_employees.filter(
                 role=constants.EMPLOYEE_USER
@@ -995,6 +997,7 @@ class DeviceConfigAPI(APIView):
             "config_reload_seconds": policy.config_reload_seconds,
             "remote_config_refresh_seconds": policy.remote_config_refresh_seconds,
         }
+        print(f"==>> config_data: {config_data}")
         return Response(
             {
                 "status": "ok",
