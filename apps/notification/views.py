@@ -104,7 +104,6 @@ class SaveFCMTokenView(APIView):
         device, created = UserDeviceToken.objects.get_or_create(
             user=request.user,
             fcm_token=token,
-            is_active=True,
         )
 
         if not device:
@@ -114,8 +113,10 @@ class SaveFCMTokenView(APIView):
             )
 
         if not created:
+            if not device.is_active:
+                device.is_active = True
             device.fcm_token = token
-            device.save(update_fields=["fcm_token", "tracking_token"])
+            device.save(update_fields=["fcm_token", "tracking_token", "is_active"])
 
         return ApiResponse.success(
             {
@@ -131,19 +132,10 @@ class DeleteFCMTokenView(APIView):
         token = (
             request.data.get("token") or request.data.get("fcm_token") or ""
         ).strip()
-        tracking_token = request.data.get("tracking_token") or request.data.get(
-            "tracking_code"
-        )
 
-        if tracking_token:
-            device = UserDeviceToken.objects.filter(
-                user=request.user,
-                tracking_token=tracking_token,
-            ).first()
-        else:
-            device = UserDeviceToken.objects.filter(
-                user=request.user, fcm_token=token
-            ).first()
+        device = UserDeviceToken.objects.filter(
+            user=request.user, fcm_token=token
+        ).first()
 
         if not device:
             return ApiResponse.error({"error": "Device not found"}, status=404)
@@ -153,6 +145,6 @@ class DeleteFCMTokenView(APIView):
                 {"error": "Token does not match device"}, status=400
             )
 
-        device.fcm_token = None
-        device.save(update_fields=["fcm_token"])
+        device.is_active = False
+        device.save(update_fields=["is_active"])
         return ApiResponse.success({"device_token_deleted": True})
