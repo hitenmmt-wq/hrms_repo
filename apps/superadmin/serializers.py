@@ -7,11 +7,13 @@ Handles data validation and transformation for API responses.
 """
 
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base.validators import BaseValidator
 from apps.employee.models import LeaveBalance
 from apps.employee.serializers import EmployeeListSerializer
 from apps.superadmin import models
@@ -183,9 +185,18 @@ class EmployeeAttendanceMiniSerializer(serializers.ModelSerializer):
 class AdminRegisterSerializer(serializers.ModelSerializer):
     """Serializer for admin user registration with password hashing."""
 
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = models.Users
         fields = ["role", "email", "password", "birthdate", "joining_date"]
+
+    def validate_password(self, value):
+        try:
+            BaseValidator.validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        return value
 
     def create(self, validated_data):
         """Create admin user with hashed password and inactive status."""

@@ -909,6 +909,8 @@ class AIService:
         - Always generate 4–5 relevant suggestions.
         - Suggestions must be easy, clear, and HRMS-related.
         - Avoid repeating outdated suggestions when the input changes.
+        - If user has sent message to proceed then, stop suggestions and prepare to answer.
+        - If user is asking about a specific topic, focus on that.
 
         STRICT OUTPUT FORMAT:
         - Return ONLY a list of suggestion strings.
