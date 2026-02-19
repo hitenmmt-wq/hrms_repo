@@ -9,6 +9,7 @@ Provides admin-level access to all HRMS features and user management.
 from datetime import datetime, time, timedelta
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -25,6 +26,7 @@ from apps.base import constants
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
 from apps.base.response import ApiResponse
+from apps.base.validators import BaseValidator
 from apps.base.viewset import BaseViewSet
 from apps.employee.utils import employee_monthly_working_hours
 from apps.superadmin import models, serializers
@@ -251,7 +253,10 @@ class ChangePassword(APIView):
             return ApiResponse.error(
                 {"error": "New passwords do not match."}, status=400
             )
-
+        try:
+            BaseValidator.validate_password(new_pass)
+        except ValidationError as e:
+            return ApiResponse.error({"error": e.messages}, status=400)
         user.set_password(new_pass)
         user.save()
 
@@ -407,40 +412,6 @@ class AdminRegister(BaseViewSet):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = serializers.CustomTokenObtainPairSerializer
-
-    #  ----This code is for Employee Idle behaviour handeling ------
-    # def post(self, request, *args, **kwargs):
-    #     response = super().post(request, *args, **kwargs)
-
-    #     if response.status_code == 200:
-    #         # Update idle detector config file
-    #         self.update_idle_config(response.data)
-
-    #     return response
-
-    # def update_idle_config(self, login_data):
-    #     """Update idle detector config file with employee data"""
-    #     try:
-    #         config_path = os.path.join(os.getcwd(), '..', 'idle_monitor', 'config.json')
-
-    #         config = {
-    #             "api_url": constants.LIVE_SERVER,
-    #             "employee_token": login_data["data"]["access"],
-    #             "refresh_token": login_data["data"]["refresh"],
-    #             "employee_id": login_data["data"]["user"]["id"],
-    #             "employee_name": f"{login_data['data']['user']['first_name']}
-    #                   {login_data['data']['user']['last_name']}",
-    #             "employee_email": login_data["data"]["user"]["email"],
-    #             "idle_threshold": 600
-    #         }
-
-    #         with open(config_path, 'w') as f:
-    #             json.dump(config, f, indent=2)
-
-    #         print(f"✅ Idle detector config updated for {config['employee_name']}")
-
-    #     except Exception as e:
-    #         print(f"⚠️ Failed to update idle config: {e}")
 
 
 class UserViewSet(APIView):
@@ -962,11 +933,11 @@ class ActivityLogAPI(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        models.DeviceActivity.objects.create(
-            employee=device.user,
-            is_active=bool(request.data.get("is_active")),
-            idle_seconds=int(request.data.get("idle_seconds") or 0),
-        )
+        # models.DeviceActivity.objects.create(
+        #     employee=device.user,
+        #     is_active=bool(request.data.get("is_active")),
+        #     idle_seconds=int(request.data.get("idle_seconds") or 0),
+        # )
         print("Activity log saved for user:", device.user.email)
         return ApiResponse.success({"status": "ok"})
 

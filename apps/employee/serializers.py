@@ -6,10 +6,12 @@ leave balance tracking, payslip generation, and dashboard data
 for the HRMS employee module.
 """
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
 
 from apps.attendance.models import EmployeeAttendance
+from apps.base.validators import BaseValidator
 from apps.employee.models import LeaveBalance, PaySlip
 from apps.employee.utils import calculate_leave_deduction, weekdays_count
 from apps.superadmin import models
@@ -43,6 +45,13 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
             "salary_ctc",
         ]
         depth = 1
+
+    def validate_password(self, value):
+        try:
+            BaseValidator.validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        return value
 
     def create(self, validated_data):
         """Create employee with hashed password and send welcome email."""

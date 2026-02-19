@@ -64,6 +64,11 @@ class BaseValidator:
         if not re.search(r"\d", password):
             raise ValidationError("Password must contain at least one digit.")
 
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            raise ValidationError(
+                "Password must contain at least one special character."
+            )
+
         return password
 
     @staticmethod
@@ -181,7 +186,7 @@ class EmployeeValidator(BaseValidator):
         if age < 18:
             raise ValidationError("Employee must be at least 18 years old.")
 
-        if age > 100:
+        if age > 70:
             raise ValidationError("Employee won't be as productive as required.")
 
         return birth_date
