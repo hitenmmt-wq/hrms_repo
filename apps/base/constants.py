@@ -53,7 +53,9 @@ NOTIFICATION_URL_MAP_ADMIN = {
     ANNOUNCEMENT_NOTIFY: "/common-data/announcement",
     ATTENDANCE_REMINDER: "/attendance",
     ATTENDANCE_REJECTED: "/attendance",
+    LATE_COMING: "/attendance",
     PAYSLIP_GENERATED: "/payslip",
+    NEXT_DAY_HOLIDAY: "/common-data/holiday",
 }
 
 NOTIFICATION_URL_MAP = {
@@ -62,5 +64,7 @@ NOTIFICATION_URL_MAP = {
     ANNOUNCEMENT_NOTIFY: "/announcements",
     ATTENDANCE_REMINDER: "/my-attendance",
     ATTENDANCE_REJECTED: "/my-attendance",
+    LATE_COMING: "/my-attendance",
     PAYSLIP_GENERATED: "/my-payslips",
+    NEXT_DAY_HOLIDAY: "/common-data/holiday",
 }

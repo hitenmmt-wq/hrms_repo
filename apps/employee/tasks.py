@@ -568,6 +568,20 @@ def notify_employee_next_holiday():
     if next_holiday.date != next_day:
         return "No holiday found on next day"
 
+    if next_day.weekday() == 5:
+        receipents = models.Users.objects.filter(is_active=True)
+        notification_type = NotificationType.objects.filter(
+            code=constants.NEXT_DAY_HOLIDAY
+        ).first()
+        for receipent in receipents:
+            create_notification(
+                recipient=receipent,
+                notification_type=notification_type,
+                title="🎉 Weekend Reminder!",
+                message="Hurry, Weekend is here. Make sure to enjoy your time off. Happy Weekend!✨✨",
+                related_object=next_holiday,
+            )
+
     if next_holiday.date == next_day:
         receipents = models.Users.objects.filter(is_active=True)
         notification_type = NotificationType.objects.filter(
