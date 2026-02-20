@@ -1,3 +1,4 @@
+altgraph==0.17.5
 amqp==5.3.1
 anyio==4.12.1
 arabic-reshaper==3.0.0
@@ -78,6 +79,7 @@ packaging==25.0
 pdfkit==1.0.0
 pdfminer.six==20251230
 pdfplumber==0.11.9
+pefile==2024.8.26
 pillow==12.0.0
 playwright==1.57.0
 prompt_toolkit==3.0.52
@@ -93,7 +95,10 @@ pydyf==0.12.1
 pyee==13.0.0
 pyHanko==0.32.0
 pyhanko-certvalidator==0.29.0
+pyinstaller==6.18.0
+pyinstaller-hooks-contrib==2026.0
 PyJWT==2.10.1
+pynput==1.8.1
 pyOpenSSL==25.3.0
 pypdf==6.5.0
 pypdfium2==5.3.0
@@ -103,6 +108,7 @@ python-crontab==3.3.0
 python-dateutil==2.9.0.post0
 python-docx==1.2.0
 python-dotenv==1.2.1
+pywin32-ctypes==0.2.3
 PyYAML==6.0.3
 redis==7.1.0
 referencing==0.37.0

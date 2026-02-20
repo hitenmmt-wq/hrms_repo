@@ -520,14 +520,14 @@ def notify_frequent_late_comings():
             employee_data = models.Users.objects.filter(id=late_coming_employee).first()
             create_notification(
                 recipient=recipient,
-                actor=late_coming_employee,
+                actor=employee_data,
                 notification_type=notification_type,
                 title="🚨 Late Coming Alert!",
                 message=(
                     f"{employee_data.first_name}"
                     f"{employee_data.last_name} is late today.",
                 ),
-                related_object=late_coming_employee,
+                related_object=employee_data,
             )
 
 
@@ -567,6 +567,20 @@ def notify_employee_next_holiday():
 
     if next_holiday.date != next_day:
         return "No holiday found on next day"
+
+    if next_day.weekday() == 5:
+        receipents = models.Users.objects.filter(is_active=True)
+        notification_type = NotificationType.objects.filter(
+            code=constants.NEXT_DAY_HOLIDAY
+        ).first()
+        for receipent in receipents:
+            create_notification(
+                recipient=receipent,
+                notification_type=notification_type,
+                title="🎉 Weekend Reminder!",
+                message="Hurray, Weekend is here. Make sure to enjoy your time off. Happy Weekend!✨✨",
+                related_object=next_holiday,
+            )
 
     if next_holiday.date == next_day:
         receipents = models.Users.objects.filter(is_active=True)

@@ -70,9 +70,20 @@ class EmployeeAttendance(BaseModel):
 
     @property
     def get_current_time(self):
+        break_datas = self.attendance_break_logs.all()
+        break_time = 0
+
+        for break_data in break_datas:
+            if break_data and break_data.restart_time:
+                break_time += (
+                    break_data.restart_time.timestamp()
+                    - break_data.pause_time.timestamp()
+                )
+
         if self.check_in:
             diff = timezone.now() - self.check_in
-            total_seconds = int(diff.total_seconds())
+            total_seconds = int(diff.total_seconds() - break_time)
+            print(f"==>> total_seconds: {total_seconds}")
             hours = total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
             return f"{hours}:{minutes:02d}"

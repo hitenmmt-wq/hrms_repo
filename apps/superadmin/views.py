@@ -61,47 +61,6 @@ class CustomScriptView(APIView):
 
     def get(self, request):
         """Execute custom scripts for data migration or testing purposes."""
-        import time
-
-        from pynput import keyboard, mouse
-
-        last_activity_time = time.time()
-
-        def on_move(x, y):
-            global last_activity_time
-            last_activity_time = time.time()
-            print(f"==>> last_activity_time on move: {last_activity_time}")
-
-        def on_click(x, y, button, pressed):
-            global last_activity_time
-            last_activity_time = time.time()
-            print(f"==>> last_activity_time on click: {last_activity_time}")
-
-        def on_press(key):
-            global last_activity_time
-            last_activity_time = time.time()
-            print(f"==>> last_activity_time on press: {last_activity_time}")
-
-        mouse_action = mouse.Listener(on_move=on_move, on_click=on_click).start()
-        print(f"==>> mouse_action: {mouse_action}")
-        keyboard_action = keyboard.Listener(on_press=on_press).start()
-        print(f"==>> keyboard_action: {keyboard_action}")
-
-        while True:
-            idle_time = time.time() - last_activity_time
-            print(f"==>> idle_time: {idle_time}")
-            if mouse_action or keyboard_action:
-                idle_time = 0
-            else:
-                continue
-            if idle_time > 60:
-                print("User is idle")
-                break
-            else:
-                last_activity_time = 0
-                print("User is active")
-
-            time.sleep(5)
 
         print("hiiiiiii iiiiiiiiiiiiiiiiiiiiii")
         return ApiResponse.success({"message": "script worked successfully"})
@@ -512,6 +471,18 @@ class CommonDataViewSet(BaseViewSet):
             delete_old_file(instance, "policy_file")
             instance.delete()
             return ApiResponse.success(message="Common Data deleted successfully")
+
+    @action(detail=False, methods=["get"], url_path="partial")
+    def get_partial_data(self, request, *args, **kwargs):
+        print("here...")
+        instance = self.get_queryset().first()
+        if not instance:
+            return ApiResponse.success(message="Common Data not available", data=None)
+
+        serializer = serializers.CommonDataPartialSerializer(instance)
+        return ApiResponse.success(
+            message="Common Data Fetched successfully", data=serializer.data
+        )
 
 
 #   ================  SETTING_DATA CRUD API   ========

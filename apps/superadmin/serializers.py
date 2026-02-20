@@ -27,6 +27,22 @@ class CommonDataSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class CommonDataPartialSerializer(serializers.ModelSerializer):
+    """Serializer for partial data of company configuration and leave policy settings."""
+
+    class Meta:
+        model = models.CommonData
+        fields = [
+            "id",
+            "name",
+            "company_link",
+            "company_logo",
+            "pl_leave",
+            "sl_leave",
+            "lop_leave",
+        ]
+
+
 class SettingDataSerializer(serializers.ModelSerializer):
     """Serializer for system configuration settings."""
 
