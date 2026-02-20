@@ -578,7 +578,7 @@ def notify_employee_next_holiday():
                 recipient=receipent,
                 notification_type=notification_type,
                 title="🎉 Weekend Reminder!",
-                message="Hurry, Weekend is here. Make sure to enjoy your time off. Happy Weekend!✨✨",
+                message="Hurray, Weekend is here. Make sure to enjoy your time off. Happy Weekend!✨✨",
                 related_object=next_holiday,
             )
 
