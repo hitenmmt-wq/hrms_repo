@@ -100,10 +100,12 @@ class SaveFCMTokenView(APIView):
         token = (
             request.data.get("token") or request.data.get("fcm_token") or ""
         ).strip()
+        device_name = request.data.get("device_name", "").strip()
 
         device, created = UserDeviceToken.objects.get_or_create(
             user=request.user,
             fcm_token=token,
+            device_name=device_name,
         )
 
         if not device:
@@ -116,7 +118,14 @@ class SaveFCMTokenView(APIView):
             if not device.is_active:
                 device.is_active = True
             device.fcm_token = token
-            device.save(update_fields=["fcm_token", "tracking_token", "is_active"])
+            device.save(
+                update_fields=[
+                    "fcm_token",
+                    "device_name",
+                    "tracking_token",
+                    "is_active",
+                ]
+            )
 
         return ApiResponse.success(
             {

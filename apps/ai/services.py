@@ -300,6 +300,7 @@ class AIService:
             - No explanation.
             - No text before or after.
             - No reasoning.
+            - If uncertain or indecisive then return list ["other"] as default.
             - Example outputs:
             ['leave_inquiry']
             ['attendance_inquiry', 'payroll_inquiry']
