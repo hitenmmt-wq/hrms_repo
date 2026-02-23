@@ -317,7 +317,7 @@ class AIService:
             return response[0] if response else None
         except Exception as e:
             print("HF ERROR:", str(e))
-            return "I'm having trouble generating a response right now. Please try again in a moment."
+            return ["other"]
 
     async def _build_context(self, message: str, intent: list) -> Dict[str, Any]:
         """Build context data based on user role and intent."""
