@@ -20,6 +20,13 @@ admin.site.register(models.DeviceConfigPolicy)
 
 @admin.register(models.UserDeviceToken)
 class UserDeviceTokenAdmin(admin.ModelAdmin):
-    list_display = ("user", "device_name", "tracking_token", "fcm_token", "created_at")
+    list_display = (
+        "user",
+        "is_active",
+        "device_name",
+        "tracking_token",
+        "fcm_token",
+        "created_at",
+    )
     list_filter = ("created_at",)
     search_fields = ("user__email", "device_name")
