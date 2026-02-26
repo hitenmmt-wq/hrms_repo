@@ -22,6 +22,9 @@ class Conversation(BaseModel):
     type = models.CharField(max_length=20, choices=CONVERSATION_TYPES)
     name = models.CharField(max_length=255, null=True, blank=True)
     participants = models.ManyToManyField(Users, related_name="conversations")
+    profile = models.ImageField(
+        upload_to="conversation_profiles/", null=True, blank=True
+    )
 
     class Meta:
         indexes = [
@@ -107,6 +110,7 @@ class Message(BaseModel):
     reply_to = models.ForeignKey(
         "self", on_delete=models.CASCADE, null=True, blank=True, related_name="replies"
     )
+    is_edited = models.BooleanField(default=False)
 
     class Meta:
         indexes = [

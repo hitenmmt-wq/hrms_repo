@@ -9,7 +9,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 # from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count
+from django.db.models import Count, OuterRef, Subquery
 from django.utils import timezone
 
 from apps.chat.connection_tracker import chat_tracker
@@ -105,7 +105,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "add_reaction": self.handle_add_reaction,
             "remove_reaction": self.handle_remove_reaction,
             "get_messages": self.handle_get_messages,
-            # "mark_read": self.handle_mark_read(content),
+            "remove_user": self.handle_remove_user_group,
+            # "group_profile_upload": self.handle_group_profile_upload,
             "heartbeat": lambda _: self.send_json({"type": "heartbeat_ack"}),
         }
 
@@ -113,26 +114,106 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if handler:
             await handler(content)
 
+    async def handle_remove_user_group(self, content):
+        """Handle removing a user from a conversation group."""
+        conversation_id = content.get("conversation_id")
+        user_id = content.get("user_id")
+        if not conversation_id:
+            return await self.send_json(
+                {"type": "error", "message": "Conversation ID not provided"},
+            )
+        if not user_id:
+            return await self.send_json(
+                {"type": "error", "message": "User ID not provided"},
+            )
+        try:
+            conversation = await database_sync_to_async(Conversation.objects.get)(
+                id=conversation_id
+            )
+            user = await database_sync_to_async(Users.objects.get)(id=user_id)
+            removed = await self.remove_user_from_conversation(conversation, user)
+            # Notify the user about removal
+            if removed:
+                await self.channel_layer.group_send(
+                    f"user_{user_id}",
+                    {
+                        "type": "global.message",
+                        "payload": {
+                            "type": "removed_from_conversation",
+                            "conversation_id": conversation_id,
+                        },
+                    },
+                )
+        except Conversation.DoesNotExist:
+            print(f"Conversation with ID {conversation_id} does not exist.")
+        except Users.DoesNotExist:
+            print(f"User with ID {user_id} does not exist.")
+
     async def handle_update_message(self, content):
         message_id = content.get("message_id", "")
         new_text = content.get("new_text", "").strip()
+        conversation_id = content.get("conversation_id")
+
         if not message_id or not new_text:
-            return self.send_json(
+            return await self.send_json(
                 {"type": "error", "message": "Message ID and new text are required"}
             )
-        updated_message = await self.update_message(message_id, self.user.id, new_text)
-        await self.send_json({"type": updated_message, "message_id": message_id})
-        return updated_message
+        if not conversation_id:
+            return await self.send_json(
+                {"type": "error", "message": "Conversation ID not provided"}
+            )
+
+        result = await self.update_message(message_id, self.user.id, new_text)
+        await self.send_json(
+            {
+                "type": "message_update_status",
+                "status": result,
+                "message_id": message_id,
+            }
+        )
+
+        if result == "Message updated successfully":
+            payload = {
+                "type": "message_updated",
+                "message_id": message_id,
+                "new_text": new_text,
+                "is_edited": True,
+                "updated_at": timezone.now().isoformat(),
+            }
+            # Broadcast to conversation group
+            await self.channel_layer.group_send(
+                f"chat_{conversation_id}", {"type": "chat.message", "payload": payload}
+            )
+            # Broadcast to participants' global groups
+            participants = await self.get_conversation_participants(conversation_id)
+            for participant_id in participants:
+                if participant_id != self.user.id:
+                    await self.channel_layer.group_send(
+                        f"user_{participant_id}",
+                        {"type": "global.message", "payload": payload},
+                    )
 
     async def handle_delete_message(self, content):
         message_id = content.get("message_id", "")
+        conversation_id = content.get("conversation_id")
+
         if not message_id:
-            return self.send_json(
+            return await self.send_json(
                 {"type": "error", "message": "Message ID not provided"}
             )
-        delete_message = await self.delete_message(message_id, self.user.id)
-        await self.send_json({"type": delete_message, "message_id": message_id})
-        return delete_message
+        if not conversation_id:
+            return await self.send_json(
+                {"type": "error", "message": "Conversation ID not provided"}
+            )
+
+        result = await self.delete_message(message_id, self.user.id, conversation_id)
+        await self.send_json(
+            {
+                "type": "message_delete_status",
+                "status": result,
+                "message_id": message_id,
+            }
+        )
 
     async def handle_send_message(self, content):
         """Handle sending new messages and broadcasting to conversation participants."""
@@ -146,17 +227,41 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         )
         print(f"==>> message_data: {message_data}")
         if message_data:
-            if hasattr(self, "room_group_name"):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        "type": "chat.message",
-                        "payload": {
-                            "type": "new_message",
-                            "message": message_data,
-                        },
+            await self.send_json(
+                {
+                    "type": "message_sent",
+                    "message": message_data,
+                }
+            )
+            # Broadcast to conversation group
+            await self.channel_layer.group_send(
+                f"chat_{conversation_id}",
+                {
+                    "type": "chat.message",
+                    "payload": {
+                        "type": "new_message",
+                        "message": message_data,
                     },
-                )
+                },
+            )
+            # Broadcast to each participant's global group and update their unread counts
+            participants = await self.get_conversation_participants(conversation_id)
+            for participant_id in participants:
+                if participant_id != self.user.id:
+                    await self.channel_layer.group_send(
+                        f"user_{participant_id}",
+                        {
+                            "type": "global.message",
+                            "payload": {
+                                "type": "new_message",
+                                "message": message_data,
+                            },
+                        },
+                    )
+                    # Update unread count for recipient
+                    await self.channel_layer.group_send(
+                        f"user_{participant_id}", {"type": "global.unread_update"}
+                    )
 
     async def handle_start_typing(self, content):
         """Broadcast typing start to all participants."""
@@ -310,39 +415,75 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """Handle adding emoji reactions to messages."""
         message_id = content.get("message_id")
         emoji = content.get("emoji")
+        conversation_id = content.get("conversation_id")
 
         if message_id and emoji:
             reaction_data = await self.add_reaction(message_id, self.user.id, emoji)
             if reaction_data:
                 payload = {
                     "type": "reaction_added",
+                    "conversation_id": conversation_id,
                     "message_id": message_id,
                     "reaction": reaction_data,
                 }
+                # Broadcast to conversation group
                 await self.channel_layer.group_send(
-                    self.room_group_name, {"type": "chat.message", "payload": payload}
+                    f"chat_{conversation_id}",
+                    {"type": "chat.message", "payload": payload},
                 )
+                # Broadcast to participants' global groups
+                participants = await self.get_conversation_participants(conversation_id)
+                for participant_id in participants:
+                    if participant_id != self.user.id:
+                        await self.channel_layer.group_send(
+                            f"user_{participant_id}",
+                            {"type": "global.message", "payload": payload},
+                        )
 
     async def handle_remove_reaction(self, content):
         """Handle removing emoji reactions from messages."""
         message_id = content.get("message_id")
         emoji = content.get("emoji")
+        conversation_id = content.get("conversation_id")
 
         if message_id and emoji:
             success = await self.remove_reaction(message_id, self.user.id, emoji)
             if success:
                 payload = {
                     "type": "reaction_removed",
+                    "conversation_id": conversation_id,
                     "message_id": message_id,
                     "user_id": self.user.id,
                     "emoji": emoji,
                 }
+                # Broadcast to conversation group
                 await self.channel_layer.group_send(
-                    self.room_group_name, {"type": "chat.message", "payload": payload}
+                    f"chat_{conversation_id}",
+                    {"type": "chat.message", "payload": payload},
                 )
+                # Broadcast to participants' global groups
+                participants = await self.get_conversation_participants(conversation_id)
+                for participant_id in participants:
+                    if participant_id != self.user.id:
+                        await self.channel_layer.group_send(
+                            f"user_{participant_id}",
+                            {"type": "global.message", "payload": payload},
+                        )
 
     async def global_unread_update(self, event):
         await self.send_unread_counts()
+
+    @database_sync_to_async
+    def remove_user_from_conversation(self, conversation, user):
+        """Remove a user from a conversation and clean up related data."""
+        conversation.participants.remove(user)
+        MessageStatus.objects.filter(
+            user=user, message__conversation=conversation
+        ).delete()
+        MessageReaction.objects.filter(
+            user=user, message__conversation=conversation
+        ).delete()
+        return True
 
     @database_sync_to_async
     def get_messages_for_read_receipt(self, message_ids):
@@ -366,28 +507,33 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_unread_counts(self, user_id):
         """Get count of unread messages for user across all conversations."""
+        last_message_subquery = (
+            Message.objects.filter(conversation_id=OuterRef("message__conversation_id"))
+            .order_by("-created_at")
+            .values("text")[:1]
+        )
         qs = (
             MessageStatus.objects.filter(
                 user_id=user_id, status__in=["sent", "delivered"]
             )
             .exclude(message__sender_id=user_id)
-            .values("message__conversation_id", "message__text")
-            .annotate(count=Count("id"))
+            .values("message__conversation_id")
+            .annotate(
+                unread_count=Count("id"),
+                last_message=Subquery(last_message_subquery),
+            )
         )
 
         by_conversation = {
             str(row["message__conversation_id"]): {
                 "conversation_id": str(row["message__conversation_id"]),
-                "text": str(row["message__text"]),
-                "count": row["count"],
+                "text": row["last_message"],
+                "count": row["unread_count"],
             }
             for row in qs
         }
-        print(f"==>> by_conversation: {by_conversation}")
 
         total = sum(item["count"] for item in by_conversation.values())
-        print(f"==>> total: {total}")
-
         return {"total": total, "by_conversation": by_conversation}
 
     @database_sync_to_async
@@ -504,6 +650,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                                 "status": message.get_status_for_user(user.id),
                                 "reader": {
                                     "id": participant.id,
+                                    "email": participant.email,
                                     "first_name": participant.first_name,
                                     "last_name": participant.last_name,
                                 },
@@ -525,6 +672,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                                 "status": message.get_status_for_user(user.id),
                                 "reader": {
                                     "id": participant.id,
+                                    "email": participant.email,
                                     "first_name": participant.first_name,
                                     "last_name": participant.last_name,
                                 },
@@ -624,6 +772,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             message = Message.objects.filter(id=message_id).first()
             if message and message.sender.id == user_id:
                 message.text = new_text
+                message.is_edited = True
                 message.updated_at = timezone.now()
                 message.save()
                 return "Message updated successfully"
@@ -632,25 +781,38 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return "Message does not exist"
 
     @database_sync_to_async
-    def delete_message(self, message_id, user_id):
+    def delete_message(self, message_id, user_id, conversation_id):
         """Delete a message."""
         try:
             message = Message.objects.filter(id=message_id).first()
+            if not message:
+                return "Message not found....."
             if message and message.sender.id == user_id:
                 message.delete()
 
+                payload = {
+                    "type": "delete_message",
+                    "conversation_id": conversation_id,
+                    "message_id": message_id,
+                    "deleted_at": timezone.now().isoformat(),
+                }
+
+                # Broadcast to conversation group
                 async_to_sync(self.channel_layer.group_send)(
-                    f"chat_{message.conversation.id}",
-                    {
-                        "type": "chat.delete_message",
-                        "payload": {
-                            "type": "delete_message",
-                            "conversation_id": message.conversation.id,
-                            "message_id": message.id,
-                            "deleted_at": timezone.now().isoformat(),
-                        },
-                    },
+                    f"chat_{conversation_id}",
+                    {"type": "chat.message", "payload": payload},
                 )
+
+                # Broadcast to participants' global groups
+                conversation = Conversation.objects.get(id=conversation_id)
+                participants = conversation.participants.exclude(id=user_id)
+                for participant in participants:
+                    print(f"==>> participant: {participant}")
+                    async_to_sync(self.channel_layer.group_send)(
+                        f"user_{participant.id}",
+                        {"type": "global.message", "payload": payload},
+                    )
+
                 return "Message deleted successfully"
             return "Unauthorized to delete this message"
         except Message.DoesNotExist:
@@ -664,12 +826,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if event.get("sender_id") != self.user.id:
             await self.send_json(event["payload"])
 
+    async def global_typing_indicator(self, event):
+        """Handle typing indicators in conversation group."""
+        if event.get("sender_id") != self.user.id:
+            await self.send_json(event["payload"])
+
     async def global_read_receipt(self, event):
         if event["payload"]["user_id"] != self.user.id:
             await self.send_json(event["payload"])
 
     async def global_message(self, event):
         await self.send_json(event["payload"])
+        # Update unread count when receiving new message
+        if event["payload"].get("type") == "new_message":
+            await self.send_unread_counts()
 
     async def typing_indicator(self, event):
         if event.get("sender_id") != self.user.id:
@@ -679,13 +849,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         payload = event["payload"]
         await self.send_json(payload)
 
-        # Receiver auto-read logic
+        # Receiver auto-read logic - only for new messages
         if (
             payload.get("type") == "new_message"
             and self.is_tab_visible
-            and payload["message"]["sender"]["id"] == self.user.id
+            and payload.get("message", {}).get("sender", {}).get("id") != self.user.id
         ):
             message_id = payload["message"]["id"]
+            conversation_id = payload["message"].get("conversation_id")
 
             updated = await self.mark_single_message_read(message_id, self.user.id)
 
@@ -694,7 +865,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     f"\n{'-'*70}"
                     f"\n📨 REAL-TIME MESSAGE MARKED AS READ"
                     f"\n  User: {self.user.email} (ID: {self.user.id})"
-                    f"\n  Conversation: {payload['conversation_id']}"
+                    f"\n  Conversation: {conversation_id}"
                     f"\n  Message ID: {message_id}"
                     f"\n  Sender: {payload['message']['sender']['email']}"
                     f"\n{'-'*70}\n"
@@ -741,6 +912,24 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 # Update unread count for this user
                 await self.channel_layer.group_send(
                     f"user_{self.user.id}", {"type": "global.unread_update"}
+                )
+                # Notify sender about read status
+                await self.channel_layer.group_send(
+                    f"user_{payload['message']['sender']['id']}",
+                    {
+                        "type": "global.message_read",
+                        "payload": {
+                            "type": "message_read",
+                            "conversation_id": conversation_id,
+                            "message_id": message_id,
+                            "reader": {
+                                "id": self.user.id,
+                                "first_name": self.user.first_name,
+                                "last_name": self.user.last_name,
+                            },
+                            "read_at": timezone.now().isoformat(),
+                        },
+                    },
                 )
 
     async def chat_message_read(self, event):

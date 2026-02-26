@@ -17,6 +17,11 @@ urlpatterns = [
         views.ConversationDeleteView.as_view(),
         name="conversation-delete",
     ),
+    path(
+        "group_profile_upload/",
+        views.GroupProfileUploadView.as_view(),
+        name="group-profile-upload",
+    ),
     path("upload/", views.FileUploadView.as_view(), name="chat-file-upload"),
     path(
         "get_conversation_messages/<int:conversation>/",
@@ -33,14 +38,4 @@ urlpatterns = [
         views.MessageReactionView.as_view(),
         name="message-reactions",
     ),
-    # path(
-    #     "summary/",
-    #     views.ChatSummaryView.as_view(),
-    #     name="chat-summary",
-    # ),
-    # path(
-    #     "polling/",
-    #     views.MessagePollingView.as_view(),
-    #     name="message-polling",
-    # ),
 ]

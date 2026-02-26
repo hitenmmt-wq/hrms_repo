@@ -56,7 +56,9 @@ class NotificationViewSet(BaseViewSet):
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user).select_related(
+        return Notification.objects.filter(
+            recipient=self.request.user, is_read=False
+        ).select_related(
             "actor__department", "actor__position", "notification_type", "content_type"
         )
 
