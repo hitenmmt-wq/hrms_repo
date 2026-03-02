@@ -32,13 +32,13 @@ from apps.superadmin.models import Holiday, Users
 class AttendanceViewSet(BaseViewSet):
     """Attendance management ViewSet for employee time tracking operations."""
 
-    pagination_class = CustomPageNumberPagination
-    serializer_class = AttendanceSerializer
-    filterset_class = EmployeeAttendanceFilter
-    permission_classes = [IsAuthenticated]
     queryset = EmployeeAttendance.objects.select_related(
         "employee__department", "employee__position"
     )
+    pagination_class = CustomPageNumberPagination
+    serializer_class = AttendanceSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_class = EmployeeAttendanceFilter
     order_by = ["-day"]
 
     def destroy(self, request, *args, **kwargs):

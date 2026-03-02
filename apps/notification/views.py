@@ -107,6 +107,7 @@ class SaveFCMTokenView(APIView):
         device, created = UserDeviceToken.objects.get_or_create(
             user=request.user,
             fcm_token=token,
+            device_name=device_name,
         )
 
         if not device:

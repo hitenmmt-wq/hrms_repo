@@ -149,7 +149,7 @@ def generate_monthly_payslips():
         )
         print(f"==>> leave_deduction: {leave_deduction}")
         attendance_data = EmployeeAttendance.objects.filter(
-            employee=employee, day__month=current_month
+            employee=employee, day__month=prev_month, day__year=prev_year
         )
         print(f"==>> attendance_data: {attendance_data}")
         print(f"==>> attendance_data count: {attendance_data.count()}")

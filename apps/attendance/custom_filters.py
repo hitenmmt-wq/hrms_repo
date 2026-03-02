@@ -1,25 +1,19 @@
-from django_filters import filters
+import django_filters
 
 from apps.attendance import models
 
 
-class EmployeeAttendanceFilter(filters.Filter):
-    employee = filters.NumberFilter(field_name="employee__id")
-    day = filters.DateFilter(field_name="day")
-    check_in = filters.DateTimeFilter(field_name="check_in")
-    check_out = filters.DateTimeFilter(field_name="check_out")
-    status = filters.ChoiceFilter(choice=models.EmployeeAttendance.ATTENDANCE_TYPE)
+class EmployeeAttendanceFilter(django_filters.FilterSet):
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    day = django_filters.DateFilter(field_name="day")
+    check_in = django_filters.DateTimeFilter(field_name="check_in")
+    check_out = django_filters.DateTimeFilter(field_name="check_out")
+    status = django_filters.ChoiceFilter(
+        choices=models.EmployeeAttendance.ATTENDANCE_TYPE
+    )
+    month = django_filters.NumberFilter(field_name="day", lookup_expr="month")
+    year = django_filters.NumberFilter(field_name="day", lookup_expr="year")
 
     class Meta:
         model = models.EmployeeAttendance
-        fields = ["employee", "day", "check_in", "check_out", "status"]
-
-    def filter_by_month(self, queryset, name, value):
-        month = self.data.get("month")
-        year = self.data.get("year")
-        if month:
-            queryset = queryset.filter(day__month=month)
-        if year:
-            queryset = queryset.filter(day__year=year)
-
-        return queryset
+        fields = ["employee", "day", "check_in", "check_out", "status", "month", "year"]
