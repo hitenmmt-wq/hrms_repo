@@ -5,6 +5,8 @@ Provides helper functions for check-in/check-out operations, break time calculat
 work hour computations, and attendance status determination for the HRMS system.
 """
 
+import calendar
+from datetime import date
 from decimal import Decimal
 
 from django.db import transaction
@@ -13,6 +15,17 @@ from django.utils import timezone
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
 from apps.base import constants
 from apps.superadmin.models import Users
+
+
+def get_weekend_days(month, year):
+    weekend_days = []
+    total_days = calendar.monthrange(year, month)[1]
+    for day in range(1, total_days + 1):
+        date_obj = date(year, month, day)
+        if date_obj.weekday() >= 5:  # Saturday=5, Sunday=6
+            weekend_days.append(date_obj)
+
+    return weekend_days
 
 
 def _calculate_break_hours(attendance: EmployeeAttendance) -> Decimal:

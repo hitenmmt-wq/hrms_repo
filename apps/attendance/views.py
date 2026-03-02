@@ -7,18 +7,26 @@ records, and attendance management for the HRMS time tracking system.
 
 from django.utils import timezone
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 
+from apps.attendance.custom_filters import EmployeeAttendanceFilter
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
 from apps.attendance.serializers import (  # , IdleStatusSerializer
     AttendanceSerializer,
     BreakLogSerializer,
 )
-from apps.attendance.utils import check_in, check_out, pause_break, resume_break
+from apps.attendance.utils import (
+    check_in,
+    check_out,
+    get_weekend_days,
+    pause_break,
+    resume_break,
+)
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
 from apps.base.viewset import BaseViewSet
-from apps.superadmin.models import Users
+from apps.superadmin.models import Holiday, Users
 
 
 class AttendanceViewSet(BaseViewSet):
@@ -26,6 +34,7 @@ class AttendanceViewSet(BaseViewSet):
 
     pagination_class = CustomPageNumberPagination
     serializer_class = AttendanceSerializer
+    filterset_class = EmployeeAttendanceFilter
     permission_classes = [IsAuthenticated]
     queryset = EmployeeAttendance.objects.select_related(
         "employee__department", "employee__position"
@@ -123,69 +132,72 @@ class AttendanceViewSet(BaseViewSet):
         return ApiResponse.success("Attendance Summary", data=context)
 
 
-# class IdleStatusView(APIView):
-#     """API endpoint for receiving idle status updates from desktop application."""
+class AttendanceCalenderViewSet(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     permission_classes = [IsAuthenticated]
+    def get(self, request):
+        current_month = int(request.query_params.get("month"))
+        current_year = int(request.query_params.get("year"))
+        employee_id = int(request.query_params.get("employee_id"))
+        if not employee_id:
+            return ApiResponse.error("Employee ID is required", status=400)
+        if not current_month and not current_year:
+            return ApiResponse.error("Month and Year is required", status=400)
 
-#     def post(self, request):
-#         """Handle idle status updates and trigger auto-pause if needed."""
-#         serializer = IdleStatusSerializer(data=request.data)
+        employee = Users.objects.filter(id=employee_id).first()
+        attendances = EmployeeAttendance.objects.filter(
+            employee=employee, day__month=current_month, day__year=current_year
+        ).order_by("day")
+        attendance_month_wise = []
+        total_work_hours = 0
+        for attendance in attendances:
+            attendance_month_wise.append(
+                {
+                    "date": attendance.day.strftime("%Y-%m-%d"),
+                    "status": attendance.status,
+                    "check_in": (
+                        attendance.check_in.strftime("%Y-%m-%d")
+                        if attendance.check_in
+                        else None
+                    ),
+                    "check_out": (
+                        attendance.check_out.strftime("%Y-%m-%d")
+                        if attendance.check_out
+                        else None
+                    ),
+                    "work_hours": attendance.work_hours,
+                    "break_hours": attendance.break_hours,
+                }
+            )
+            total_work_hours = sum(attendance.work_hours for attendance in attendances)
+        holidays = Holiday.objects.filter(
+            date__month=current_month, date__year=current_year
+        )
 
-#         if not serializer.is_valid():
-#             return ApiResponse.error("Invalid data", serializer.errors, status.HTTP_400_BAD_REQUEST)
+        for holiday in holidays:
+            attendance_month_wise.append(
+                {
+                    "date": holiday.date.strftime("%Y-%m-%d"),
+                    "status": "Holiday",
+                    "name": holiday.name,
+                }
+            )
 
-#         data = serializer.validated_data
-#         user = request.user
-
-#         # Get today's attendance record
-#         today_attendance = EmployeeAttendance.objects.filter(
-#             employee=user,
-#             day=timezone.now().date()
-#         ).first()
-
-#         if not today_attendance:
-#             return ApiResponse.error("No attendance record found for today", status_code=status.HTTP_404_NOT_FOUND)
-
-#         # Handle idle status
-#         if data['is_idle']:
-#             # Auto-pause work if user is idle and currently working
-#             if today_attendance.track_current_status == 'ongoing':
-#                 pause_break(today_attendance)
-#                 return ApiResponse.success({
-#                     "message": "Work auto-paused due to inactivity",
-#                     "idle_duration": data['idle_duration'],
-#                     "action": "paused"
-#                 })
-
-
-#         return ApiResponse.success({
-#             "message": "Idle status received",
-#             "current_status": today_attendance.track_current_status,
-#             "action": "none"
-#         })
-
-
-# class IdleDetectorHealthView(APIView):
-#     """Health check endpoint for idle detector connection status."""
-
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         """Check if idle detector is properly configured and connected."""
-#         user = request.user
-#         print("------------this function is called for detecting of application running ------------")
-
-#         today_attendance = EmployeeAttendance.objects.filter(
-#             employee=user,
-#             day=timezone.now().date()
-#         ).first()
-
-#         return ApiResponse.success({
-#             "status": "connected",
-#             "employee_id": user.id,
-#             "employee_name": f"{user.first_name} {user.last_name}",
-#             "has_attendance_today": bool(today_attendance),
-#             "current_status": today_attendance.track_current_status if today_attendance else None,
-#             "timestamp": timezone.now().isoformat()
-#         })
+        weekend_days = get_weekend_days(current_month, current_year)
+        for weekend_day in weekend_days:
+            attendance_month_wise.append(
+                {"date": weekend_day.strftime("%Y-%m-%d"), "status": "Weekend"}
+            )
+        attendance_month_wise.sort(key=lambda x: x["date"])
+        attendance_month_wise.append(
+            {
+                "total_attendance": len(attendances),
+                "total_work_hours": total_work_hours,
+                "total_holidays": holidays.count(),
+                "total_weekends": len(weekend_days),
+            }
+        )
+        print(f"==>> attendance_month_wise: {attendance_month_wise}")
+        return ApiResponse.success(
+            "Attendance calender data fetched", data=attendance_month_wise
+        )

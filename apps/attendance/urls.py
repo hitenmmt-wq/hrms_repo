@@ -11,6 +11,5 @@ router.register(
 
 urlpatterns = [
     path("", include(router.urls)),
-    # path("idle-status/", views.IdleStatusView.as_view(), name="idle-status"),
-    # path("idle-health/", views.IdleDetectorHealthView.as_view(), name="idle-health"),
+    path("attendance_calender/", views.AttendanceCalenderViewSet.as_view()),
 ]
