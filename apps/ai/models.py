@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.base.models import BaseModel
+from apps.base.validators import BaseValidator
 from apps.superadmin.models import Users
 
 
@@ -68,7 +69,9 @@ class AIQueryLog(BaseModel):
     query = models.TextField()
     intent = models.TextField(null=True, blank=True)
     data_accessed = models.JSONField(default=list, blank=True)
-    response_quality = models.IntegerField(null=True, blank=True)  # User rating 1-5
+    response_quality = models.IntegerField(
+        null=True, blank=True, validators=[BaseValidator.validate_positive_number]
+    )  # User rating 1-5
     processing_time = models.FloatField(null=True, blank=True)
 
     class Meta:

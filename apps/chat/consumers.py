@@ -646,6 +646,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                                 "type": "message_read",
                                 "conversation_id": conversation_id,
                                 "message_id": message.id,
+                                "reply_to": message.reply_to,
                                 "text": message.text,
                                 "status": message.get_status_for_user(user.id),
                                 "reader": {
@@ -667,6 +668,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                             "payload": {
                                 "type": "message_read",
                                 "conversation_id": conversation_id,
+                                "reply_to": message.reply_to,
                                 "text": message.text,
                                 "message_id": message.id,
                                 "status": message.get_status_for_user(user.id),
@@ -684,6 +686,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return {
                 "id": message.id,
                 "text": message.text,
+                "reply_to": message.reply_to,
                 "msg_type": message.msg_type,
                 "sender": {
                     "id": user.id,

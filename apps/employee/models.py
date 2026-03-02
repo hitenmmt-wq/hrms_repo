@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.base.models import BaseModel
+from apps.base.validators import BaseValidator
 from apps.superadmin.models import Users
 
 
@@ -30,7 +31,12 @@ class LeaveBalance(BaseModel):
     used_pl = models.FloatField(default=0, null=True, blank=True)
     used_sl = models.FloatField(default=0, null=True, blank=True)
     used_lop = models.FloatField(default=0, null=True, blank=True)
-    year = models.IntegerField(default=current_year, null=True, blank=True)
+    year = models.IntegerField(
+        default=current_year,
+        null=True,
+        blank=True,
+        validators=[BaseValidator.validate_positive_number],
+    )
 
     class Meta:
         indexes = [

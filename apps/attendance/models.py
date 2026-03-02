@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.base.models import BaseModel
+from apps.base.validators import BaseValidator
 from apps.superadmin.models import Users
 
 
@@ -32,7 +33,12 @@ class EmployeeAttendance(BaseModel):
     check_out = models.DateTimeField(null=True, blank=True)
     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     break_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    status = models.CharField(max_length=50, default="pending", choices=ATTENDANCE_TYPE)
+    status = models.CharField(
+        max_length=50,
+        default="pending",
+        choices=ATTENDANCE_TYPE,
+        validators=[BaseValidator.validate_name],
+    )
     is_halfday_paid = models.BooleanField(default=False)
 
     class Meta:

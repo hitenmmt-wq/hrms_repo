@@ -72,21 +72,21 @@ class BaseValidator:
         return password
 
     @staticmethod
-    def validate_name(name, field_name="Name"):
+    def validate_name(name):
         """Validate name fields."""
         if not name:
-            raise ValidationError(f"{field_name} is required.")
+            raise ValidationError(f"{name} is required.")
 
         name = name.strip()
         if len(name) < 2:
-            raise ValidationError(f"{field_name} must be at least 2 characters long.")
+            raise ValidationError(f"{name} must be at least 2 characters long.")
 
         if len(name) > 50:
-            raise ValidationError(f"{field_name} must not exceed 50 characters.")
+            raise ValidationError(f"{name} must not exceed 50 characters.")
 
         if not re.match(r"^[a-zA-Z\s\-\'\.]+$", name):
             raise ValidationError(
-                f"{field_name} can only contain letters, spaces, hyphens, apostrophes, and periods."
+                f"{name} can only contain letters, spaces, hyphens, apostrophes, and periods."
             )
 
         return name
@@ -132,6 +132,12 @@ class BaseValidator:
                     f"File type not allowed. Allowed types: {', '.join(allowed_extensions)}"
                 )
         return file
+
+    @staticmethod
+    def validate_positive_number(number):
+        """validate positive numbers only"""
+        if number is not None and number <= 0:
+            raise ValidationError("Value must be a positive number.")
 
 
 class EmployeeValidator(BaseValidator):
