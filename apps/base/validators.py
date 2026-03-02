@@ -4,7 +4,7 @@ Provides reusable validation functions and classes for common validation needs.
 """
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -104,7 +104,15 @@ class BaseValidator:
     @staticmethod
     def validate_future_date(date_value, field_name="Date"):
         """Validate that date is not in the past."""
-        if date_value and date_value < timezone.now().date():
+        if not date_value:
+            return date_value
+
+        if isinstance(date_value, datetime):
+            comparison_value = date_value.date()
+        else:
+            comparison_value = date_value
+
+        if comparison_value < timezone.now().date():
             raise ValidationError(f"{field_name} cannot be in the past.")
         return date_value
 
