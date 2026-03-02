@@ -5,21 +5,32 @@ Handles serialization for conversations, messages, reactions, and message status
 for the HRMS chat system with support for media attachments and reply functionality.
 """
 
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.db.models import Count
 from rest_framework import serializers
 
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
+from apps.superadmin.models import Users
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Basic user serializer for chat participant information."""
 
+    profile = serializers.SerializerMethodField()
+
     class Meta:
-        model = User
-        fields = ("id", "email", "first_name", "last_name")
+        model = Users
+        fields = ("id", "email", "first_name", "last_name", "profile")
+
+    def get_profile(self, obj):
+        request = self.context.get("request")
+        if obj.profile:
+            if request:
+                return request.build_absolute_uri(obj.profile.url)
+            return obj.profile.url
+        return None
 
 
 class MessageReactionSerializer(serializers.ModelSerializer):
@@ -57,6 +68,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "conversation",
             "sender",
             "text",
+            "is_edited",
             "media",
             "media_url",
             "msg_type",
@@ -84,7 +96,9 @@ class MessageSerializer(serializers.ModelSerializer):
             return {
                 "id": obj.reply_to.id,
                 "text": obj.reply_to.text,
-                "sender": UserSerializer(obj.reply_to.sender).data,
+                "sender": UserSerializer(
+                    obj.reply_to.sender, context=self.context
+                ).data,
             }
         return None
 
@@ -118,7 +132,7 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating new conversations with participant selection."""
 
     participants = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True
+        queryset=Users.objects.all(), many=True
     )
     messages = MessageSerializer(many=True, read_only=True)
 
@@ -142,6 +156,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     unread_count = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     read_receipts = serializers.SerializerMethodField()
+    profile = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -149,6 +164,7 @@ class ConversationSerializer(serializers.ModelSerializer):
             "id",
             "type",
             "name",
+            "profile",
             "participants",
             "created_at",
             "messages",
@@ -157,13 +173,26 @@ class ConversationSerializer(serializers.ModelSerializer):
             "read_receipts",
         )
 
+    def get_profile(self, obj):
+        """Get profile image URL for group conversations."""
+        request = self.context.get("request")
+        if obj.profile:
+            if request:
+                return request.build_absolute_uri(obj.profile.url)
+            return obj.profile.url
+        return None
+
     def get_participants(self, obj):
         """Return participants excluding the current user."""
         request = self.context.get("request")
         if request and request.user:
             other_participants = obj.participants.exclude(id=request.user.id)
-            return UserSerializer(other_participants, many=True).data
-        return UserSerializer(obj.participants.all(), many=True).data
+            return UserSerializer(
+                other_participants, many=True, context=self.context
+            ).data
+        return UserSerializer(
+            obj.participants.all(), many=True, context=self.context
+        ).data
 
     def get_unread_count(self, obj):
         """Calculate unread messages for the current user in the conversation."""

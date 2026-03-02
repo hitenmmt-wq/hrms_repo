@@ -58,6 +58,8 @@ class ApplyLeaveFilter(django_filters.FilterSet):
     total_days = django_filters.NumberFilter(field_name="total_days")
     reason = django_filters.CharFilter(field_name="reason", lookup_expr="icontains")
     status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+    month = django_filters.NumberFilter(method="filter_by_month_year")
+    year = django_filters.NumberFilter(method="filter_by_month_year")
 
     class Meta:
         model = models.Leave
@@ -70,6 +72,17 @@ class ApplyLeaveFilter(django_filters.FilterSet):
             "reason",
             "status",
         ]
+
+    def filter_by_month_year(self, queryset, name, value):
+        month = self.data.get("month")
+        year = self.data.get("year")
+        if month:
+            queryset = queryset.filter(from_date__month=int(month))
+
+        if year:
+            queryset = queryset.filter(from_date__year=int(year))
+
+        return queryset
 
 
 class PaySlipFilter(django_filters.FilterSet):

@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Waiting for database..."
-while ! nc -z db 5432; do
-  echo "Database not ready, waiting..."
-  sleep 2
-done
-echo "Database is ready!"
-
 echo "Waiting for Redis..."
 while ! nc -z redis 6379; do
   echo "Redis not ready, waiting..."

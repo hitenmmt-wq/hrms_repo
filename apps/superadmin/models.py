@@ -13,6 +13,7 @@ from django.db import models
 
 from apps.base import constants
 from apps.base.models import BaseModel
+from apps.base.validators import BaseValidator
 
 
 class CommonData(BaseModel):
@@ -71,7 +72,13 @@ class Users(AbstractUser):
     """Custom user model with role-based access and employee information."""
 
     username = None
-    role = models.CharField(max_length=50, null=True, blank=True, default="employee")
+    role = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        default="employee",
+        validators=[BaseValidator.validate_name],
+    )
     email = models.EmailField(unique=True)
     department = models.ForeignKey(
         "Department",
@@ -81,7 +88,9 @@ class Users(AbstractUser):
         blank=True,
     )
     profile = models.ImageField(upload_to="profile", null=True, blank=True)
-    employee_id = models.CharField(max_length=50, null=True, blank=True)
+    employee_id = models.CharField(
+        max_length=50, null=True, blank=True, validators=[BaseValidator.validate_name]
+    )
     position = models.ForeignKey(
         "Position",
         on_delete=models.CASCADE,
@@ -114,7 +123,7 @@ class Users(AbstractUser):
 class Department(BaseModel):
     """Organizational departments for employee categorization."""
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, validators=[BaseValidator.validate_name])
 
     def __str__(self):
         return self.name
@@ -125,7 +134,7 @@ class Announcement(BaseModel):
 
     title = models.CharField(max_length=225)
     description = models.TextField()
-    date = models.DateTimeField()
+    date = models.DateTimeField(validators=[BaseValidator.validate_future_date])
 
     def __str__(self):
         return self.title
@@ -134,7 +143,7 @@ class Announcement(BaseModel):
 class Position(BaseModel):
     """Job positions and roles within the organization."""
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, validators=[BaseValidator.validate_name])
 
     def __str__(self):
         return self.name
@@ -143,8 +152,8 @@ class Position(BaseModel):
 class Holiday(BaseModel):
     """Company holidays and non-working days."""
 
-    name = models.CharField(max_length=50)
-    date = models.DateField()
+    name = models.CharField(max_length=50, validators=[BaseValidator.validate_name])
+    date = models.DateField(validators=[BaseValidator.validate_future_date])
 
     def __str__(self):
         return f"{self.name} - {self.date}"
@@ -153,8 +162,8 @@ class Holiday(BaseModel):
 class LeaveType(BaseModel):
     """Types of leaves available (sick, privilege, etc.)."""
 
-    name = models.CharField(max_length=50)
-    code = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, validators=[BaseValidator.validate_name])
+    code = models.CharField(max_length=50, validators=[BaseValidator.validate_name])
 
     def __str__(self):
         return f"{self.name}"
@@ -180,13 +189,19 @@ class Leave(BaseModel):
     from_date = models.DateField()
     to_date = models.DateField(null=True, blank=True)
     day_part = models.CharField(
-        max_length=50, choices=HALF_DAY_PART, null=True, blank=True
+        max_length=50,
+        choices=HALF_DAY_PART,
+        null=True,
+        blank=True,
+        validators=[BaseValidator.validate_name],
     )
     total_days = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
     reason = models.TextField()
-    status = models.CharField(max_length=50, default="pending")
+    status = models.CharField(
+        max_length=50, default="pending", validators=[BaseValidator.validate_name]
+    )
     is_sandwich_applied = models.BooleanField(default=False)
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(
@@ -250,7 +265,12 @@ class DeviceActivity(BaseModel):
 
 
 class DeviceConfigPolicy(BaseModel):
-    key = models.CharField(max_length=50, unique=True, default="default")
+    key = models.CharField(
+        max_length=50,
+        unique=True,
+        default="default",
+        validators=[BaseValidator.validate_name],
+    )
     server_url = models.TextField(null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
     idle_threshold_seconds = models.IntegerField(default=60)

@@ -10,13 +10,16 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from apps.base.models import BaseModel
+from apps.base.validators import BaseValidator
 from apps.superadmin.models import Users
 
 
 class NotificationType(BaseModel):
     """Notification categories and types for system alerts."""
 
-    code = models.CharField(max_length=50, unique=True)
+    code = models.CharField(
+        max_length=50, unique=True, validators=[BaseValidator.validate_name]
+    )
     name = models.CharField(max_length=100)
 
     def __str__(self):

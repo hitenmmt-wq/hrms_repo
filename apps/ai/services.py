@@ -810,6 +810,7 @@ class AIService:
         - If request is unrelated to HRMS → politely refuse.
         - If request is illegal/illogical → guide user toward proper action.
         - If unsure → ask for clarification.
+        - But never return intent to user in response.
 
         GENERAL INTERACTIONS:
         - For greeting/general inquiries:
