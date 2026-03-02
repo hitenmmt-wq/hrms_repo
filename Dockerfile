@@ -8,6 +8,9 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
+# Create user
+RUN useradd -m appuser
+
 # System dependencies
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -35,22 +38,24 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
+# Set container timezone
+ENV TZ=Asia/Kolkata
+# RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+#     && echo $TZ > /etc/timezone
+
 # Copy project code
 COPY . .
 
-# Entrypoint
-RUN echo '#!/bin/bash\nset -e\n\
-echo "Waiting for database..."\n\
-while ! nc -z host.docker.internal 5432; do sleep 2; done\n\
-echo "Waiting for Redis..."\n\
-while ! nc -z redis 6379; do sleep 2; done\n\
-exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+# Copy and set entrypoint permissions
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Give permissions
+RUN chown -R appuser:appuser /app
+
+# Switch user
+USER appuser
 
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
-# Set container timezone
-ENV TZ=Asia/Kolkata
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone
