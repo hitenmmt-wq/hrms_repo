@@ -49,6 +49,8 @@ LATE_COMING = "late_coming"
 
 NEXT_DAY_HOLIDAY = "holiday"
 
+OFFICIAL_WORKING_HOURS = 8
+
 NOTIFICATION_URL_MAP_ADMIN = {
     CHAT_NOTIFY: "/chat",
     LEAVE_APPLY: "/leaveapproval",
