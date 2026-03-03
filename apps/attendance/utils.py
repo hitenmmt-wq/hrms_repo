@@ -45,7 +45,7 @@ def _calculate_status(work_hours: Decimal) -> str:
     """Determine attendance status based on total work hours."""
     if work_hours >= 8:
         return constants.PRESENT
-    if work_hours >= 4:
+    if work_hours >= 4 and work_hours <= 5:
         return constants.HALFDAY_LEAVE
     if work_hours > 0:
         return constants.INCOMPLETE_HOURS
