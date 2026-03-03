@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.attendance.models import EmployeeAttendance
+from apps.attendance.utils import get_weekend_days
 from apps.base import constants
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAdmin, IsAuthenticated
@@ -588,7 +589,7 @@ class LeaveTypeViewSet(BaseViewSet):
     entity_name = "LeaveType"
     permission_classes = [IsAdmin]
     serializer_class = serializers.LeaveTypeSerializer
-    queryset = models.LeaveType.objects.all()
+    queryset = models.LeaveType.objects.exclude(code=constants.UNPAID_LEAVE)
     pagination_class = CustomPageNumberPagination
     filter_backends = [
         DjangoFilterBackend,
@@ -599,6 +600,23 @@ class LeaveTypeViewSet(BaseViewSet):
     search_fields = ["name", "code"]
     ordering_fields = ["name", "code"]
     ordering = ["name"]
+
+    @action(detail=False, methods=["GET"])
+    def weekend_holiday_list(self, request, *args, **kwargs):
+        today = timezone.now().date()
+        queryset = models.Holiday.objects.filter(
+            date__gte=today, date__month=today.month
+        )
+        holidays = serializers.HolidayListSerializer(queryset, many=True).data
+
+        weekends = get_weekend_days(today.month, today.year)
+        weekend_list = [
+            {"date": date.strftime("%Y-%m-%d"), "name": "Weekend"} for date in weekends
+        ]
+        combined_list = holidays + weekend_list
+        sorted_list = sorted(combined_list, key=lambda x: x["date"])
+
+        return ApiResponse.success(message="Weekend and Holiday List", data=sorted_list)
 
 
 #   ================  DEPARTMENT CRUD API   ========

@@ -5,6 +5,8 @@ Handles check-in/check-out operations, break logging, daily attendance
 records, and attendance management for the HRMS time tracking system.
 """
 
+import calendar
+
 from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -22,6 +24,7 @@ from apps.attendance.utils import (
     pause_break,
     resume_break,
 )
+from apps.base import constants
 from apps.base.pagination import CustomPageNumberPagination
 from apps.base.permissions import IsAuthenticated
 from apps.base.response import ApiResponse
@@ -155,15 +158,9 @@ class AttendanceCalenderViewSet(APIView):
                 {
                     "date": attendance.day.strftime("%Y-%m-%d"),
                     "status": attendance.status,
-                    "check_in": (
-                        attendance.check_in.strftime("%Y-%m-%d")
-                        if attendance.check_in
-                        else None
-                    ),
+                    "check_in": (attendance.check_in if attendance.check_in else None),
                     "check_out": (
-                        attendance.check_out.strftime("%Y-%m-%d")
-                        if attendance.check_out
-                        else None
+                        attendance.check_out if attendance.check_out else None
                     ),
                     "work_hours": attendance.work_hours,
                     "break_hours": attendance.break_hours,
@@ -189,15 +186,24 @@ class AttendanceCalenderViewSet(APIView):
                 {"date": weekend_day.strftime("%Y-%m-%d"), "status": "Weekend"}
             )
         attendance_month_wise.sort(key=lambda x: x["date"])
+        working_days = calendar.monthrange(current_year, current_month)[1]
+        official_working_days = working_days - (len(weekend_days) + holidays.count())
+        official_working_hours = (
+            official_working_days * constants.OFFICIAL_WORKING_HOURS
+        )
+        total_attendance = len(
+            attendances.exclude(status__in=["pending", "paid_leave", "unpaid_leave"])
+        )
         attendance_month_wise.append(
             {
-                "total_attendance": len(attendances),
+                "official_working_days": official_working_days,
+                "total_attendance": total_attendance,
+                "official_working_hours": official_working_hours,
                 "total_work_hours": total_work_hours,
                 "total_holidays": holidays.count(),
                 "total_weekends": len(weekend_days),
             }
         )
-        print(f"==>> attendance_month_wise: {attendance_month_wise}")
         return ApiResponse.success(
             "Attendance calender data fetched", data=attendance_month_wise
         )
