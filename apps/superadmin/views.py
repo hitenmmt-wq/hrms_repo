@@ -627,7 +627,11 @@ class DepartmentViewSet(BaseViewSet):
     permission_classes = [IsAdmin]
     queryset = models.Department.objects.all()
     pagination_class = CustomPageNumberPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = DepartmentFilter
     filterset_fields = ["name"]
     search_fields = ["name"]
@@ -648,7 +652,11 @@ class AnnouncementViewSet(BaseViewSet):
     permission_classes = [IsAdmin]
     queryset = models.Announcement.objects.all()
     pagination_class = CustomPageNumberPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = AnnouncementFilter
     search_fields = ["title", "date"]
     ordering_fields = ["-date"]
@@ -668,7 +676,11 @@ class PositionViewSet(BaseViewSet):
     permission_classes = [IsAdmin]
     queryset = models.Position.objects.all()
     pagination_class = CustomPageNumberPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_class = PositionFilter
     filterset_fields = ["name"]
     search_fields = ["name"]

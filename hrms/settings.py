@@ -84,6 +84,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "hrms.custom_middlewares.my_middleware.RequestTimingMiddleware",
+    "hrms.custom_middlewares.my_middleware.BlockMobileMiddleware",
 ]
 
 CORS_ALLOWED_ORIGINS = [

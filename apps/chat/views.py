@@ -2,13 +2,15 @@ import os
 
 from django.shortcuts import get_object_or_404
 from django.utils.text import get_valid_filename
-from rest_framework import generics, status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics, status
 
 # from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.base import permissions
+from apps.base.pagination import CustomPageNumberPagination
 from apps.base.response import ApiResponse
 from apps.chat.models import Conversation, Message, MessageReaction, MessageStatus
 from apps.chat.serializers import (
@@ -17,6 +19,8 @@ from apps.chat.serializers import (
     MessageReactionSerializer,
     MessageSerializer,
 )
+
+# from apps.employee.custom_filters import ConversationMessageFilter
 from apps.employee.serializers import EmployeeListSerializer
 from apps.superadmin.models import Users
 
@@ -211,6 +215,13 @@ class FileUploadView(generics.CreateAPIView):
 class ConversationMessageView(generics.ListAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter,
+    ]
+    # filterset_class = ConversationMessageFilter
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         conv = self.kwargs["conversation"]

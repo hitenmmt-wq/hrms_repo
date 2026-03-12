@@ -7,17 +7,30 @@
             size: A4;
             margin: 20mm 15mm;
         }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.05; /* control visibility here */
+            z-index: -1;
+        }
+        .watermark img {
+            width: 200px;
+            height: auto;
+        }
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11px;
             margin: 0;
             padding: 0;
-            {% if company_logo %}
+            {% comment %} {% if company_logo %}
             background-image: url('data:image/jpeg;base64,{{ company_logo }}');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
-            {% endif %}
+            background-opacity: 0.06;
+            {% endif %} {% endcomment %}
         }
 
         .center {
@@ -75,11 +88,16 @@
 </head>
 
 <body>
+    {% if company_logo %}
+    <div class="watermark">
+        <img src="data:image/jpeg;base64,{{ company_logo }}" />
+    </div>
+    {% endif %}
     <!-- Company Logo -->
     <div class="center logo">
-        {% if company_logo %}
+        {% comment %} {% if company_logo %}
         <img src="data:image/jpeg;base64,{{ company_logo }}" alt="Company Logo" />
-        {% endif %}
+        {% endif %} {% endcomment %}
     </div>
 
     <!-- Annexure Title -->

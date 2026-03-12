@@ -28,6 +28,10 @@ app.conf.beat_schedule = {
         "task": "apps.employee.tasks.notify_employee_birthday",
         "schedule": crontab(minute=5, hour=9),
     },
+    "employee-work-anniversary": {
+        "task": "apps.employee.taske.notify_work_anniversary",
+        "schedule": crontab(minute=9, hour=9),
+    },
     "late-comers-notification": {
         "task": "apps.employee.tasks.notify_frequent_late_comings",
         "schedule": crontab(minute=0, hour=13),
