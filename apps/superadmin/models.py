@@ -220,7 +220,7 @@ class Leave(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.employee.email} - {self.leave_type} - {self.status}"
+        return f"{self.employee.email} - {self.leave_type} - {self.status}- {self.from_date}"
 
     def save(self, *args, **kwargs):
         """Auto-calculate total days based on leave type and date range with sandwich rule."""

@@ -52,7 +52,7 @@ class LeaveBalance(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.employee.email} - {self.year}"
+        return f"{self.employee.email} - {self.year} - PL:{self.used_pl}, SL:{self.used_sl}, LOP:{self.used_lop}"
 
     @property
     def remaining_pl(self):

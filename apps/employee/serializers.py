@@ -189,6 +189,9 @@ class ApplyLeaveSerializer(serializers.ModelSerializer):
             "reason",
             "is_sandwich_applied",
             "status",
+            "approved_by",
+            "approved_at",
+            "response_text",
         ]
         depth = 1
 

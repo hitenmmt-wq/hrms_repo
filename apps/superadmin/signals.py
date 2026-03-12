@@ -14,6 +14,8 @@ def assign_employee_id(sender, instance, **kwargs):
 
     if instance.employee_id:
         return
+    if instance.role == "admin":
+        return
 
     year = timezone.now().year
     prefix = f"EMP{year}"
@@ -53,7 +55,7 @@ def notify_on_announcement(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Announcement)
 def notify_on_announcement_update(sender, instance, created, **kwargs):
-    if created:
+    if created or instance.is_deleted:
         return
     notification_type = NotificationType.objects.get(code=constants.ANNOUNCEMENT_NOTIFY)
     employees = Users.objects.filter(is_active=True)

@@ -8,6 +8,8 @@ records, and attendance management for the HRMS time tracking system.
 import calendar
 
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 
@@ -42,6 +44,11 @@ class AttendanceViewSet(BaseViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = EmployeeAttendanceFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter,
+    ]
     order_by = ["-day"]
 
     def destroy(self, request, *args, **kwargs):
@@ -192,7 +199,13 @@ class AttendanceCalenderViewSet(APIView):
             official_working_days * constants.OFFICIAL_WORKING_HOURS
         )
         total_attendance = len(
-            attendances.exclude(status__in=["pending", "paid_leave", "unpaid_leave"])
+            attendances.exclude(
+                status__in=[
+                    constants.PENDING,
+                    constants.PAID_LEAVE,
+                    constants.UNPAID_LEAVE,
+                ]
+            )
         )
         attendance_month_wise.append(
             {

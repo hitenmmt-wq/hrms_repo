@@ -31,7 +31,7 @@ class HuggingFaceLLM:
                     "content": prompt,
                 },
             ],
-            "max_new_tokens": 300,
+            "max_tokens": 300,
             "temperature": 0.6,
         }
 

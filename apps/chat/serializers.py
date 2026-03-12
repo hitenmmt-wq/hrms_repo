@@ -152,7 +152,6 @@ class ConversationSerializer(serializers.ModelSerializer):
     """Serializer for displaying conversations with participants and messages."""
 
     participants = serializers.SerializerMethodField()
-    messages = MessageSerializer(many=True, read_only=True)
     unread_count = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     read_receipts = serializers.SerializerMethodField()
@@ -167,7 +166,6 @@ class ConversationSerializer(serializers.ModelSerializer):
             "profile",
             "participants",
             "created_at",
-            "messages",
             "unread_count",
             "last_message",
             "read_receipts",
