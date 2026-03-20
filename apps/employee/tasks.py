@@ -71,7 +71,16 @@ def update_employee_absent_leaves():
     ]
     absent_leave = models.Leave.objects.bulk_create(leave_objects)
     print(f"==>> absent_leave: {absent_leave}")
-
+    leave_balance_objects = [
+        LeaveBalance(
+            employee=employee,
+            year=today.year,
+            used_lop=1,
+        )
+        for employee in employees_left
+    ]
+    leave_balance_updated = LeaveBalance.objects.bulk_create(leave_balance_objects)
+    print(f"==>> leave_balance_updated: {leave_balance_updated}")
     print("done------------==============")
     return "Absent Employees attendance added successfully..."
 
