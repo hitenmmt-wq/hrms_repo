@@ -1,5 +1,5 @@
 {
-  "server_url": "https://turbo-workstation-sold-management.trycloudflare.com/",
+  "server_url": "https://differential-magnet-midi-visiting.trycloudflare.com/",
   "activity_endpoint": "/superadmin/activity-log/",
   "remote_config_endpoint": "/superadmin/device/config/",
   "remote_config_enabled": true,
