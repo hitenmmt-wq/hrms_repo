@@ -241,6 +241,26 @@ class EmployeeViewSet(BaseViewSet):
         absent_employee_data = EmployeeListSerializer(absent_employees, many=True).data
         return ApiResponse.success(absent_employee_data)
 
+    @action(detail=False, methods=["POST"])
+    def activate_employee(self, request):
+        employee_id = request.data.get("employee_id")
+        employee = models.Users.objects.filter(id=employee_id).first()
+        if employee:
+            employee.is_active = True
+            employee.save()
+            return ApiResponse.success(message="Employee activated successfully")
+        return ApiResponse.error(message="Employee not found", status=404)
+
+    @action(detail=False, methods=["POST"])
+    def deactivate_employee(self, request):
+        employee_id = request.data.get("employee_id")
+        employee = models.Users.objects.filter(id=employee_id).first()
+        if employee:
+            employee.is_active = False
+            employee.save()
+            return ApiResponse.success(message="Employee deactivated successfully")
+        return ApiResponse.error(message="Employee not found", status=404)
+
 
 class LeaveBalanceViewSet(BaseViewSet):
     """Leave balance management for tracking employee leave allocations."""

@@ -84,9 +84,9 @@ class BaseValidator:
         if len(name) > 50:
             raise ValidationError(f"{name} must not exceed 50 characters.")
 
-        if not re.match(r"^[a-zA-Z\s\-\'\.]+$", name):
+        if not re.match(r"^[a-zA-Z0-9\s\_\-\'\.]+$", name):
             raise ValidationError(
-                f"{name} can only contain letters, spaces, hyphens, apostrophes, and periods."
+                f"{name} can only contain letters, numbers, spaces, underscores, hyphens, apostrophes, and periods."
             )
 
         return name
