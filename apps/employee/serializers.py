@@ -59,19 +59,42 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
         user = models.Users(**validated_data)
         user.set_password(password)
         user.save()
+        common_data = models.CommonData.objects.first()
         try:
             LeaveBalance.objects.get(employee=user, year=timezone.now().year)
             print("Leave balance exists")
         except LeaveBalance.DoesNotExist:
             LeaveBalance.objects.create(
                 employee=user,
+                pl=0,
+                sl=0,
+                lop=0,
                 year=timezone.now().year,
             )
         try:
+            text_body = f"""
+            Dear {user.first_name} {user.last_name},\n
+            We are delighted to welcome you to {common_data.name}.\n
+            Congratulations on joining our team as a {user.role}.
+            We are excited to have you on board and look forward to the valuable
+            contributions you will bring to our organization.\n
+            At {common_data.name}, we strive to foster a collaborative, innovative,
+            and growth-oriented environment. We hope you find your journey here both
+            rewarding and inspiring.\n
+            Your account has been successfully created in our HRMS system. Your account
+            credentials are Username : {user.email}, Password : 'Jay@#2302' (Eg.name=Jay,
+            DOB=23/02).\n
+            If you have any questions or need assistance, please feel free to
+            reach out to the HR team.\n
+            Once again, welcome to the team — we’re glad to have you with us!\n
+            Warm regards,
+            HR Team
+            {common_data.name}
+            """
             send_email_task(
-                subject="Welcome to HRMS",
+                subject=f"Welcome to {common_data.name}!",
                 to_email=user.email,
-                text_body=f"You have been added as an {user.role} to HRMS",
+                text_body=text_body,
                 html_body=None,
                 pdf_bytes=None,
                 filename=None,
