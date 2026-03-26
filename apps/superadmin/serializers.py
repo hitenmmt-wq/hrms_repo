@@ -219,10 +219,11 @@ class AdminRegisterSerializer(serializers.ModelSerializer):
         user = models.Users.objects.create(
             email=validated_data["email"],
             password=make_password(validated_data["password"]),
-            role=validated_data.get("role", "employee"),
+            role=validated_data.get("role", "admin"),
             birthdate=validated_data.get("birthdate", None),
             joining_date=validated_data.get("joining_date", None),
             is_active=True,
+            is_superuser=True,
         )
         return user
 

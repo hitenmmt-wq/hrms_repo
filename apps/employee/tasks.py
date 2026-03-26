@@ -42,6 +42,9 @@ def credit_new_year_employee_leaves():
 def update_employee_absent_leaves():
     print("this function of employee absent triggered.....")
     today = timezone.now().date()
+    day = today.day
+    if day in [5, 6]:
+        return "Today is weekend."
     present_employee_ids = EmployeeAttendance.objects.filter(day=today).values_list(
         "employee_id", flat=True
     )
@@ -71,16 +74,15 @@ def update_employee_absent_leaves():
     ]
     absent_leave = models.Leave.objects.bulk_create(leave_objects)
     print(f"==>> absent_leave: {absent_leave}")
-    leave_balance_objects = [
-        LeaveBalance(
-            employee=employee,
-            year=today.year,
-            used_lop=1,
-        )
-        for employee in employees_left
-    ]
-    leave_balance_updated = LeaveBalance.objects.bulk_create(leave_balance_objects)
-    print(f"==>> leave_balance_updated: {leave_balance_updated}")
+
+    for employee in employees_left:
+        leave_balance_objects = LeaveBalance.objects.filter(
+            employee=employee, year=today.year
+        ).first()
+        leave_balance_objects.used_lop += 1
+        leave_balance_objects.save()
+        print(f"==>> leave_balance_updated: {leave_balance_objects}")
+
     print("done------------==============")
     return "Absent Employees attendance added successfully..."
 
@@ -109,6 +111,27 @@ def notify_employee_birthday():
                 message=f"Today is {birthday_employee.first_name} {birthday_employee.last_name}'s birthday. Wish them!",
                 related_object=birthday_employee,
             )
+
+
+@shared_task
+def notify_work_anniversary():
+    today = timezone.now().date()
+    employees = models.Users.objects.filter(is_active=True, joining_date__date=today)
+    for employee in employees:
+        joining_date = employee.joining_date
+        if joining_date:
+            anniversary_date = joining_date.replace(year=today.year)
+            if anniversary_date == today:
+                notification_type = NotificationType.objects.filter(
+                    code=constants.WORK_ANNIVERSARY
+                ).first()
+                create_notification(
+                    recipient=employee,
+                    notification_type=notification_type,
+                    title="📅 Work Anniversary!",
+                    message=f"Today is {employee.first_name} Work Anniversary! Wish them well.",
+                    related_object=employee,
+                )
 
 
 @shared_task
@@ -604,3 +627,36 @@ def notify_employee_next_holiday():
                 message=f"Upcoming holiday {next_holiday.name} is on {next_holiday.date}. Make sure to make it count.",
                 related_object=next_holiday,
             )
+
+
+@shared_task
+def leave_balance_update_after_probation():
+    today = timezone.now().date()
+    employees = models.Users.objects.filter(is_active=True).exclude(role="admin")
+    common_data = models.CommonData.objects.first()
+    for employee in employees:
+        joining_date = employee.joining_date
+        if (today - joining_date.date()).days == 90:
+            leave_balance = LeaveBalance.objects.get_or_create(
+                employee=employee,
+                year=today.year,
+            )
+            leave_balance.pl = common_data.pl_leave
+            leave_balance.sl = common_data.sl_leave
+            leave_balance.save()
+            print(f"Updated leave balance for {employee.email}")
+            receipent = models.Users.objects.filter(
+                Q(role="admin", is_active=True) | Q(id=employee.id)
+            )
+            notification_type = NotificationType.objects.filter(
+                code=constants.LEAVE_BALANCE_UPDATE
+            ).first()
+            create_notification(
+                recipient=receipent,
+                notification_type=notification_type,
+                title="Probation Complete!",
+                message="Probation period is completed successfully.",
+                related_object=leave_balance,
+            )
+        else:
+            print("Probation is pending", employee)

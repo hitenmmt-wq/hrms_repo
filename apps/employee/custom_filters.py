@@ -1,6 +1,12 @@
 import django_filters
 
-from apps.employee.models import LeaveBalance, PaySlip
+from apps.employee.models import (
+    InventoryDetail,
+    Item,
+    LeaveBalance,
+    PaySlip,
+    TicketIssue,
+)
 from apps.superadmin import models
 
 
@@ -92,3 +98,33 @@ class PaySlipFilter(django_filters.FilterSet):
     class Meta:
         model = PaySlip
         fields = ["employee", "month"]
+
+
+class TicketIssueFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+    priority = django_filters.CharFilter(field_name="priority", lookup_expr="icontains")
+    employee = django_filters.NumberFilter(field_name="employee__id")
+
+    class Meta:
+        model = TicketIssue
+        fields = ["employee", "title", "status", "priority"]
+
+
+class ItemFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+    purchased_by = django_filters.NumberFilter(field_name="purchased_by__id")
+
+    class Meta:
+        model = Item
+        fields = ["name", "purchased_by"]
+
+
+class InventoryDetailFilter(django_filters.FilterSet):
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    item = django_filters.NumberFilter(field_name="item__id")
+    alloted_by = django_filters.NumberFilter(field_name="alloted_by__id")
+
+    class Meta:
+        model = InventoryDetail
+        fields = ["employee", "item", "alloted_by"]

@@ -47,6 +47,8 @@ LEAVE_BALANCE_UPDATE = "leave_balance_update"
 
 BIRTHDAY = "birthday"
 
+WORK_ANNIVERSARY = "work_anniversary"
+
 LATE_COMING = "late_coming"
 
 NEXT_DAY_HOLIDAY = "holiday"
