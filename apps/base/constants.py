@@ -43,6 +43,8 @@ UNPAID_LEAVE = "unpaid_leave"
 PAID_LEAVE = "paid_leave"
 HALFDAY_LEAVE = "halfday_leave"
 
+LEAVE_BALANCE_UPDATE = "leave_balance_update"
+
 BIRTHDAY = "birthday"
 
 LATE_COMING = "late_coming"

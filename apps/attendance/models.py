@@ -33,6 +33,8 @@ class EmployeeAttendance(BaseModel):
     check_out = models.DateTimeField(null=True, blank=True)
     work_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     break_hours = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    is_early_going = models.BooleanField(default=False)
+    is_late_coming = models.BooleanField(default=False)
     status = models.CharField(
         max_length=50,
         default="pending",

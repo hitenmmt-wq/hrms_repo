@@ -13,7 +13,19 @@ class EmployeeAttendanceFilter(django_filters.FilterSet):
     )
     month = django_filters.NumberFilter(field_name="day", lookup_expr="month")
     year = django_filters.NumberFilter(field_name="day", lookup_expr="year")
+    is_early_going = django_filters.BooleanFilter(field_name="is_early_going")
+    is_late_coming = django_filters.BooleanFilter(field_name="is_late_coming")
 
     class Meta:
         model = models.EmployeeAttendance
-        fields = ["employee", "day", "check_in", "check_out", "status", "month", "year"]
+        fields = [
+            "employee",
+            "day",
+            "check_in",
+            "check_out",
+            "status",
+            "month",
+            "year",
+            "is_early_going",
+            "is_late_coming",
+        ]
