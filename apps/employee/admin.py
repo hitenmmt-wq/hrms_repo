@@ -8,3 +8,4 @@ from apps.superadmin.admin import BaseAdmin
 
 admin.site.register(models.LeaveBalance, BaseAdmin)
 admin.site.register(models.PaySlip, BaseAdmin)
+admin.site.register(models.TicketIssue, BaseAdmin)
