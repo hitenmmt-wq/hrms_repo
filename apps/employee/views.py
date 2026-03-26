@@ -27,8 +27,9 @@ from apps.employee.custom_filters import (
     EmployeeFilter,
     LeaveBalanceFilter,
     PaySlipFilter,
+    TicketIssueFilter,
 )
-from apps.employee.models import LeaveBalance, PaySlip
+from apps.employee.models import LeaveBalance, PaySlip, TicketIssue
 from apps.employee.serializers import (
     AnnouncementMiniSerializer,
     ApplyLeaveCreateSerializer,
@@ -41,6 +42,7 @@ from apps.employee.serializers import (
     LeaveMiniSerializer,
     PaySlipCreateSerializer,
     PaySlipSerializer,
+    TicketIssueSerializer,
     TodayAttendanceSerializer,
 )
 from apps.employee.tasks import get_leave_deduction_preview
@@ -653,3 +655,27 @@ class PaySlipDownloadView(APIView):
             return generate_payslip_pdf(payslip)
         except Exception as e:
             return ApiResponse.error(message=str(e), status=400)
+
+
+class TicketIssueViewSet(BaseViewSet):
+    entity_name = "Ticket Issue"
+    model = TicketIssue
+    permission_classes = [IsAuthenticated]
+    queryset = TicketIssue.objects.all().order_by("-id")
+    serializer_class = TicketIssueSerializer
+    pagination_class = CustomPageNumberPagination
+    filterset_class = TicketIssueFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = [
+        "employee__email",
+        "employee__last_name",
+        "employee__first_name",
+        "status",
+        "priority",
+        "title",
+    ]
+    ordering = ["-id"]
