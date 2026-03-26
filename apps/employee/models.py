@@ -25,8 +25,8 @@ class LeaveBalance(BaseModel):
     employee = models.OneToOneField(
         Users, on_delete=models.CASCADE, related_name="employee_leave_balance"
     )
-    pl = models.FloatField(default=12, null=True, blank=True)
-    sl = models.FloatField(default=4, null=True, blank=True)
+    pl = models.FloatField(default=0, null=True, blank=True)
+    sl = models.FloatField(default=0, null=True, blank=True)
     lop = models.FloatField(default=0, null=True, blank=True)
     used_pl = models.FloatField(default=0, null=True, blank=True)
     used_sl = models.FloatField(default=0, null=True, blank=True)
@@ -117,3 +117,65 @@ class PaySlip(BaseModel):
 
     def __str__(self):
         return f"{self.employee.email} - {self.month} Payslip"
+
+
+class TicketIssue(BaseModel):
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="employee_tickets"
+    )
+    title = models.TextField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=100, default="open")
+    priority = models.CharField(max_length=100, default="low")
+    raised_on = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.title
+
+
+class Item(BaseModel):
+    """Inventory item master — tracks available gadgets/assets."""
+
+    name = models.CharField(max_length=255)
+    quantity = models.PositiveIntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
+    purchased_at = models.DateTimeField()
+    purchased_by = models.ForeignKey(
+        Users,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchased_items",
+    )
+
+    class Meta:
+        indexes = [models.Index(fields=["name"])]
+
+    def __str__(self):
+        return self.name
+
+
+class InventoryDetail(BaseModel):
+    """Tracks items allotted to employees."""
+
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="employee_inventory"
+    )
+    item = models.ForeignKey(
+        Item, on_delete=models.CASCADE, related_name="item_inventory"
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    allotment_date = models.DateTimeField()
+    alloted_by = models.ForeignKey(
+        Users,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inventory_alloted_by",
+    )
+
+    class Meta:
+        indexes = [models.Index(fields=["employee", "item"])]
+
+    def __str__(self):
+        return f"{self.employee.email} - {self.item.name}"

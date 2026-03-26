@@ -12,7 +12,13 @@ from rest_framework import serializers
 
 from apps.attendance.models import EmployeeAttendance
 from apps.base.validators import BaseValidator
-from apps.employee.models import LeaveBalance, PaySlip
+from apps.employee.models import (
+    InventoryDetail,
+    Item,
+    LeaveBalance,
+    PaySlip,
+    TicketIssue,
+)
 from apps.employee.utils import calculate_leave_deduction, weekdays_count
 from apps.superadmin import models
 from apps.superadmin.tasks import send_email_task
@@ -73,23 +79,23 @@ class EmployeeCreateSerializer(serializers.ModelSerializer):
             )
         try:
             text_body = f"""
-            Dear {user.first_name} {user.last_name},\n
-            We are delighted to welcome you to {common_data.name}.\n
-            Congratulations on joining our team as a {user.role}.
-            We are excited to have you on board and look forward to the valuable
-            contributions you will bring to our organization.\n
-            At {common_data.name}, we strive to foster a collaborative, innovative,
-            and growth-oriented environment. We hope you find your journey here both
-            rewarding and inspiring.\n
-            Your account has been successfully created in our HRMS system. Your account
-            credentials are Username : {user.email}, Password : 'Jay@#2302' (Eg.name=Jay,
-            DOB=23/02).\n
-            If you have any questions or need assistance, please feel free to
-            reach out to the HR team.\n
-            Once again, welcome to the team — we’re glad to have you with us!\n
-            Warm regards,
-            HR Team
-            {common_data.name}
+                Dear {user.first_name} {user.last_name},\n
+                We are delighted to welcome you to {common_data.name}.\n
+                Congratulations on joining our team as a {user.role}.
+                We are excited to have you on board and look forward to the valuable
+                contributions you will bring to our organization.\n
+                At {common_data.name}, we strive to foster a collaborative, innovative,
+                and growth-oriented environment. We hope you find your journey here both
+                rewarding and inspiring.\n
+                Your account has been successfully created in our HRMS system. Your account
+                credentials are Username : {user.email}, Password : 'Jay@#2302' (Eg.name=Jay,
+                DOB=23/02).\n
+                If you have any questions or need assistance, please feel free to
+                reach out to the HR team.\n
+                Once again, welcome to the team — we’re glad to have you with us!\n
+                Warm regards,
+                HR Team
+                {common_data.name}
             """
             send_email_task(
                 subject=f"Welcome to {common_data.name}!",
@@ -407,3 +413,71 @@ class PaySlipSerializer(serializers.ModelSerializer):
             "total_deductions",
             "net_salary",
         ]
+
+
+class TicketIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketIssue
+        fields = "__all__"
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    """Serializer for inventory item master data."""
+
+    purchased_by = serializers.PrimaryKeyRelatedField(
+        queryset=models.Users.objects.all(), allow_null=True, required=False
+    )
+
+    class Meta:
+        model = Item
+        fields = [
+            "id",
+            "name",
+            "quantity",
+            "description",
+            "purchased_at",
+            "purchased_by",
+        ]
+
+
+class ItemDetailSerializer(serializers.ModelSerializer):
+    """Read serializer for Item with nested purchased_by info."""
+
+    purchased_by = EmployeeListSerializer(read_only=True)
+
+    class Meta:
+        model = Item
+        fields = [
+            "id",
+            "name",
+            "quantity",
+            "description",
+            "purchased_at",
+            "purchased_by",
+        ]
+
+
+class InventoryDetailSerializer(serializers.ModelSerializer):
+    """Read serializer for employee inventory allotments."""
+
+    employee = EmployeeListSerializer(read_only=True)
+    item = ItemDetailSerializer(read_only=True)
+    alloted_by = EmployeeListSerializer(read_only=True)
+
+    class Meta:
+        model = InventoryDetail
+        fields = ["id", "employee", "item", "quantity", "allotment_date", "alloted_by"]
+
+
+class InventoryDetailCreateSerializer(serializers.ModelSerializer):
+    """Write serializer for allotting inventory items to employees."""
+
+    employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
+    item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
+    alloted_by = serializers.PrimaryKeyRelatedField(
+        queryset=models.Users.objects.all(), allow_null=True, required=False
+    )
+
+    class Meta:
+        model = InventoryDetail
+        fields = ["id", "employee", "item", "quantity", "allotment_date", "alloted_by"]
