@@ -31,6 +31,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
             "work_hours",
             "break_hours",
             "status",
+            "is_early_going",
+            "is_late_coming",
         )
 
     def get_work_hours(self, obj):
