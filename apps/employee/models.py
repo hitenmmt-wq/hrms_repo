@@ -158,24 +158,60 @@ class Item(BaseModel):
 class InventoryDetail(BaseModel):
     """Tracks items allotted to employees."""
 
-    employee = models.ForeignKey(
-        Users, on_delete=models.CASCADE, related_name="employee_inventory"
-    )
     item = models.ForeignKey(
         Item, on_delete=models.CASCADE, related_name="item_inventory"
     )
-    quantity = models.PositiveIntegerField(default=1)
-    allotment_date = models.DateTimeField()
-    alloted_by = models.ForeignKey(
-        Users,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="inventory_alloted_by",
-    )
+    serial_number = models.CharField(max_length=255, unique=True, blank=True)
+    purchase_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, default="available")
+    condition = models.CharField(max_length=50, default="Good")
 
     class Meta:
-        indexes = [models.Index(fields=["employee", "item"])]
+        indexes = [models.Index(fields=["item"])]
 
     def __str__(self):
         return f"{self.employee.email} - {self.item.name}"
+
+
+class ItemAssignment(models.Model):
+    inventory_item = models.ForeignKey(InventoryDetail, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Users, on_delete=models.CASCADE)
+
+    assigned_date = models.DateField(null=True, blank=True)
+    expected_return_date = models.DateField(null=True, blank=True)
+    actual_return_date = models.DateField(null=True, blank=True)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["inventory_item"],
+                condition=Q(is_active=True),
+                name="unique_active_assignment_per_device",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.inventory_item} -> {self.employee}"
+
+
+class ItemHistory(models.Model):
+    ACTION_CHOICES = [
+        ("assigned", "Assigned"),
+        ("returned", "Returned"),
+        ("maintenance", "Maintenance"),
+        ("damaged", "Damaged"),
+    ]
+
+    inventory_item = models.ForeignKey(InventoryDetail, on_delete=models.CASCADE)
+    employee = models.ForeignKey(
+        Users, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    date = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.inventory_item} - {self.action}"

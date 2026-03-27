@@ -23,6 +23,9 @@ router.register(r"position", views.PositionViewSet, basename="position")
 router.register(r"profile", views.ProfileViewSet, basename="profile")
 router.register(r"leave", views.LeaveViewSet, basename="leave")
 router.register(r"leave_type", views.LeaveTypeViewSet, basename="leave_type")
+router.register(r"client", views.ClientViewSet, basename="client")
+router.register(r"project", views.ProjectViewSet, basename="project")
+router.register(r"daily_report", views.DailyReportViewSet, basename="daily_report")
 
 urlpatterns = [
     path("", include(router.urls)),

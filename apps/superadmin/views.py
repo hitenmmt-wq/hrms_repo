@@ -8,6 +8,7 @@ Provides admin-level access to all HRMS features and user management.
 
 from datetime import datetime, time, timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -33,11 +34,14 @@ from apps.employee.utils import employee_monthly_working_hours
 from apps.superadmin import models, serializers
 from apps.superadmin.custom_filters import (
     AnnouncementFilter,
+    ClientFilter,
+    DailyReportFilter,
     DepartmentFilter,
     HolidayFilter,
     LeaveFilter,
     LeaveTypeFilter,
     PositionFilter,
+    ProjectFilter,
     SuperAdminFilter,
 )
 from apps.superadmin.tasks import send_email_task
@@ -310,13 +314,32 @@ class AdminRegister(BaseViewSet):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-
+            common_data = models.CommonData.objects.first()
             try:
                 print("startssssssssssssssssss")
+                text_body = f"""
+                    Dear {user.first_name} {user.last_name},\n
+                    We are delighted to welcome you to {common_data.name}.\n
+                    Congratulations on joining our team as a {user.role}.
+                    We are excited to have you on board and look forward to the valuable
+                    contributions you will bring to our organization.\n
+                    At {common_data.name}, we strive to foster a collaborative, innovative,
+                    and growth-oriented environment. We hope you find your journey here both
+                    rewarding and inspiring.\n
+                    Your account has been successfully created in our HRMS system. Your account
+                    credentials are Username : {user.email}, Password : 'Jay@#2302' (Eg.name=Jay,
+                    DOB=23/02).\n
+                    If you have any questions or need assistance, please feel free to
+                    reach out to the HR team.\n
+                    Once again, welcome to the team — we’re glad to have you with us!\n
+                    Warm regards,
+                    HR Team
+                    {common_data.name}
+                """
                 send_email_task.delay(
-                    subject="Welcome to HRMS",
+                    subject=f"Welcome to {common_data.name}",
                     to_email=user.email,
-                    text_body=f"You have been added to HRMS portal as {user.role}. Please Login to continue.",
+                    text_body=text_body,
                     html_body=None,
                     pdf_bytes=None,
                     filename=None,
@@ -804,7 +827,14 @@ class LeaveApprovalViewSet(BaseViewSet):
             )
             # Determine attendance status based on leave type
             total_days = float(leave_data.total_days or 0)
-            attendance_statuses = determine_attendance_statuses(leave_data, total_days)
+            if timezone.now() >= leave_data.employee.joining_date + relativedelta(
+                months=3
+            ):
+                attendance_statuses = determine_attendance_statuses(
+                    leave_data, total_days
+                )
+            else:
+                attendance_statuses = constants.UNPAID_LEAVE
             print(f"==>> attendance_statuses: {attendance_statuses}")
 
             is_halfday_paid = False
@@ -1021,3 +1051,68 @@ class DeviceRegisterAPI(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class ClientViewSet(BaseViewSet):
+    entity_name = "Client"
+    model = models.Client
+    permission_classes = [IsAdmin]
+    serializer_class = serializers.ClientSerializer
+    pagination_class = CustomPageNumberPagination
+    queryset = models.Client.objects.all().order_by("-id")
+    filterset_class = ClientFilter
+    filterset_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+
+
+class ProjectViewSet(BaseViewSet):
+    entity_name = "Project"
+    model = models.Project
+    permission_classes = [IsAdmin]
+    serializer_class = serializers.ProjectSerializer
+    pagination_class = CustomPageNumberPagination
+    queryset = models.Project.objects.all().order_by("-id")
+    filterset_class = ProjectFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = [
+        "title",
+        "description",
+        "manager__email",
+        "manager__first_name",
+        "manager__last_name",
+        "start_date",
+        "status",
+    ]
+    ordering = ["-id"]
+
+
+class DailyReportViewSet(BaseViewSet):
+    entity_name = "Daily Reports"
+    model = models.DailyReport
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.DailyReportSerializer
+    queryset = models.DailyReport.objects.all().order_by("-id")
+    filterset_class = DailyReportFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = [
+        "title",
+        "description",
+        "project__title",
+        "employee__email",
+        "employee__first_name",
+        "employee__last_name",
+        "report_date",
+        "status",
+    ]
+    ordering = ["-id"]

@@ -29,7 +29,7 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=5, hour=9),
     },
     "employee-work-anniversary": {
-        "task": "apps.employee.taske.notify_work_anniversary",
+        "task": "apps.employee.tasks.notify_work_anniversary",
         "schedule": crontab(minute=9, hour=9),
     },
     "late-comers-notification": {
@@ -47,5 +47,9 @@ app.conf.beat_schedule = {
     "notify_employee_next_holiday": {
         "task": "apps.employee.tasks.notify_employee_next_holiday",
         "schedule": crontab(minute=0, hour=11),
+    },
+    "leave_balance_update_after_probation": {
+        "task": "apps.employee.tasks.leave_balance_update_after_probation",
+        "schedule": crontab(minute=0, hour=1),
     },
 }
