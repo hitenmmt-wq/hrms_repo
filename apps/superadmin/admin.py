@@ -37,6 +37,10 @@ admin.site.register(models.CommonData, BaseAdmin)
 admin.site.register(models.DeviceActivity, BaseAdmin)
 admin.site.register(models.DeviceConfigPolicy, BaseAdmin)
 
+admin.site.register(models.Project, BaseAdmin)
+admin.site.register(models.DailyReport, BaseAdmin)
+admin.site.register(models.Client, BaseAdmin)
+
 
 @admin.register(models.UserDeviceToken)
 class UserDeviceTokenAdmin(BaseAdmin):

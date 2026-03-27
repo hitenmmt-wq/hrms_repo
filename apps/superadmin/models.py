@@ -7,8 +7,10 @@ foundation of the HRMS system.
 """
 
 import uuid
+from datetime import timedelta
 
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from apps.base import constants
@@ -282,3 +284,60 @@ class DeviceConfigPolicy(BaseModel):
 
     def __str__(self):
         return f"{self.key} v{self.version}"
+
+
+class Client(BaseModel):
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    company_name = models.CharField(max_length=200, null=True, blank=True)
+    phone = models.PositiveIntegerField(null=True, blank=True)
+    website = models.URLField(null=True, blank=True)
+    country = models.CharField(max_length=100, default="India")
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class Project(BaseModel):
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="client_projects"
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    manager = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="managed_projects"
+    )
+    team_members = models.ManyToManyField(Users, related_name="projects")
+    start_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=100, default="active")
+
+    def __str__(self):
+        return f"{self.title} - {self.manager.email} - {self.start_date}"
+
+
+class DailyReport(BaseModel):
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="daily_reports"
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="project_reports",
+        null=True,
+        blank=True,
+    )
+    report_date = models.DateField(null=True, blank=True)
+    title = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    duration = models.DurationField(
+        validators=[MinValueValidator(timedelta(minutes=1))]
+    )
+    status = models.CharField(max_length=100, default="submitted")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "report_date"],
+                name="unique_daily_report_per_employee",
+            )
+        ]

@@ -417,3 +417,25 @@ class DeviceRegisterSerializer(serializers.ModelSerializer):
         # device_name = serializers.CharField(
         #     max_length=255, required=False, allow_null=True, allow_blank=True
         # )
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Client
+        fields = "__all__"
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    """Serializer for project handling"""
+
+    class Meta:
+        model = models.Project
+        fields = "__all__"
+
+
+class DailyReportSerializer(serializers.ModelSerializer):
+    """Serializer for daily report handling"""
+
+    class Meta:
+        model = models.DailyReport
+        fields = "__all__"

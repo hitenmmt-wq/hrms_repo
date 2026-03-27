@@ -25,11 +25,23 @@ from apps.base.viewset import BaseViewSet
 from apps.employee.custom_filters import (
     ApplyLeaveFilter,
     EmployeeFilter,
+    InventoryDetailFilter,
+    ItemAssignmentFilter,
+    ItemFilter,
+    ItemHistoryFilter,
     LeaveBalanceFilter,
     PaySlipFilter,
     TicketIssueFilter,
 )
-from apps.employee.models import LeaveBalance, PaySlip, TicketIssue
+from apps.employee.models import (
+    InventoryDetail,
+    Item,
+    ItemAssignment,
+    ItemHistory,
+    LeaveBalance,
+    PaySlip,
+    TicketIssue,
+)
 from apps.employee.serializers import (
     AnnouncementMiniSerializer,
     ApplyLeaveCreateSerializer,
@@ -38,6 +50,10 @@ from apps.employee.serializers import (
     EmployeeListSerializer,
     EmployeeUpdateSerializer,
     HolidayMiniSerializer,
+    InventoryDetailSerializer,
+    ItemAssignmentSerializer,
+    ItemHistorySerializer,
+    ItemSerializer,
     LeaveBalanceSerializer,
     LeaveMiniSerializer,
     PaySlipCreateSerializer,
@@ -678,4 +694,85 @@ class TicketIssueViewSet(BaseViewSet):
         "priority",
         "title",
     ]
+    ordering = ["-id"]
+
+
+class ItemViewSet(BaseViewSet):
+    entity_name = "Item"
+    model = Item
+    permission_classes = [IsAuthenticated]
+    queryset = Item.objects.all().order_by("-id")
+    serializer_class = ItemSerializer
+    pagination_class = CustomPageNumberPagination
+    filterset_class = ItemFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["name", "description"]
+    ordering = ["-id"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        purchased_by = self.request.query_params.get("purchased_by", None)
+        if purchased_by is not None:
+            queryset = queryset.filter(purchased_by__id=purchased_by)
+        return queryset
+
+    @action(detail=False, methods=["GET"])
+    def get_items_for_inventory(self, request):
+        items = Item.objects.all()
+        serializer = ItemSerializer(items, many=True)
+        return ApiResponse.success(data=serializer.data)
+
+
+class InventoryDetailViewSet(BaseViewSet):
+    entity_name = "Inventory Detail"
+    model = InventoryDetail
+    permission_classes = [IsAuthenticated]
+    queryset = InventoryDetail.objects.all().order_by("-id")
+    serializer_class = InventoryDetailSerializer
+    pagination_class = CustomPageNumberPagination
+    filterset_class = InventoryDetailFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["item__name", "serial_number", "status", "condition"]
+    ordering = ["-id"]
+
+
+class ItemAssignmentViewSet(BaseViewSet):
+    entity_name = "Item Assignment"
+    model = ItemAssignment
+    permission_classes = [IsAuthenticated]
+    queryset = ItemAssignment.objects.all().order_by("-id")
+    serializer_class = ItemAssignmentSerializer
+    pagination_class = CustomPageNumberPagination
+    filterset_class = ItemAssignmentFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["item__name", "assigned_to__first_name", "assigned_to__last_name"]
+    ordering = ["-id"]
+
+
+class ItemHistoryViewSet(BaseViewSet):
+    entity_name = "Item History"
+    model = ItemHistory
+    permission_classes = [IsAuthenticated]
+    queryset = ItemHistory.objects.all().order_by("-id")
+    serializer_class = ItemHistorySerializer
+    pagination_class = CustomPageNumberPagination
+    filterset_class = ItemHistoryFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["item__name", "employee__first_name", "employee__last_name"]
     ordering = ["-id"]

@@ -660,3 +660,33 @@ def leave_balance_update_after_probation():
             )
         else:
             print("Probation is pending", employee)
+
+
+@shared_task
+def notify_employee_for_daily_report():
+    today = timezone.now().date()
+    employees = models.Users.objects.filter(role="employee", is_active=True)
+    for employee in employees:
+        daily_report = models.DailyReport.objects.filter(
+            employee=employee, report_date=today
+        ).exists()
+        if not daily_report:
+            notification_type = NotificationType.objects.filter(
+                code=constants.DAILY_REPORT
+            ).first()
+            create_notification(
+                recipient=employee,
+                notification_type=notification_type,
+                title="Daily Report Alert",
+                message="We have noticed that you have forgot to update today's report.",
+                related_object=daily_report,
+            )
+            admin_receipent = models.Users.objects.filter(role="admin", is_active=True)
+            for receipent in admin_receipent:
+                create_notification(
+                    recipient=receipent,
+                    notification_type=notification_type,
+                    title="Daily Report Alert",
+                    message=f"{employee.first_name} {employee.last_name} has not submitted the daily report yet.",
+                    related_object=daily_report,
+                )

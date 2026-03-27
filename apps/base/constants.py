@@ -51,6 +51,8 @@ WORK_ANNIVERSARY = "work_anniversary"
 
 LATE_COMING = "late_coming"
 
+DAILY_REPORT = "daily_report"
+
 NEXT_DAY_HOLIDAY = "holiday"
 
 OFFICIAL_WORKING_HOURS = 8

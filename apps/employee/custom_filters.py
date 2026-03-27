@@ -3,6 +3,8 @@ import django_filters
 from apps.employee.models import (
     InventoryDetail,
     Item,
+    ItemAssignment,
+    ItemHistory,
     LeaveBalance,
     PaySlip,
     TicketIssue,
@@ -121,10 +123,47 @@ class ItemFilter(django_filters.FilterSet):
 
 
 class InventoryDetailFilter(django_filters.FilterSet):
-    employee = django_filters.NumberFilter(field_name="employee__id")
     item = django_filters.NumberFilter(field_name="item__id")
-    alloted_by = django_filters.NumberFilter(field_name="alloted_by__id")
+    serial_number = django_filters.CharFilter(
+        field_name="serial_number", lookup_expr="icontains"
+    )
+    purchase_date = django_filters.DateFilter(field_name="purchase_date")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+    condition = django_filters.CharFilter(
+        field_name="condition", lookup_expr="icontains"
+    )
 
     class Meta:
         model = InventoryDetail
-        fields = ["employee", "item", "alloted_by"]
+        fields = ["serial_number", "item", "purchase_date", "status", "condition"]
+
+
+class ItemAssignmentFilter(django_filters.FilterSet):
+    inventory_item = django_filters.NumberFilter(field_name="inventory_item__id")
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    assigned_date = django_filters.DateFilter(field_name="assigned_date")
+    expected_return_date = django_filters.DateFilter(field_name="expected_return_date")
+    actual_return_date = django_filters.DateFilter(field_name="actual_return_date")
+    is_active = django_filters.BooleanFilter(field_name="is_active")
+
+    class Meta:
+        model = ItemAssignment
+        fields = [
+            "inventory_item",
+            "employee",
+            "assigned_date",
+            "expected_return_date",
+            "actual_return_date",
+            "is_active",
+        ]
+
+
+class ItemHistoryFilter(django_filters.FilterSet):
+    inventory_item = django_filters.NumberFilter(field_name="inventory_item__id")
+    action = django_filters.CharFilter(field_name="action", lookup_expr="icontains")
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    date = django_filters.DateFilter(field_name="date")
+
+    class Meta:
+        model = ItemHistory
+        fields = ["inventory_item", "action", "employee", "date"]

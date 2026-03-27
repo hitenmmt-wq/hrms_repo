@@ -81,3 +81,43 @@ class LeaveFilter(django_filters.FilterSet):
     class Meta:
         model = models.Leave
         fields = ["employee", "leave_type", "status", "from_date", "to_date"]
+
+
+class ClientFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name="name", lookup_expr="icontains")
+    email = django_filters.CharFilter(field_name="email", lookup_expr="icontains")
+    company_name = django_filters.CharFilter(
+        field_name="company_name", lookup_expr="icontains"
+    )
+    phone = django_filters.NumberFilter(field_name="phone")
+    website = django_filters.CharFilter(field_name="website", lookup_expr="icontains")
+    country = django_filters.CharFilter(field_name="country", lookup_expr="icontains")
+
+    class Meta:
+        model = models.Client
+        fields = "__all__"
+
+
+class ProjectFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
+    manager = django_filters.NumberFilter(field_name="manager__id")
+    start_date = django_filters.DateFilter(field_name="start_date", lookup_expr="gte")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+
+    class Meta:
+        model = models.Project
+        fields = ["title", "manager", "start_date", "status"]
+
+
+class DailyReportFilter(django_filters.FilterSet):
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    project = django_filters.NumberFilter(field_name="project__id")
+    report_date = django_filters.DateFilter(
+        field_name="report_date", lookup_expr="exact"
+    )
+    title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="icontains")
+
+    class Meta:
+        model = models.DailyReport
+        fields = ["employee", "project", "report_date", "title", "status"]

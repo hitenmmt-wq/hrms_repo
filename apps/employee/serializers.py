@@ -15,6 +15,8 @@ from apps.base.validators import BaseValidator
 from apps.employee.models import (
     InventoryDetail,
     Item,
+    ItemAssignment,
+    ItemHistory,
     LeaveBalance,
     PaySlip,
     TicketIssue,
@@ -457,27 +459,27 @@ class ItemDetailSerializer(serializers.ModelSerializer):
         ]
 
 
-class InventoryDetailSerializer(serializers.ModelSerializer):
-    """Read serializer for employee inventory allotments."""
-
-    employee = EmployeeListSerializer(read_only=True)
-    item = ItemDetailSerializer(read_only=True)
-    alloted_by = EmployeeListSerializer(read_only=True)
-
-    class Meta:
-        model = InventoryDetail
-        fields = ["id", "employee", "item", "quantity", "allotment_date", "alloted_by"]
-
-
 class InventoryDetailCreateSerializer(serializers.ModelSerializer):
-    """Write serializer for allotting inventory items to employees."""
-
-    employee = serializers.PrimaryKeyRelatedField(queryset=models.Users.objects.all())
-    item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
-    alloted_by = serializers.PrimaryKeyRelatedField(
-        queryset=models.Users.objects.all(), allow_null=True, required=False
-    )
+    """Create serializer for Inventory Detail items"""
 
     class Meta:
         model = InventoryDetail
-        fields = ["id", "employee", "item", "quantity", "allotment_date", "alloted_by"]
+        fields = ["item", "serial_number", "purchase_date", "status", "condition"]
+
+
+class InventoryDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryDetail
+        fields = "__all__"
+
+
+class ItemAssignmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemAssignment
+        fields = "__all__"
+
+
+class ItemHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ItemHistory
+        fields = "__all__"
