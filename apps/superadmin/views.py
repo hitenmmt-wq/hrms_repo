@@ -128,7 +128,7 @@ class AdminDashboardView(APIView):
                     is_active=True, role=constants.EMPLOYEE_USER
                 )
                 .select_related("department", "position")
-                .order_by("-id")[:3]
+                .order_by("-joining_date")[:3]
             )
 
             announcement = models.Announcement.objects.filter(date__gte=today).order_by(

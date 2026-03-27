@@ -52,4 +52,8 @@ app.conf.beat_schedule = {
         "task": "apps.employee.tasks.leave_balance_update_after_probation",
         "schedule": crontab(minute=0, hour=1),
     },
+    "notify_employee_for_daily_report": {
+        "task": "apps.employee.tasks.notify_employee_for_daily_report",
+        "schedule": crontab(minute=0, hour=22),
+    },
 }
