@@ -19,6 +19,7 @@ router.register(
     r"item_assignment", views.ItemAssignmentViewSet, basename="item_assignment"
 )
 router.register(r"item_history", views.ItemHistoryViewSet, basename="item_history")
+router.register(r"expense_claim", views.ExpenseClaimViewSet, basename="expense_claim")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -25,6 +25,7 @@ from apps.base.viewset import BaseViewSet
 from apps.employee.custom_filters import (
     ApplyLeaveFilter,
     EmployeeFilter,
+    ExpenseClaimFilter,
     InventoryDetailFilter,
     ItemAssignmentFilter,
     ItemFilter,
@@ -34,6 +35,7 @@ from apps.employee.custom_filters import (
     TicketIssueFilter,
 )
 from apps.employee.models import (
+    ExpenseClaim,
     InventoryDetail,
     Item,
     ItemAssignment,
@@ -49,6 +51,7 @@ from apps.employee.serializers import (
     EmployeeCreateSerializer,
     EmployeeListSerializer,
     EmployeeUpdateSerializer,
+    ExpenseClaimSerializer,
     HolidayMiniSerializer,
     InventoryDetailSerializer,
     ItemAssignmentSerializer,
@@ -775,4 +778,21 @@ class ItemHistoryViewSet(BaseViewSet):
         filters.OrderingFilter,
     ]
     search_fields = ["item__name", "employee__first_name", "employee__last_name"]
+    ordering = ["-id"]
+
+
+class ExpenseClaimViewSet(BaseViewSet):
+    entity_name = "Expense Claim"
+    model = ExpenseClaim
+    permission_classes = [IsAuthenticated]
+    queryset = ExpenseClaim.objects.all().order_by("-id")
+    pagination_class = CustomPageNumberPagination
+    serializer_class = ExpenseClaimSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = ExpenseClaimFilter
+    search_fields = ["employee__first_name", "employee__last_name", "description"]
     ordering = ["-id"]

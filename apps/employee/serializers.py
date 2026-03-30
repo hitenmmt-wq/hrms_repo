@@ -13,6 +13,7 @@ from rest_framework import serializers
 from apps.attendance.models import EmployeeAttendance
 from apps.base.validators import BaseValidator
 from apps.employee.models import (
+    ExpenseClaim,
     InventoryDetail,
     Item,
     ItemAssignment,
@@ -482,4 +483,10 @@ class ItemAssignmentSerializer(serializers.ModelSerializer):
 class ItemHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemHistory
+        fields = "__all__"
+
+
+class ExpenseClaimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExpenseClaim
         fields = "__all__"
