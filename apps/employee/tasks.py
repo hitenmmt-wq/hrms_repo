@@ -42,7 +42,7 @@ def credit_new_year_employee_leaves():
 def update_employee_absent_leaves():
     print("this function of employee absent triggered.....")
     today = timezone.now().date()
-    day = today.day
+    day = today.weekday()
     if day in [5, 6]:
         return "Today is weekend."
     present_employee_ids = EmployeeAttendance.objects.filter(day=today).values_list(
