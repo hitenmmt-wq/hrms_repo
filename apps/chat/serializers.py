@@ -68,6 +68,9 @@ class MessageSerializer(serializers.ModelSerializer):
             "conversation",
             "sender",
             "text",
+            "encrypted_text",
+            "is_encrypted",
+            "nonce",
             "is_edited",
             "media",
             "media_url",
@@ -79,7 +82,13 @@ class MessageSerializer(serializers.ModelSerializer):
             "read_by",
             "created_at",
         )
-        read_only_fields = ("sender", "created_at")
+        read_only_fields = (
+            "sender",
+            "created_at",
+            "encrypted_text",
+            "is_encrypted",
+            "nonce",
+        )
 
     def get_media_url(self, obj):
         """Generate absolute URL for media attachments."""
@@ -91,14 +100,19 @@ class MessageSerializer(serializers.ModelSerializer):
         return None
 
     def get_reply_to(self, obj):
-        """Get reply message details for threaded conversations."""
+        """Get reply message details for threaded conversations (supports encrypted messages)."""
         if obj.reply_to:
             return {
                 "id": obj.reply_to.id,
                 "text": obj.reply_to.text,
+                "encrypted_text": obj.reply_to.encrypted_text,
+                "nonce": obj.reply_to.nonce,  # Critical for decrypting replied message
+                "is_encrypted": obj.reply_to.is_encrypted,
+                "msg_type": obj.reply_to.msg_type,
                 "sender": UserSerializer(
                     obj.reply_to.sender, context=self.context
                 ).data,
+                "created_at": obj.reply_to.created_at.isoformat(),
             }
         return None
 
@@ -122,9 +136,14 @@ class MessageSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        """Ensure message has either text content or media attachment."""
-        if not data.get("text") and not data.get("media"):
-            raise serializers.ValidationError("Either text or media must be provided")
+        """Ensure message has either text content, encrypted_text, or media attachment."""
+        has_content = (
+            data.get("text") or data.get("encrypted_text") or data.get("media")
+        )
+        if not has_content:
+            raise serializers.ValidationError(
+                "Either text, encrypted_text, or media must be provided"
+            )
         return data
 
 

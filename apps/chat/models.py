@@ -105,6 +105,21 @@ class Message(BaseModel):
         Users, on_delete=models.CASCADE, related_name="sent_messages"
     )
     text = models.TextField(null=True, blank=True)
+    # E2E Encryption fields
+    encrypted_text = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Base64-encoded encrypted message content",
+    )
+    is_encrypted = models.BooleanField(
+        default=False, help_text="Whether this message is encrypted"
+    )
+    nonce = models.CharField(
+        max_length=32,
+        null=True,
+        blank=True,
+        help_text="Base64-encoded nonce for encryption",
+    )
     media = models.FileField(upload_to="chat_media/", null=True, blank=True)
     msg_type = models.CharField(max_length=20, choices=MSG_TYPE_CHOICES, default="text")
     reply_to = models.ForeignKey(

@@ -38,4 +38,20 @@ urlpatterns = [
         views.MessageReactionView.as_view(),
         name="message-reactions",
     ),
+    # E2E Encryption key exchange endpoints
+    path(
+        "keys/set_public_key/",
+        views.SetPublicKeyView.as_view(),
+        name="set-public-key",
+    ),
+    path(
+        "keys/get_public_key/",
+        views.GetPublicKeyView.as_view(),
+        name="get-public-key",
+    ),
+    path(
+        "keys/my_keys/",
+        views.MyKeysView.as_view(),
+        name="my-keys",
+    ),
 ]
