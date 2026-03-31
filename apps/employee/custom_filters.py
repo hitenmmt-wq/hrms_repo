@@ -1,6 +1,7 @@
 import django_filters
 
 from apps.employee.models import (
+    ExpenseClaim,
     InventoryDetail,
     Item,
     ItemAssignment,
@@ -167,3 +168,28 @@ class ItemHistoryFilter(django_filters.FilterSet):
     class Meta:
         model = ItemHistory
         fields = ["inventory_item", "action", "employee", "date"]
+
+
+class ExpenseClaimFilter(django_filters.FilterSet):
+    employee = django_filters.NumberFilter(field_name="employee__id")
+    date = django_filters.DateFilter(field_name="date")
+    amount = django_filters.NumberFilter(field_name="amount")
+    description = django_filters.CharFilter(
+        field_name="description", lookup_expr="icontains"
+    )
+    claim_status = django_filters.CharFilter(
+        field_name="claim_status", lookup_expr="icontains"
+    )
+    clearance_status = django_filters.CharFilter(
+        field_name="clearance_status", lookup_expr="icontains"
+    )
+
+    class Meta:
+        model = ExpenseClaim
+        fields = [
+            "employee",
+            "amount",
+            "description",
+            "claim_status",
+            "clearance_status",
+        ]

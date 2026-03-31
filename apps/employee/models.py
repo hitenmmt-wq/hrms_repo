@@ -215,3 +215,20 @@ class ItemHistory(models.Model):
 
     def __str__(self):
         return f"{self.inventory_item} - {self.action}"
+
+
+class ExpenseClaim(BaseModel):
+    employee = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name="employee_expense_claims"
+    )
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    title = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    claim_status = models.CharField(max_length=20, default="pending")
+    file = models.FileField(upload_to="expense_claims/", null=True, blank=True)
+    clearance_status = models.CharField(max_length=20, default="pending")
+    cleared_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.employee.email} - {self.amount} - {self.claim_status}"
