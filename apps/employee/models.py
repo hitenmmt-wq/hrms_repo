@@ -232,3 +232,35 @@ class ExpenseClaim(BaseModel):
 
     def __str__(self):
         return f"{self.employee.email} - {self.amount} - {self.claim_status}"
+
+    def approved_claims(self):
+        return ExpenseClaim.objects.filter(
+            employee=self.employee, claim_status="approved"
+        )
+
+    def rejected_claims(self):
+        return ExpenseClaim.objects.filter(
+            employee=self.employee, claim_status="rejected"
+        )
+
+    def total_approved_claims(self):
+        """Calculate total approved claims by the admin"""
+        return (
+            ExpenseClaim.objects.filter(
+                employee=self.employee, claim_status="approved"
+            ).aggregate(total=models.Sum("amount"))["total"]
+            or 0
+        )
+
+    def uncleared_claims(self):
+        return (
+            ExpenseClaim.objects.filter(
+                employee=self.employee,
+                claim_status="approved",
+                clearance_status="pending",
+            ).aggregate(total=models.Sum("amount"))["total"]
+            or 0
+        )
+
+    def cleared_claims(self):
+        return float(self.total_approved_claims()) - float(self.uncleared_claims())

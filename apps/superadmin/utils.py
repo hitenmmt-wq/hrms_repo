@@ -1,6 +1,6 @@
 import calendar
 import math
-from datetime import date
+from datetime import date, timedelta
 
 import pdfplumber
 from django.utils import timezone
@@ -27,32 +27,41 @@ def update_leave_balance(employee, leave_type=None, status=None, count=0):
     if not leave_balance:
         return None
 
-    if status == constants.REJECTED:
-        return
+    if (
+        employee.joining_date
+        and employee.joining_date.date() <= today.date() - timedelta(days=90)
+    ):
+        print("Employee completed 3 month probation")
+        if status == constants.REJECTED:
+            return
 
-    elif status == constants.APPROVED:
-        if leave_type and leave_type.code == constants.PRIVILEGE_LEAVE:
-            pending_pl = get_pending_monthly_pl(leave_balance, today.date())
-            apply_pl_usage(leave_balance, pending_pl, count)
+        elif status == constants.APPROVED:
+            if leave_type and leave_type.code == constants.PRIVILEGE_LEAVE:
+                pending_pl = get_pending_monthly_pl(leave_balance, today.date())
+                apply_pl_usage(leave_balance, pending_pl, count)
 
-        elif leave_type and leave_type.code == constants.SICK_LEAVE:
-            pending_sl = get_pending_quarter_sl(leave_balance, today.date())
-            if pending_sl >= count:
-                leave_balance.used_sl += count
-            else:
-                if pending_sl > 0:
-                    leave_balance.used_sl += pending_sl
-                    leave_balance.used_lop += count - pending_sl
+            elif leave_type and leave_type.code == constants.SICK_LEAVE:
+                pending_sl = get_pending_quarter_sl(leave_balance, today.date())
+                if pending_sl >= count:
+                    leave_balance.used_sl += count
                 else:
-                    leave_balance.used_lop += count
-        elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
-            pending_pl = get_pending_monthly_pl(leave_balance, today.date())
-            apply_pl_usage(leave_balance, pending_pl, count)
+                    if pending_sl > 0:
+                        leave_balance.used_sl += pending_sl
+                        leave_balance.used_lop += count - pending_sl
+                    else:
+                        leave_balance.used_lop += count
+            elif leave_type and leave_type.code == constants.HALFDAY_LEAVE:
+                pending_pl = get_pending_monthly_pl(leave_balance, today.date())
+                apply_pl_usage(leave_balance, pending_pl, count)
+            else:
+                # Other leave types go to LOP
+                leave_balance.used_lop += count
         else:
-            # Other leave types go to LOP
             leave_balance.used_lop += count
+            return
     else:
-        return
+        print("Employee probation period is pending, Leave will be deducted")
+        leave_balance.used_lop += count
 
     leave_balance.save()
     return leave_balance
