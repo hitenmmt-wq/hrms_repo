@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from apps.attendance.models import AttendanceBreakLogs, EmployeeAttendance
 from apps.base import constants
-from apps.superadmin.models import Users
+from apps.superadmin.models import Leave, Users
 
 
 def get_weekend_days(month, year):
@@ -55,7 +55,16 @@ def _calculate_status(work_hours: Decimal) -> str:
 @transaction.atomic
 def check_in(employee: Users) -> EmployeeAttendance:
     """Handle employee check-in operation with attendance record creation."""
+
     today = timezone.localdate()
+    leave = Leave.objects.filter(
+        employee=employee,
+        from_date__lte=today,
+        to_date__gte=today,
+        status=constants.APPROVED,
+    )
+    if leave.exists():
+        return "Can't let you login as you're on approved leave"
 
     attendance, created = EmployeeAttendance.objects.get_or_create(
         employee=employee, day=today, defaults={"check_in": timezone.now()}

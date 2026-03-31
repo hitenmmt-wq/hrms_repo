@@ -107,6 +107,8 @@ class AttendanceViewSet(BaseViewSet):
     def check_in(self, request):
         """Handle employee check-in for daily attendance."""
         attendance = check_in(request.user)
+        if not attendance or isinstance(attendance, str):
+            return ApiResponse.error(attendance, status=400)
         return ApiResponse.success(
             "Attendance Created Successfully", AttendanceSerializer(attendance).data
         )

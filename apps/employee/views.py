@@ -572,12 +572,12 @@ class PaySlipViewSet(BaseViewSet):
         month_name = request.data.get("month_name")
         # days = request.data.get("days")
         month = request.data.get("month")
-        # year = request.data.get("year")
-        # holidays = holidays_in_month(year, month)
-        # working_days = weekdays_count(
-        #     datetime.strptime(start_date, "%Y-%m-%d").date(),
-        #     datetime.strptime(end_date, "%Y-%m-%d").date(),
-        # ) - int(holidays)
+        year = request.data.get("year")
+        holidays = holidays_in_month(year, month)
+        working_days = weekdays_count(
+            datetime.strptime(start_date, "%Y-%m-%d").date(),
+            datetime.strptime(end_date, "%Y-%m-%d").date(),
+        ) - int(holidays)
         basic_salary = request.data.get("basic_salary")
         hr_allowance = request.data.get("hr_allowance")
         special_allowance = request.data.get("special_allowance")
@@ -591,6 +591,13 @@ class PaySlipViewSet(BaseViewSet):
         employee = models.Users.objects.filter(id=employee_id).first()
         if not employee:
             return ApiResponse.error(message="Employee not found", status=404)
+        leaves = models.Leave.objects.filter(
+            employee=employee,
+            from_date__month=month,
+            from_date__year=year,
+            status="approved",
+        ).count()
+        working_days = working_days - leaves
         attandance_data = EmployeeAttendance.objects.filter(
             employee=employee, day__month=month
         )
@@ -623,7 +630,7 @@ class PaySlipViewSet(BaseViewSet):
                 start_date=start_date,
                 end_date=end_date,
                 month=month_name,
-                days=present_days_count,
+                days=working_days,  # for attendance "present_days_count"
                 basic_salary=basic_salary,
                 hr_allowance=hr_allowance,
                 special_allowance=special_allowance,

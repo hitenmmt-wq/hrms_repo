@@ -155,10 +155,12 @@ def generate_monthly_payslips():
     end_date = timezone.datetime(
         prev_year, prev_month, monthrange(prev_year, prev_month)[1]
     ).date()
+    holidays = holidays_in_month(prev_month, prev_year)
+    days = (weekdays_count(start_date, end_date)) - int(holidays)
     month_name = start_date.strftime("%B %Y")
     common_data = models.CommonData.objects.first()
-    employees = models.Users.objects.filter(
-        role=constants.EMPLOYEE_USER, is_active=True
+    employees = models.Users.objects.filter(is_active=True).exclude(
+        role=constants.ADMIN_USER
     )
 
     for employee in employees:
@@ -176,6 +178,13 @@ def generate_monthly_payslips():
             },
         )
 
+        leaves = models.Leave.objects.filter(
+            employee=employee,
+            from_date__month=prev_month,
+            from_date__year=prev_year,
+            status="approved",
+        ).count()
+        days = days - leaves
         leave_deduction = calculate_leave_deduction(
             employee, start_date, end_date, leave_balance
         )
@@ -209,7 +218,7 @@ def generate_monthly_payslips():
             start_date=start_date,
             end_date=end_date,
             month=month_name,
-            days=present_days,
+            days=days,  # for attendance "present_days"
             basic_salary=basic_salary,
             hr_allowance=hr_allowance,
             special_allowance=special_allowance,
@@ -293,8 +302,8 @@ def calculate_leave_deduction(employee, start_date, end_date, leave_balance):
         else:
             other_days += days
 
-    print(f"📊 Leave breakdown - PL: {pl_days}, SL: {sl_days}, Other: {other_days}")
-    print(f"💰 Available - PL: {available_pl}, SL: {available_sl}")
+    print(f" Leave breakdown - PL: {pl_days}, SL: {sl_days}, Other: {other_days}")
+    print(f" Available - PL: {available_pl}, SL: {available_sl}")
 
     deductible_days = 0
 
@@ -325,7 +334,7 @@ def calculate_leave_deduction(employee, start_date, end_date, leave_balance):
 
     daily_salary = (employee.salary_ctc or Decimal("0")) / 30
     leave_deduction = daily_salary * Decimal(str(deductible_days))
-    print(f"💸 Total deductible days: {deductible_days}, deduction: {leave_deduction}")
+    print(f" Total deductible days: {deductible_days}, deduction: {leave_deduction}")
 
     return leave_deduction
 
@@ -414,12 +423,12 @@ def get_leave_deduction_preview(employee, start_date, end_date, leave_balance):
         free_pl_per_month = 1  # 1 PL is free per month
         if pl_days <= free_pl_per_month:
             # All PL covered (1 or less)
-            print(f"✅ All {pl_days} PL days covered (free allowance)")
+            print(f" All {pl_days} PL days covered (free allowance)")
         else:
             # More than 1 PL - deduct excess
             excess_pl = pl_days - free_pl_per_month
             deductible_days += excess_pl
-            print(f"⚠️ PL: {free_pl_per_month} free, {excess_pl} excess deducted")
+            print(f" PL: {free_pl_per_month} free, {excess_pl} excess deducted")
 
     # Other leave types are always deductible
     deductible_days += other_days

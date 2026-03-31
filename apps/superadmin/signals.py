@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from apps.base import constants
 from apps.notification.models import NotificationType
 from apps.notification.services import create_notification
-from apps.superadmin.models import Announcement, Leave, Users
+from apps.superadmin.models import Announcement, DailyReport, Leave, Users
 
 # from django.utils import timezone
 
@@ -89,3 +89,30 @@ def notify_on_leave_apply(sender, instance, created, **kwargs):
                 ),
                 related_object=instance,
             )
+
+
+# Need to update this signal
+@receiver(post_save, sender=DailyReport)
+def notify_on_daily_report(sender, instance, created, **kwargs):
+    if created:
+        notification_type = NotificationType.objects.get(code=constants.DAILY_REPORT)
+        create_notification(
+            recipient=instance.employee,
+            notification_type=notification_type,
+            title="Daily Report Submitted",
+            message="Your daily report has been submitted successfully.",
+            related_object=instance,
+        )
+        # here need to add Reporting manager only and remove this admin's configuration
+        # for admin in Users.objects.filter(role="admin", is_active=True):
+        #     create_notification(
+        #         recipient=admin,
+        #         actor=instance.employee,
+        #         notification_type=notification_type,
+        #         title="New Daily Report",
+        #         message=(
+        #             f"{instance.employee.first_name} "
+        #             f"{instance.employee.last_name} has submitted Today's report."
+        #         ),
+        #         related_object=instance,
+        #     )
