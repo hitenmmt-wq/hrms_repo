@@ -320,3 +320,94 @@ class MessageReactionView(generics.GenericAPIView):
             return Response(
                 {"error": "Reaction not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class SetPublicKeyView(generics.GenericAPIView):
+    """Set user's public key for E2E encryption."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """
+        {
+            "public_key": "base64_encoded_key_here"
+        }
+        """
+        public_key = request.data.get("public_key")
+
+        if not public_key:
+            return Response(
+                {"error": "public_key is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate key format (basic check)
+        if len(public_key) < 40:
+            return Response(
+                {"error": "Invalid public key format"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        user.public_key = public_key
+        user.encryption_enabled = True
+        user.save()
+
+        return Response(
+            {
+                "message": "Public key saved successfully",
+                "user_id": user.id,
+                "encryption_enabled": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class GetPublicKeyView(generics.GenericAPIView):
+    """Get user's public key for E2E encryption."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get user's public key.
+        GET /api/chat/keys/get_public_key/?user_id=123
+        """
+        user_id = request.query_params.get("user_id")
+
+        if not user_id:
+            user_id = request.user.id
+
+        try:
+            user = Users.objects.get(id=user_id)
+            return Response(
+                {
+                    "user_id": user.id,
+                    "email": user.email,
+                    "public_key": user.public_key,
+                    "encryption_enabled": user.encryption_enabled,
+                }
+            )
+        except Users.DoesNotExist:
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class MyKeysView(generics.GenericAPIView):
+    """Get current user's encryption status."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get current user's encryption status.
+        GET /api/chat/keys/my_keys/
+        """
+        user = request.user
+        return Response(
+            {
+                "user_id": user.id,
+                "has_public_key": bool(user.public_key),
+                "encryption_enabled": user.encryption_enabled,
+            }
+        )

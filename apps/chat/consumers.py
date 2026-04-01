@@ -106,6 +106,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "remove_reaction": self.handle_remove_reaction,
             "get_messages": self.handle_get_messages,
             "remove_user": self.handle_remove_user_group,
+            "add_user": self.handle_add_user_group,
+            # "change_group_name":self.handle_change_group_name,
+            # "delete_group_name":self.handle_delete_group_name,
             # "group_profile_upload": self.handle_group_profile_upload,
             "heartbeat": lambda _: self.send_json({"type": "heartbeat_ack"}),
         }
@@ -113,6 +116,40 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         handler = handlers.get(event)
         if handler:
             await handler(content)
+
+    async def handle_add_user_group(self, content):
+        """Handle addding a user to a conversation group"""
+        conversation_id = content.get("conversation_id")
+        if not conversation_id:
+            return await self.send_json(
+                {"type": "error", "message": "Conversation ID not provided"},
+            )
+        user_id = content.get("user_id")
+        if not user_id:
+            return await self.send_json(
+                {"type": "error", "message": "User ID not provided"},
+            )
+        try:
+            conversation = await database_sync_to_async(Conversation.objects.get)(
+                id=conversation_id
+            )
+            user = await database_sync_to_async(Users.objects.get)(id=user_id)
+            added = await self.add_user_to_conversation(conversation, user)
+            if added:
+                await self.channel_layer.group_send(
+                    f"user_{user_id}",
+                    {
+                        "type": "global.message",
+                        "payload": {
+                            "type": "added_to_conversation",
+                            "conversation_id": conversation_id,
+                        },
+                    },
+                )
+        except Conversation.DoesNotExist:
+            print(f"Conversation with ID {conversation_id} does not exist.")
+        except Users.DoesNotExist:
+            print(f"User with ID {user_id} does not exist.")
 
     async def handle_remove_user_group(self, content):
         """Handle removing a user from a conversation group."""
@@ -216,14 +253,24 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def handle_send_message(self, content):
-        """Handle sending new messages and broadcasting to conversation participants."""
+        """Handle sending new messages with optional encryption."""
         text = content.get("text", "")
+        encrypted_text = content.get("encrypted_text", "")
+        nonce = content.get("nonce", "")
+        is_encrypted = content.get("is_encrypted", False)
         msg_type = content.get("msg_type", "text")
         reply_to = content.get("reply_to")
         conversation_id = content.get("conversation_id")
 
+        # Store additional fields for encrypted messages
+        additional_data = {}
+        if is_encrypted and encrypted_text and nonce:
+            additional_data["encrypted_text"] = encrypted_text
+            additional_data["nonce"] = nonce
+            additional_data["is_encrypted"] = True
+
         message_data = await self.create_message_with_data(
-            conversation_id, self.user.id, text, msg_type, reply_to
+            conversation_id, self.user.id, text, msg_type, reply_to, additional_data
         )
         print(f"==>> message_data: {message_data}")
         if message_data:
@@ -474,6 +521,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_unread_counts()
 
     @database_sync_to_async
+    def add_user_to_conversation(self, conversation, user):
+        """Add a user to a conversation."""
+        conversation.participants.add(user)
+        # Optionally, create MessageStatus entries for existing messages
+        existing_messages = Message.objects.filter(conversation=conversation)
+        for message in existing_messages:
+            MessageStatus.objects.get_or_create(
+                message=message,
+                user=user,
+                defaults={"status": "sent"},
+            )
+        return True
+
+    @database_sync_to_async
     def remove_user_from_conversation(self, conversation, user):
         """Remove a user from a conversation and clean up related data."""
         conversation.participants.remove(user)
@@ -589,9 +650,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def create_message_with_data(
-        self, conversation_id, user_id, text, msg_type, reply_to
+        self, conversation_id, user_id, text, msg_type, reply_to, additional_data=None
     ):
         """Create new message and return simple data dict."""
+        if additional_data is None:
+            additional_data = {}
+
         try:
             conversation = Conversation.objects.get(id=conversation_id)
             user = Users.objects.get(id=user_id)
@@ -603,10 +667,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 except Message.DoesNotExist:
                     pass
 
+            # Create message with optional encryption data
             message = Message.objects.create(
                 conversation=conversation,
                 sender=user,
-                text=text,
+                text=(
+                    text if not additional_data else None
+                ),  # Don't store plaintext if encrypted
+                encrypted_text=additional_data.get("encrypted_text"),
+                nonce=additional_data.get("nonce"),
+                is_encrypted=additional_data.get("is_encrypted", False),
                 msg_type=msg_type,
                 reply_to=reply_message,
             )
@@ -686,6 +756,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return {
                 "id": message.id,
                 "text": message.text,
+                "encrypted_text": message.encrypted_text,
+                "is_encrypted": message.is_encrypted,
+                "nonce": message.nonce,
                 "reply_to": message.reply_to,
                 "msg_type": message.msg_type,
                 "sender": {

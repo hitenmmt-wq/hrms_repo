@@ -93,6 +93,19 @@ class Users(AbstractUser):
     employee_id = models.CharField(
         max_length=50, null=True, blank=True, validators=[BaseValidator.validate_name]
     )
+    # reporting_manager = models.ForeignKey(
+    #     "self",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="team_members"
+    # )
+    # secondary_managers = models.ManyToManyField(
+    #     "self",
+    #     symmetrical=False,
+    #     blank=True,
+    #     related_name="secondary_team"
+    # )
     position = models.ForeignKey(
         "Position",
         on_delete=models.CASCADE,
@@ -105,6 +118,14 @@ class Users(AbstractUser):
     salary_ctc = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
+
+    # E2E Encryption fields
+    public_key = models.TextField(
+        null=True,
+        blank=True,
+        help_text="User's public key for E2E encryption (base64-encoded)",
+    )
+    encryption_enabled = models.BooleanField(default=False)
 
     class Meta:
         indexes = [

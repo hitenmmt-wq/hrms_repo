@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from django.db.models import Avg
@@ -56,15 +57,22 @@ class AIConversationViewSet(viewsets.ModelViewSet):
 
         try:
             ai_service = AIService(request.user)
-            response_data = ai_service.process_query(message, conversation.session_id)
-            print(f"==>> response_data: {response_data}")
+
+            # Run async query processing in event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response_data = loop.run_until_complete(
+                    ai_service.process_query(message, conversation.session_id)
+                )
+            finally:
+                loop.close()
 
             return Response(
                 {
                     "success": True,
                     "ai_response": response_data["response"],
                     "message_id": response_data["message_id"],
-                    "processing_time": response_data["processing_time"],
                     "intent": response_data.get("intent", "unknown"),
                 }
             )
@@ -88,14 +96,22 @@ class AIConversationViewSet(viewsets.ModelViewSet):
 
         try:
             ai_service = AIService(request.user)
-            response_data = ai_service.process_query(message)
+
+            # Run async query processing in event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response_data = loop.run_until_complete(
+                    ai_service.process_query(message)
+                )
+            finally:
+                loop.close()
 
             return Response(
                 {
                     "success": True,
                     "response": response_data["response"],
                     "conversation_id": response_data["conversation_id"],
-                    "processing_time": response_data["processing_time"],
                     "intent": response_data.get("intent", "unknown"),
                 }
             )
@@ -104,6 +120,67 @@ class AIConversationViewSet(viewsets.ModelViewSet):
             logger.exception(f"Error processing quick query for user {request.user.id}")
             return Response(
                 {"error": f"Failed to process query: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["get"])
+    def available_tools(self, request):
+        """Get all MCP tools available for the user's role."""
+        try:
+            ai_service = AIService(request.user)
+            tools_data = ai_service.get_user_available_tools()
+
+            return Response(
+                {
+                    "success": True,
+                    "data": tools_data,
+                }
+            )
+        except Exception as e:
+            logger.exception(
+                f"Error fetching available tools for user {request.user.id}"
+            )
+            return Response(
+                {"error": f"Failed to fetch available tools: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"])
+    def execute_tool(self, request):
+        """Execute a specific MCP tool based on user role and parameters."""
+        tool_name = request.data.get("tool_name", "").strip()
+        parameters = request.data.get("parameters", {})
+
+        if not tool_name:
+            return Response(
+                {"error": "Tool name is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ai_service = AIService(request.user)
+
+            # Run async task execution in event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(
+                    ai_service.execute_user_task(tool_name, parameters)
+                )
+            finally:
+                loop.close()
+
+            return Response(
+                {
+                    "success": result.get("success", False),
+                    "data": result,
+                }
+            )
+
+        except Exception as e:
+            logger.exception(f"Error executing tool for user {request.user.id}")
+            return Response(
+                {"error": f"Failed to execute tool: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
