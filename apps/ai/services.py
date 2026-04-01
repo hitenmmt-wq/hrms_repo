@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 # import ast
@@ -7,6 +8,7 @@ from channels.db import database_sync_to_async
 from django.utils import timezone
 
 from apps.ai.hugging_face import HuggingFaceLLM
+from apps.ai.mcp_tools import RoleBasedMCPTools, TaskExecutor
 from apps.ai.models import AIConversation, AIMessage, AIQueryLog
 from apps.ai.utils import (
     PromptTemplates,
@@ -32,13 +34,42 @@ from apps.superadmin.models import (
     Users,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class AIService:
     """Core AI service for handling chatbot interactions."""
 
+    _llm_instance = None  # Cached LLM instance
+
     def __init__(self, user):
         self.user = user
         self.role = user.role
+        self.mcp_tools = RoleBasedMCPTools()
+        self.task_executor = TaskExecutor(user, self.mcp_tools)
+        # Intent context mapping - maps intent to context builder method
+        self._intent_context_map = {
+            "leave_inquiry": self._get_leave_context,
+            "attendance_inquiry": self._get_attendance_context,
+            "payroll_inquiry": self._get_payroll_context,
+            "profile_inquiry": self._get_profile_context,
+            "general_inquiry": self._get_general_context,
+            "holiday_inquiry": self._get_holiday_context,
+            "announcement_inquiry": self._get_announcement_context,
+            "department_inquiry": self._get_department_context,
+            "position_inquiry": self._get_position_context,
+            "common_data_inquiry": self._get_commondata_context,
+            "leave_type_inquiry": self._get_leave_type_context,
+            "employee_inquiry": self._get_employee_context,
+            "handbook_inquiry": self._get_handbook_context,
+        }
+
+    @classmethod
+    def _get_llm(cls):
+        """Get or create cached LLM instance."""
+        if cls._llm_instance is None:
+            cls._llm_instance = HuggingFaceLLM()
+        return cls._llm_instance
 
     async def process_query(
         self, message: str, conversation_id: str = None
@@ -54,26 +85,20 @@ class AIService:
         # Classify intent and build context
         intent = self._classify_intent(message, conversation)
         print(f"==>> intent: {intent}")
-        # if isinstance(intent, str):
-        #     intent = ast.literal_eval(intent)
+        logger.debug(f"Classified intent: {intent}")
 
-        # Here deciding that which table to be used for CRUD
-        if any(
-            i.startswith("create") or i.startswith("update") or i.startswith("delete")
-            for i in intent
-        ):
+        # Check if CRUD operation needed
+        is_crud_operation = any(
+            i.startswith(("create", "update", "delete")) for i in intent
+        )
+        print(f"==>> is_crud_operation: {is_crud_operation}")
 
-            schema_data = await self.get_db_schema(intent)
-        else:
-            print("getting here -+++++++++++++++++++++++++++++++++++++++++++++++++++")
-            schema_data = None
-        print(f"==>> schema_data: {schema_data}")
-
-        # intent = ('attendance_inquiry', 'payroll_inquiry', 1.297)
+        # Build context based on intent
         context_data = await self._build_context(message, intent)
         print(f"==>> context_data: {context_data}")
+        logger.debug(f"Built context with keys: {list(context_data.keys())}")
 
-        # Generate AI response (placeholder for actual AI integration)
+        # Generate AI response
         ai_response = self._generate_response(
             message, context_data, intent, conversation
         )
@@ -132,17 +157,18 @@ class AIService:
         return "\n".join(schema_lines)
 
     async def get_auto_suggestions(self, message: str):
-        """Getting Auto suggestions here for AI chatbot"""
-        if message and len(message) > 5:
-            auto_suggestion_prompt = self._generate_auto_suggestion_with_llm(message)
-            try:
-                llm = HuggingFaceLLM()
-                response = llm.generate(auto_suggestion_prompt)
-                auto_suggestion = response[0]
-            except Exception as e:
-                print("HF ERROR:", str(e))
-                auto_suggestion = ""
-            return auto_suggestion
+        """Generate auto suggestions for partial user input."""
+        if not message or len(message) <= 5:
+            return ""
+
+        auto_suggestion_prompt = self._generate_auto_suggestion_with_llm(message)
+        try:
+            llm = self._get_llm()
+            response = llm.generate(auto_suggestion_prompt)
+            return response[0] if response else ""
+        except Exception as e:
+            logger.error(f"Error generating suggestions: {str(e)}")
+            return ""
 
     @database_sync_to_async
     def _get_or_create_conversation(
@@ -157,14 +183,16 @@ class AIService:
             except AIConversation.DoesNotExist:
                 pass
 
+        # Generate title using LLM
         title_prompt = self._generate_title_with_llm(message=message)
         try:
-            llm = HuggingFaceLLM()
+            llm = self._get_llm()
             title_response = llm.generate(title_prompt)
-            title = title_response[0]
+            title = title_response[0] if title_response else "Conversation"
         except Exception as e:
-            print("HF ERROR:", str(e))
-            title = "Default Title"
+            logger.error(f"Error generating conversation title: {str(e)}")
+            title = "Conversation"
+
         return AIConversation.objects.create(
             user=self.user, session_id=str(uuid.uuid4()), title=title
         )
@@ -181,9 +209,8 @@ class AIService:
 
     @database_sync_to_async
     def _ai_query_log(self, user, message, ai_message, intent, context_used):
-        print(
-            f"==>> intent before saving -----------------------------------: {intent}"
-        )
+        """Log AI query for analytics and improvement."""
+        logger.info(f"AI Query logged - Intent: {intent}, User: {user.email}")
         return AIQueryLog.objects.create(
             user=user,
             ai_message=ai_message,
@@ -212,7 +239,9 @@ class AIService:
         """Classify user intent from message."""
         message_lower = message.lower()
         print(f"==>> message_lower: {message_lower}")
+        logger.debug(f"Classifying intent for message: {message_lower[:100]}...")
 
+        # Note: These return coroutines but are used as context in prompt
         ai_query_logs = self.get_ai_query_logs()
         conversation_data = self.get_conversation_data(conversation)
         db_schema = self.get_db_schema()
@@ -221,6 +250,11 @@ class AIService:
 
             Your job is to identify the user's intent(s) from the message and return ONLY the
             matching intent name(s) from the list below.
+            Identify intents properly any tasks given by user like creating, listing, updating
+            or deleting data in database with identifying table properly. If not clear then ask
+            again as database operations are critical and wrong intent can lead to wrong data manipulation.
+            Perform action as user asks to do but also checking permissions for that action, or also that's
+            for general inquiry.
 
             AVAILABLE INTENTS:
             - leave_inquiry
@@ -311,45 +345,26 @@ class AIService:
         """
 
         try:
-            llm = HuggingFaceLLM()
+            llm = self._get_llm()
             response = llm.generate(prompt)
-            print(f"==>> intent response generated....: {response}")
+            logger.debug(f"Intent classification response: {response}")
             return response[0] if response else None
         except Exception as e:
-            print("HF ERROR:", str(e))
+            logger.error(f"Error classifying intent: {str(e)}")
             return ["other"]
 
     async def _build_context(self, message: str, intent: list) -> Dict[str, Any]:
-        """Build context data based on user role and intent."""
+        """Build context data based on user role and intent using mapping."""
         context = {}
 
-        if "leave_inquiry" in intent:
-            context.update(await self._get_leave_context())
-        if "attendance_inquiry" in intent:
-            context.update(await self._get_attendance_context())
-        if "payroll_inquiry" in intent:
-            context.update(await self._get_payroll_context())
-        if "profile_inquiry" in intent:
-            context.update(await self._get_profile_context())
-        if "general_inquiry" in intent:
-            context.update(await self._get_general_context())
-        if "holiday_inquiry" in intent:
-            context.update(await self._get_holiday_context())
-        if "announcement_inquiry" in intent:
-            context.update(await self._get_announcement_context())
-        if "department_inquiry" in intent:
-            context.update(await self._get_department_context())
-        if "position_inquiry" in intent:
-            context.update(await self._get_position_context())
-        if "common_data_inquiry" in intent or intent == "commondata_inquiry":
-            context.update(await self._get_commondata_context())
-        if "leave_type_inquiry" in intent:
-            context.update(await self._get_leave_type_context())
-        if "employee_inquiry" in intent:
-            context.update(await self._get_employee_context())
-        if "handbook_inquiry" in intent:
-            context.update(await self._get_handbook_context())
-        if "other" in intent or not intent:
+        # Build context for matched intents
+        for intent_key in intent:
+            if intent_key in self._intent_context_map:
+                context_builder = self._intent_context_map[intent_key]
+                context.update(await context_builder())
+
+        # Add default context if no intents matched
+        if not context:
             context.update(await self._get_default_context())
 
         return context
@@ -481,6 +496,27 @@ class AIService:
         context["extra_details"] = calculate_attendance_patterns()
         return context
 
+    @staticmethod
+    def _format_payslip(ps):
+        """Format payslip data for context."""
+        return {
+            "employee": ps.employee,
+            "start_date": ps.start_date,
+            "end_date": ps.end_date,
+            "month": ps.month,
+            "days": ps.days,
+            "basic_salary": ps.basic_salary,
+            "hr_allowance": ps.hr_allowance,
+            "special_allowance": ps.special_allowance,
+            "total_earnings": ps.total_earnings,
+            "other_deductions": ps.other_deductions,
+            "leave_deductions": ps.leave_deductions,
+            "tax_deductions": ps.tax_deductions,
+            "total_deductions": ps.total_deductions,
+            "net_salary": ps.net_salary,
+            "pdf_file": ps.pdf_file.url if ps.pdf_file else None,
+        }
+
     @database_sync_to_async
     def _get_payroll_context(self) -> Dict[str, Any]:
         """Get payroll-related context."""
@@ -491,51 +527,14 @@ class AIService:
             recent_payslips = PaySlip.objects.filter(employee=self.user).order_by(
                 "-created_at"
             )[:5]
-            context["my_recent_payslips"] = [
-                {
-                    "employee": ps.employee,
-                    "start_date": ps.start_date,
-                    "end_date": ps.end_date,
-                    "month": ps.month,
-                    "days": ps.days,
-                    "basic_salary": ps.basic_salary,
-                    "hr_allowance": ps.hr_allowance,
-                    "special_allowance": ps.special_allowance,
-                    "total_earnings": ps.total_earnings,
-                    "other_deductions": ps.other_deductions,
-                    "leave_deductions": ps.leave_deductions,
-                    "tax_deductions": ps.tax_deductions,
-                    "total_deductions": ps.total_deductions,
-                    "net_salary": ps.net_salary,
-                    "pdf_file": ps.pdf_file.url if ps.pdf_file else None,
-                }
-                for ps in recent_payslips
-            ]
-        elif self.role in ["admin", "hr"]:
-            # Admin/HR summary data
+        else:
+            # Admin/HR: show total count and recent payslips
             context["total_payslips_generated"] = PaySlip.objects.count()
             recent_payslips = PaySlip.objects.all().order_by("-created_at")[:10]
-            context["my_recent_payslips"] = [
-                {
-                    "employee": ps.employee,
-                    "start_date": ps.start_date,
-                    "end_date": ps.end_date,
-                    "month": ps.month,
-                    "days": ps.days,
-                    "basic_salary": ps.basic_salary,
-                    "hr_allowance": ps.hr_allowance,
-                    "special_allowance": ps.special_allowance,
-                    "total_earnings": ps.total_earnings,
-                    "other_deductions": ps.other_deductions,
-                    "leave_deductions": ps.leave_deductions,
-                    "tax_deductions": ps.tax_deductions,
-                    "total_deductions": ps.total_deductions,
-                    "net_salary": ps.net_salary,
-                    "pdf_file": ps.pdf_file.url if ps.pdf_file else None,
-                }
-                for ps in recent_payslips
-            ]
 
+        context["my_recent_payslips"] = [
+            self._format_payslip(ps) for ps in recent_payslips
+        ]
         context["extra_details"] = calculate_payroll_patterns()
         return context
 
@@ -561,32 +560,24 @@ class AIService:
 
     @database_sync_to_async
     def _get_general_context(self) -> Dict[str, Any]:
-        """Get general company context."""
+        """Get general company context based on role."""
         context = {}
 
-        if self.role in ["admin", "hr"]:
-            context["company_stats"] = {
-                "total_employees": (Users.objects.filter(role="employee").count)(),
-                "total_departments": (Department.objects.count)(),
-                "total_positions": (Position.objects.count)(),
-                "announcements": list(
-                    Announcement.objects.values("title", "created_at")
-                ),
-                "common_data": (CommonData.objects.first)(),
-                "leave_types": list(LeaveType.objects.values("name", "code")),
-                "holidays": (list(Holiday.objects.values("name", "date"))),
-            }
-        if self.role == "employee":
-            context["company_stats"] = {
-                "total_employees": (Users.objects.filter(role="employee").count)(),
-                "total_departments": (Department.objects.count)(),
-                "announcements": list(
-                    Announcement.objects.values("title", "created_at")
-                ),
-                "leave_types": list(LeaveType.objects.values("name", "code")),
-                "holidays": (list(Holiday.objects.values("name", "date"))),
-            }
+        # Common stats for all roles
+        company_stats = {
+            "total_employees": Users.objects.filter(role="employee").count(),
+            "total_departments": Department.objects.count(),
+            "announcements": list(Announcement.objects.values("title", "created_at")),
+            "leave_types": list(LeaveType.objects.values("name", "code")),
+            "holidays": list(Holiday.objects.values("name", "date")),
+        }
 
+        # Add admin-specific stats
+        if self.role in ["admin", "hr"]:
+            company_stats["total_positions"] = Position.objects.count()
+            company_stats["common_data"] = CommonData.objects.first()
+
+        context["company_stats"] = company_stats
         context["extra_details"] = calculate_general_patterns()
         return context
 
@@ -611,20 +602,10 @@ class AIService:
     def _get_announcement_context(self) -> Dict[str, Any]:
         """Get announcement-related context."""
         context = {}
-
-        if self.role == "employee":
-            context["announcements_data"] = list(
-                Announcement.objects.values(
-                    "title", "description", "date", "created_at"
-                )
-            )
-        elif self.role in ["admin", "hr"]:
-            context["announcements_data"] = list(
-                Announcement.objects.values(
-                    "title", "description", "date", "created_at"
-                )
-            )
-
+        # Same query for all roles
+        context["announcements_data"] = list(
+            Announcement.objects.values("title", "description", "date", "created_at")
+        )
         context["extra_details"] = calculate_announcement_patterns()
         return context
 
@@ -849,19 +830,17 @@ class AIService:
         self, message: str, context: Dict[str, Any], intent: str, conversation: str
     ) -> str:
         """Generate AI response based on context and intent using structured templates."""
-        print(f"==>> message: {message}")
-        print(f"==>> intent: {intent}")
-        print(f"==>> context: {context}")
+        logger.debug(f"Generating response for intent: {intent}")
 
         # Build structured prompt with templates
         prompt = self._build_prompt(message, context, intent, conversation)
 
         try:
-            llm = HuggingFaceLLM()
+            llm = self._get_llm()
             response = llm.generate(prompt)
             return response
         except Exception as e:
-            print("HF ERROR:", str(e))
+            logger.error(f"Error generating AI response: {str(e)}")
             return "I'm having trouble generating a response right now. Please try again in a moment."
 
     def _generate_title_with_llm(self, message: str) -> str:
@@ -939,3 +918,30 @@ class AIService:
         {message}
         """
         return prompt
+
+    def get_user_available_tools(self) -> Dict[str, Any]:
+        """Get all MCP tools available for the current user based on their role."""
+        available_tools = self.task_executor.get_available_tools()
+        return {
+            "role": self.role,
+            "user": self.user.email,
+            "available_tools": available_tools,
+            "tool_count": len(available_tools),
+        }
+
+    async def execute_user_task(
+        self, tool_name: str, parameters: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Execute a user task based on MCP tools.
+
+        Args:
+            tool_name: Name of the MCP tool to execute
+            parameters: Parameters for the tool execution
+
+        Returns:
+            Execution result with success status and data
+        """
+        parameters = parameters or {}
+        result = await self.task_executor.execute_task(tool_name, parameters)
+        return result
