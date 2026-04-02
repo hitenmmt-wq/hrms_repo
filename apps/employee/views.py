@@ -578,26 +578,25 @@ class PaySlipViewSet(BaseViewSet):
             datetime.strptime(start_date, "%Y-%m-%d").date(),
             datetime.strptime(end_date, "%Y-%m-%d").date(),
         ) - int(holidays)
-        basic_salary = request.data.get("basic_salary")
-        hr_allowance = request.data.get("hr_allowance")
-        special_allowance = request.data.get("special_allowance")
-        total_earnings = request.data.get("total_earnings")
-        tax_deductions = request.data.get("tax_deductions")
-        other_deductions = request.data.get("other_deductions")
-        leave_deduction = request.data.get("leave_deduction")
+        basic_salary = request.data.get("basic_salary", 0)
+        hr_allowance = request.data.get("hr_allowance", 0)
+        special_allowance = request.data.get("special_allowance", 0)
+        total_earnings = request.data.get("total_earnings", 0)
+        tax_deductions = request.data.get("tax_deductions", 0)
+        other_deductions = request.data.get("other_deductions", 0)
+        leave_deduction = request.data.get("leave_deduction", 0)
         print(f"==>> leave_deduction: {leave_deduction}")
-        total_deductions = request.data.get("total_deductions")
-        net_salary = request.data.get("net_salary")
+        total_deductions = request.data.get("total_deductions", 0)
+        net_salary = request.data.get("net_salary", 0)
         employee = models.Users.objects.filter(id=employee_id).first()
         if not employee:
             return ApiResponse.error(message="Employee not found", status=404)
-        leaves = models.Leave.objects.filter(
-            employee=employee,
-            from_date__month=month,
-            from_date__year=year,
-            status="approved",
-        ).count()
-        working_days = working_days - leaves
+        if PaySlip.objects.filter(
+            employee=employee, start_date=start_date, end_date=end_date
+        ).exists():
+            return ApiResponse.error(
+                message="Payslip already exists for this period", status=400
+            )
         attandance_data = EmployeeAttendance.objects.filter(
             employee=employee, day__month=month
         )
@@ -605,8 +604,10 @@ class PaySlipViewSet(BaseViewSet):
         print(f"==>> attandance_data counts: {attandance_data.count()}")
         present_days_count = 0
         for attendance in attandance_data:
-            if attendance.status == "half_day":
+            if attendance.status == "halfday_leave":
                 if attendance.is_halfday_paid:
+                    present_days_count += 1
+                else:
                     present_days_count += 0.5
             elif attendance.status in ["present", "paid_leave", "incomplete_hours"]:
                 present_days_count += 1
@@ -616,28 +617,25 @@ class PaySlipViewSet(BaseViewSet):
                 continue
 
         print(f"==>> present_days_count: {present_days_count}")
-
+        pay_per_day = basic_salary / working_days if working_days else 0
+        print(f"==>> pay_per_day: {pay_per_day}")
+        leave_deduction_from_attendance = pay_per_day * (
+            working_days - present_days_count
+        )
         try:
-            if PaySlip.objects.filter(
-                employee=employee, start_date=start_date, end_date=end_date
-            ).exists():
-                return ApiResponse.error(
-                    message="Payslip already exists for this period", status=400
-                )
-
             payslip = PaySlip.objects.create(
                 employee=employee,
                 start_date=start_date,
                 end_date=end_date,
                 month=month_name,
-                days=working_days,  # for attendance "present_days_count"
+                days=present_days_count,  # for attendance "present_days_count"
                 basic_salary=basic_salary,
                 hr_allowance=hr_allowance,
                 special_allowance=special_allowance,
                 total_earnings=total_earnings,
                 tax_deductions=tax_deductions,
                 other_deductions=other_deductions,
-                leave_deductions=leave_deduction,
+                leave_deductions=leave_deduction_from_attendance,
                 total_deductions=total_deductions,
                 net_salary=net_salary,
             )

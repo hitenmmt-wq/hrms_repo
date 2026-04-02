@@ -39,6 +39,26 @@ def credit_new_year_employee_leaves():
 
 
 @shared_task
+def update_sick_leave_quaterly():
+    print("🔥 CELERY BEAT TRIGGERED FOR QUATERLY SL UPDATE 🔥")
+    today = timezone.now().date()
+    if today.month in [4, 7, 10] and today.day == 1:
+        employees = models.Users.objects.filter(is_active=True).exclude(role="admin")
+        for employee in employees:
+            leave_balance, created = LeaveBalance.objects.get_or_create(
+                employee=employee, year=today.year
+            )
+            if not created:
+                (
+                    leave_balance.sl == 3
+                    if today.month == 4
+                    else 2 if today.month == 7 else 1 if today.month == 10 else 0
+                )
+                leave_balance.save()
+                print(f"SL updated for {employee.email} - New SL: {leave_balance.sl}")
+
+
+@shared_task
 def update_employee_absent_leaves():
     print("this function of employee absent triggered.....")
     today = timezone.now().date()
@@ -155,40 +175,18 @@ def generate_monthly_payslips():
     end_date = timezone.datetime(
         prev_year, prev_month, monthrange(prev_year, prev_month)[1]
     ).date()
-    holidays = holidays_in_month(prev_month, prev_year)
-    days = (weekdays_count(start_date, end_date)) - int(holidays)
     month_name = start_date.strftime("%B %Y")
-    common_data = models.CommonData.objects.first()
     employees = models.Users.objects.filter(is_active=True).exclude(
         role=constants.ADMIN_USER
     )
 
     for employee in employees:
-        present_days = 0
+        present_days = 0.0
         if PaySlip.objects.filter(employee=employee, month=month_name).exists():
             continue
 
-        leave_balance, _ = LeaveBalance.objects.get_or_create(
-            employee=employee,
-            year=current_year,
-            defaults={
-                "pl": common_data.pl_leave,
-                "sl": common_data.sl_leave,
-                "lop": common_data.lop_leave,
-            },
-        )
-
-        leaves = models.Leave.objects.filter(
-            employee=employee,
-            from_date__month=prev_month,
-            from_date__year=prev_year,
-            status="approved",
-        ).count()
-        days = days - leaves
-        leave_deduction = calculate_leave_deduction(
-            employee, start_date, end_date, leave_balance
-        )
-        print(f"==>> leave_deduction: {leave_deduction}")
+        holidays = holidays_in_month(prev_year, prev_month)
+        working_days = (weekdays_count(start_date, end_date)) - int(holidays)
         attendance_data = EmployeeAttendance.objects.filter(
             employee=employee, day__month=prev_month, day__year=prev_year
         )
@@ -197,19 +195,37 @@ def generate_monthly_payslips():
         for attendance in attendance_data:
             if attendance.status in ["paid_leave", "present", "incomplete_hours"]:
                 present_days += 1
-            elif attendance.status in ["half_day"]:
+            elif attendance.status in ["halfday_leave"]:
                 if attendance.is_halfday_paid:
+                    present_days += 1
+                else:
                     present_days += 0.5
         print(f"==>> present_days: {present_days}")
 
-        basic_salary = employee.salary_ctc * Decimal("0.5")
-        hr_allowance = basic_salary * Decimal("0.6")
-        special_allowance = basic_salary * Decimal("0.4")
-        total_earnings = basic_salary + hr_allowance + special_allowance
+        if employee.salary_ctc:
+            basic_salary = employee.salary_ctc * Decimal("0.5")
+            hr_allowance = basic_salary * Decimal("0.6")
+            special_allowance = basic_salary * Decimal("0.4")
+            total_earnings = basic_salary + hr_allowance + special_allowance
+        else:
+            basic_salary = hr_allowance = special_allowance = total_earnings = Decimal(
+                "0"
+            )
 
-        tax_deductions = 200
+        pay_per_day = (
+            total_earnings / working_days if working_days > 0 else Decimal("0")
+        )
+        print(f"==>> pay_per_day: {pay_per_day}")
+        absent_days = working_days - present_days
+        leave_deduction_from_attendance = pay_per_day * Decimal(absent_days)
+        print(
+            f"==>> leave_deduction_from_attendance: {leave_deduction_from_attendance}"
+        )
+        tax_deductions = 200 if present_days > 0 else Decimal("0")
         other_deductions = Decimal("0")
-        total_deductions = tax_deductions + other_deductions + leave_deduction
+        total_deductions = (
+            tax_deductions + other_deductions + leave_deduction_from_attendance
+        )
 
         net_salary = total_earnings - total_deductions
 
@@ -218,14 +234,14 @@ def generate_monthly_payslips():
             start_date=start_date,
             end_date=end_date,
             month=month_name,
-            days=days,  # for attendance "present_days"
+            days=present_days,  # for attendance "present_days"
             basic_salary=basic_salary,
             hr_allowance=hr_allowance,
             special_allowance=special_allowance,
             total_earnings=total_earnings,
             tax_deductions=tax_deductions,
             other_deductions=other_deductions,
-            leave_deductions=leave_deduction,
+            leave_deductions=leave_deduction_from_attendance,
             total_deductions=total_deductions,
             net_salary=net_salary,
         )
