@@ -206,9 +206,17 @@ class AttendanceCalenderViewSet(APIView):
                     constants.PENDING,
                     constants.PAID_LEAVE,
                     constants.UNPAID_LEAVE,
+                    constants.HALFDAY_LEAVE,
                 ]
             )
         )
+        half_day_count = len(
+            attendances.filter(status=constants.HALFDAY_LEAVE, is_halfday_paid=False)
+        )
+        half_day_count_paid = len(
+            attendances.filter(status=constants.HALFDAY_LEAVE, is_halfday_paid=True)
+        )
+        total_attendance += (half_day_count * 0.5) + (half_day_count_paid * 1)
         attendance_month_wise.append(
             {
                 "official_working_days": official_working_days,
