@@ -103,6 +103,10 @@ def update_employee_absent_leaves():
         leave_balance_objects.save()
         print(f"==>> leave_balance_updated: {leave_balance_objects}")
 
+    models.Leave.objects.filter(
+        employee__in=employees_left, from_date=today, leave_type=leave_type
+    ).update(status=constants.REJECTED)
+
     print("done------------==============")
     return "Absent Employees attendance added successfully..."
 
