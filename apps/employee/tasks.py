@@ -694,7 +694,9 @@ def leave_balance_update_after_probation():
 @shared_task
 def notify_employee_for_daily_report():
     today = timezone.now().date()
-    employees = models.Users.objects.filter(role="employee", is_active=True)
+    employees = models.Users.objects.filter(
+        role=constants.EMPLOYEE_USER, is_active=True
+    )
     for employee in employees:
         daily_report = models.DailyReport.objects.filter(
             employee=employee, report_date=today
