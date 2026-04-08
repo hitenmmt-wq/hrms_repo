@@ -135,9 +135,7 @@ class AdminDashboardView(APIView):
                 "-date"
             )[:5]
 
-            total_employees_active = total_employees.filter(
-                role=constants.EMPLOYEE_USER
-            )[:5]
+            total_employees_active = total_employees[:5]
             team_monthly_working_hour = {}
             for employee in total_employees_active:
                 team_monthly_working_hour[employee.id] = employee_monthly_working_hours(

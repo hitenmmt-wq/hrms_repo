@@ -103,6 +103,10 @@ def update_employee_absent_leaves():
         leave_balance_objects.save()
         print(f"==>> leave_balance_updated: {leave_balance_objects}")
 
+    models.Leave.objects.filter(
+        employee__in=employees_left, from_date=today, leave_type=leave_type
+    ).update(status=constants.REJECTED)
+
     print("done------------==============")
     return "Absent Employees attendance added successfully..."
 
@@ -690,7 +694,9 @@ def leave_balance_update_after_probation():
 @shared_task
 def notify_employee_for_daily_report():
     today = timezone.now().date()
-    employees = models.Users.objects.filter(role="employee", is_active=True)
+    employees = models.Users.objects.filter(
+        role=constants.EMPLOYEE_USER, is_active=True
+    )
     for employee in employees:
         daily_report = models.DailyReport.objects.filter(
             employee=employee, report_date=today
