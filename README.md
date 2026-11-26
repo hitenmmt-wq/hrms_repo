@@ -6,6 +6,8 @@
 
 A comprehensive Human Resource Management System built with Django, featuring real-time chat, attendance tracking, leave management, payroll processing, and automated background tasks.
 
+> **Local setup (Docker + frontend + host Postgres/Redis):** see [SETUP.md](../SETUP.md) at the repository root.
+
 ## 🚀 Features
 
 ### Core Modules

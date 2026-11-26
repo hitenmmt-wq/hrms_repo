@@ -233,9 +233,11 @@ class ResetPassword(APIView):
     def post(self, request):
         """Send password reset link to user's email address."""
         email = request.data.get("email")
-        try:
-            user = models.Users.objects.filter(email=email).first()
-        except models.Users.DoesNotExist:
+        if not email:
+            return Response({"error": "Email is required"}, status=400)
+
+        user = models.Users.objects.filter(email=email).first()
+        if user is None:
             return Response(
                 {"error": "User with this email does not exist"}, status=404
             )
@@ -279,6 +281,9 @@ class ConfirmResetPassword(APIView):
             user = models.Users.objects.filter(pk=user_id).first()
         except Exception as e:
             return Response({"error": f"Invalid reset link, {e}"}, status=400)
+
+        if user is None:
+            return Response({"error": "Invalid reset link"}, status=400)
 
         if not PasswordResetTokenGenerator().check_token(user, token):
             return Response({"error": "Invalid or expired token"}, status=400)

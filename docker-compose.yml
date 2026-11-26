@@ -1,66 +1,30 @@
 
-
 services:
+  # App services use host network: same PostgreSQL (127.0.0.1:5432) and Redis
+  # (127.0.0.1:6379) as local runserver. No Docker Postgres/Redis containers.
   web:
     build: .
+    network_mode: host
     command: daphne -b 0.0.0.0 -p 8000 hrms.asgi:application
     volumes:
       - .:/app
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
-    ports:
-      - "8000:8000"
-    depends_on:
-      redis:
-        condition: service_healthy
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
-    #   redis:
-    #     condition: service_healthy
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
-      DATABASE_NAME: hrms_db_demo1
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
       TZ: "Asia/Kolkata"
     env_file:
       - .env.docker
 
-
-  redis:
-    image: redis:alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    environment:
-      TZ: "Asia/Kolkata"
-
   celery:
     build: .
+    network_mode: host
     command: celery -A hrms worker --loglevel=info
     volumes:
       - .:/app
-    depends_on:
-      redis:
-        condition: service_healthy
-      # - web
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
-      DATABASE_NAME: hrms_db_demo1
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
       TZ: "Asia/Kolkata"
     env_file:
@@ -69,22 +33,12 @@ services:
 
   celery-beat:
     build: .
+    network_mode: host
     command: celery -A hrms beat --loglevel=info
     volumes:
       - .:/app
-    depends_on:
-      redis:
-        condition: service_healthy
-      # - web
     environment:
       DJANGO_SETTINGS_MODULE: hrms.settings
-      DATABASE_NAME: hrms_db_demo1
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
       SECRET_KEY: django-insecure-u!bn7xcz3ad02@n0f&v-l@lq+=(d&jt@f!(yro=@%=n#%3n&4_
       TZ: "Asia/Kolkata"
     env_file:
@@ -94,7 +48,9 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./staticfiles:/app/staticfiles
@@ -102,6 +58,3 @@ services:
     depends_on:
       - web
     restart: unless-stopped
-
-volumes:
-  postgres_data:
