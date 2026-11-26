@@ -254,13 +254,20 @@ DEFAULT_CURRENCY = "INR"
 CURRENCY_SYMBOL = "₹"
 
 # Email Configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_PORT = os.environ.get("EMAIL_PORT")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or "noreply@localhost"
+
+# Dev safety: placeholder SMTP hosts break Celery payslip mail on some DNS networks.
+_PLACEHOLDER_EMAIL_HOSTS = frozenset({"", "smtp.example.com"})
+if DEBUG and (EMAIL_HOST or "") in _PLACEHOLDER_EMAIL_HOSTS:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # CELERY configuration

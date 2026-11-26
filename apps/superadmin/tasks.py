@@ -5,9 +5,13 @@ Handles background email sending with support for HTML content,
 PDF attachments, and customizable email parameters for the HRMS system.
 """
 
+import logging
+
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -45,4 +49,11 @@ def send_email_task(
     if html_body:
         mail.attach_alternative(html_body, "text/html")
 
-    mail.send()
+    try:
+        sent = mail.send(fail_silently=False)
+    except Exception as exc:
+        logger.exception("send_email_task failed to=%s subject=%s", to_email, subject)
+        if settings.DEBUG:
+            return 0
+        raise exc from exc
+    return sent

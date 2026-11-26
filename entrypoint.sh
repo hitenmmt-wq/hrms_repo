@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Waiting for Redis..."
-while ! nc -z redis 6379; do
+REDIS_HOST="${REDIS_HOST:-redis}"
+REDIS_PORT="${REDIS_PORT:-6379}"
+
+echo "Waiting for Redis at ${REDIS_HOST}:${REDIS_PORT}..."
+while ! nc -z "$REDIS_HOST" "$REDIS_PORT"; do
   echo "Redis not ready, waiting..."
   sleep 2
 done
