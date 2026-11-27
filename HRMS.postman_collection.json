@@ -1,0 +1,5674 @@
+{
+	"info": {
+		"_postman_id": "2c701fee-9ad8-47cc-bcdf-a15a03fc4647",
+		"name": "HRMS",
+		"description": "### Welcome to Postman! This is your first collection.\n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests  \n• Test your API in real-world scenarios  \n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50710047",
+		"_collection_link": "https://hiten-mmt-6660324.postman.co/workspace/Hiten-Joshi's-Workspace~cb35216b-dcc0-445c-8123-706e3c7911ca/collection/50710047-2c701fee-9ad8-47cc-bcdf-a15a03fc4647?action=share&source=collection_link&creator=50710047"
+	},
+	"item": [
+		{
+			"name": "Custom script",
+			"item": [
+				{
+					"name": "custom script",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}superadmin/custom_script/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"custom_script",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "photo get",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{live_server}}media/profile/IMG_20250114_222427.jpg",
+							"host": [
+								"{{live_server}}media"
+							],
+							"path": [
+								"profile",
+								"IMG_20250114_222427.jpg"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "admin count data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/admin_dashboard/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_dashboard",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "employee count data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/employee_dashboard/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee_dashboard",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "present employees",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/employee/present_employees/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								"present_employees",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "absent employees",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/employee/absent_employees/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								"absent_employees",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Holiday",
+			"item": [
+				{
+					"name": "List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/holiday/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"holiday",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Uttrayan",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2025-12-24",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"mojjj\",\r\n    \"date\": \"2025-12-28\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/holiday/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"holiday",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NDM3NzYzLCJpYXQiOjE3NjU0MzU5NjMsImp0aSI6Ijc2YzYwZTJmMDRlNzRjYWM5ZjAzYjcyZDQxZTBkMjE4IiwidXNlcl9pZCI6IjEifQ.3XAg9ltLgJQg0w8y1hCqsabczO2nlFokEyOhJXtI4gY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/holiday/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"holiday",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/holiday/12/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"holiday",
+								"12",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/holiday/17/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"holiday",
+								"17",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Department",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDM2MDg0LCJpYXQiOjE3NjU5NDk2ODQsImp0aSI6ImU1MjExNDgzZWQxNzQwYjZhMDMwOWE3MDUxYTk1OWI0IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.U1I0lor-ISaQ-v76l1-L1iBSqEhSgEid_2JExSI-iu0",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"SEO\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/department/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"department",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/department/?name=Developer",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"department",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Developer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NDM0MjA0LCJpYXQiOjE3NjU0MzI0MDQsImp0aSI6IjFmYjE5ZTdjYTEyYzRlNzBiMWU3MTBiOTZkNjIzNjIyIiwidXNlcl9pZCI6IjEifQ.TpYetsCJaCIrE3nrsaevR8ViB5hI5hnVcQi86NNtkUY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"kuch nai.....\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}adminapp/department/3/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"department",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NDM0MjA0LCJpYXQiOjE3NjU0MzI0MDQsImp0aSI6IjFmYjE5ZTdjYTEyYzRlNzBiMWU3MTBiOTZkNjIzNjIyIiwidXNlcl9pZCI6IjEifQ.TpYetsCJaCIrE3nrsaevR8ViB5hI5hnVcQi86NNtkUY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/department/3/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"department",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1MzY1ODA2LCJpYXQiOjE3NjUzNjQwMDYsImp0aSI6IjkzOWRhODkzNTExNDQyYWE5MjZlMTk4NTk3OTE0Mzk5IiwidXNlcl9pZCI6IjEifQ.2hWAcgaFcK_slv6E6tq0NxtKiwmaGwSBUJQbz5vLu4Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}adminapp/department/2/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"department",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Announcement",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/announcement/?title=Holi&page=",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"announcement",
+								""
+							],
+							"query": [
+								{
+									"key": "title",
+									"value": "Holi"
+								},
+								{
+									"key": "page",
+									"value": ""
+								},
+								{
+									"key": "description",
+									"value": "Valentine’s",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\" : \"announcement new new nesdsdsddw\",\r\n    \"date\": \"2025-12-17\",\r\n    \"description\":\"description 2\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/announcement/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"announcement",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\" : \"New announcement update\",\r\n    \"date\": \"2025-12-14\",\r\n    \"description\":\"description\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/announcement/7/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"announcement",
+								"7",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1ODY0NTI5LCJpYXQiOjE3NjU3NzgxMjksImp0aSI6IjAxZTExMjIwYmFlMDQ3Yjc4OWYzMTU0NjljNmE3MTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.JpIsU7QBrGbLEu-gAHmhojlrlEO3a0ygdNn35xLnh5M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}adminapp/announcement/3/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"announcement",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "position",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}adminapp/position/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"position",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDM2MDg0LCJpYXQiOjE3NjU5NDk2ODQsImp0aSI6ImU1MjExNDgzZWQxNzQwYjZhMDMwOWE3MDUxYTk1OWI0IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.U1I0lor-ISaQ-v76l1-L1iBSqEhSgEid_2JExSI-iu0",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"react developer\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/position/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"position",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"Web Developer\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}adminapp/position/1/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"position",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}adminapp/position/3/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"position",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"admin@example.com\",\r\n    \"password\":\"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/auth/login/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login 2",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"ayushi.mmt@gmail.com\",\r\n    \"password\":\"Ayushi@982001\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/auth/login/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2NzY3OTQ2NywiaWF0IjoxNzY3MDc0NjY3LCJqdGkiOiI3ZTc1MjdhYzVjZWQ0NjJhYmNmNmI2ODUyMDBhN2RkNSIsInVzZXJfaWQiOiIxIiwicm9sZSI6ImFkbWluIn0.B0uJt5H5Of-U32CeLis8bCFHMUjZHasBq69sUCstMVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/auth/token/refresh/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"auth",
+								"token",
+								"refresh",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User access token data",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NTQ0NDE2LCJpYXQiOjE3NjU0NTgwMTYsImp0aSI6IjM1NzJkMjg1M2Y0MTQ1N2Y4Yjg4MThiMTA2MjNmZTRhIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ._ioKY5qfyuDH6zQTRssdV8kxsuF3hFsdLZWxoJkMAdU\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/auth/token/user/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"auth",
+								"token",
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin register",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"admin4@gmail.com\",\r\n    \"role\":\"admin\",\r\n    \"password\":\"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/admin_register/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user register",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1ODY0NTI5LCJpYXQiOjE3NjU3NzgxMjksImp0aSI6IjAxZTExMjIwYmFlMDQ3Yjc4OWYzMTU0NjljNmE3MTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.JpIsU7QBrGbLEu-gAHmhojlrlEO3a0ygdNn35xLnh5M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"empoyee@gmail.com\",\r\n    \"role\":\"employee\",\r\n    \"password\":\"employee\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}admin/admin_register/",
+							"host": [
+								"{{local}}admin"
+							],
+							"path": [
+								"admin_register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDU2OTQzLCJpYXQiOjE3NjU0NTIxNDMsImp0aSI6ImQzMzQxMGZhMzNlMTRkNTVhNjQ1YzAxMTc5ZDU0N2VjIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.gWClzRrAcH8x9UqFl7GL0lzTHYmg5SuNOEEWQkcq_4o",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"old_password\" : \"admin2\",\r\n    \"new_password\" : \"admin\",\r\n    \"confirm_new_pass\" : \"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/auth/change_password/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"auth",
+								"change_password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"harpesh.mmt@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{live_server}}superadmin/auth/reset_password/",
+							"host": [
+								"{{live_server}}superadmin"
+							],
+							"path": [
+								"auth",
+								"reset_password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "confirm reset password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1ODY0NTI5LCJpYXQiOjE3NjU3NzgxMjksImp0aSI6IjAxZTExMjIwYmFlMDQ3Yjc4OWYzMTU0NjljNmE3MTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.JpIsU7QBrGbLEu-gAHmhojlrlEO3a0ygdNn35xLnh5M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"uid\": \"OA\",\r\n    \"token\" : \"d0v0io-0fa85e3cd5c7b858eeb8dec636bdcc63\",\r\n    \"new_password\" : \"123\",\r\n    \"confirm_password\" : \"123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}adminapp/auth/confirm_reset_password/",
+							"host": [
+								"{{local}}adminapp"
+							],
+							"path": [
+								"auth",
+								"confirm_reset_password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all active users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/profile/all_active_users/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"profile",
+								"all_active_users",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Super-Admin",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/admin_register/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"mehulvamja5@gmail.com\",\r\n    \"role\":\"admin\",\r\n    \"password\":\"Mehul@#555\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/admin_register/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"admin4@gmail.com\",\r\n    \"role\":\"admin\",\r\n    \"first_name\":\"admin_first\",\r\n    \"last_name\":\"admin_last\",\r\n    \"birthdate\":null,\r\n    \"joining_date\":null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/admin_register/14/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_register",
+								"14",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}superadmin/admin_register/14/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"admin_register",
+								"14",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin activation link",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/activate//",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"activate",
+								"",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employee",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"harpeshpatel512@gmail.com\",\r\n    \"first_name\" : \"fsdfd\",\r\n    \"last_name\" : \"ukyu\",\r\n    \"role\" : \"employee\",\r\n    \"department\" : 1,\r\n    \"position\" : 1,\r\n    \"joining_date\" : \"2025-12-12\",\r\n    \"password\" : \"employee011\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/employee/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/employee/?first_name=sure&page=1",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								""
+							],
+							"query": [
+								{
+									"key": "last_name",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "role",
+									"value": "employee",
+									"disabled": true
+								},
+								{
+									"key": "department",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "employee_id",
+									"value": "EMP25001",
+									"disabled": true
+								},
+								{
+									"key": "email",
+									"value": "employee06@gmail.com",
+									"disabled": true
+								},
+								{
+									"key": "is_active",
+									"value": "false",
+									"disabled": true
+								},
+								{
+									"key": "first_name",
+									"value": "sure"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\" : \"employee06@gmail.com\",\r\n    \"first_name\" : \"dfd\",\r\n    \"last_name\" : \"wewe\",\r\n    \"role\" : \"employee\",\r\n    \"department\" : 1,\r\n    \"position\" : \"HR junior\",\r\n    \"joining_date\" : \"2025-12-12\",\r\n    \"employee_id\" : \"EMP25001\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employeeapp/employee/18/",
+							"host": [
+								"{{local}}employeeapp"
+							],
+							"path": [
+								"employee",
+								"18",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employeeapp/employee/17/",
+							"host": [
+								"{{local}}employeeapp"
+							],
+							"path": [
+								"employee",
+								"17",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activate employee",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee_id\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/employee/activate_employee/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								"activate_employee",
+								""
+							],
+							"query": [
+								{
+									"key": "employee_id",
+									"value": "2",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deactivate employee",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee_id\" : 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/employee/deactivate_employee/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"employee",
+								"deactivate_employee",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "get data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{live_server}}superadmin/profile/1/",
+							"host": [
+								"{{live_server}}superadmin"
+							],
+							"path": [
+								"profile",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"first_name\": \"first\",\r\n    \"last_name\": \"last43435\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/profile/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"profile",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Leaves Balance",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{live_server}}employee/leave_balance/?employee=2",
+							"host": [
+								"{{live_server}}employee"
+							],
+							"path": [
+								"leave_balance",
+								""
+							],
+							"query": [
+								{
+									"key": "employee",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTQwMjk0LCJpYXQiOjE3NjYwNTM4OTQsImp0aSI6ImQ3YTk4MzY2MWY1NDQ1ZmQ5ZDJiODkxZTI2NDJiYzU3IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.8noF7YhJuKaeKeJ7_yF_mQVKtyoFlL1BNUqHKKWJXrc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 2,\r\n    \"pl\" : 0,\r\n    \"sl\" : 0,\r\n    \"lop\" : null,\r\n    \"year\" : 2025\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/leave_balance/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"leave_balance",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTQwMjk0LCJpYXQiOjE3NjYwNTM4OTQsImp0aSI6ImQ3YTk4MzY2MWY1NDQ1ZmQ5ZDJiODkxZTI2NDJiYzU3IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.8noF7YhJuKaeKeJ7_yF_mQVKtyoFlL1BNUqHKKWJXrc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 2,\r\n    \"pl\" : 12,\r\n    \"sl\" : 4,\r\n    \"lop\" : null,\r\n    \"year\" : 2025\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/leave_balance/11/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"leave_balance",
+								"11",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY1NjAyMTI0LCJpYXQiOjE3NjU1MTU3MjQsImp0aSI6IjIyZDUxZTFmZDYzNTQ4ZmNhNjZkZGExZTU2NTUxMTFlIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.Asj8L6zDv9C8EPxrkLHlVTD-80Pwk1ZQqV-x6m63hrg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/leave_balance/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"leave_balance",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Leave Type",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/leave_type/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_type",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"Half Day Leave\",\r\n    \"code\":\"half_day\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave_type/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_type",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"Half Day Leave23456\",\r\n    \"code\":\"half_day\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave_type/3/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_type",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave_type/3/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_type",
+								"3",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Apply Leave",
+			"item": [
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/apply_leave/?month=2&year=2026",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"apply_leave",
+								""
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"disabled": true
+								},
+								{
+									"key": "from_date",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "to_date",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "employee_email",
+									"value": "joshiten010@gmail.com",
+									"disabled": true
+								},
+								{
+									"key": "month",
+									"value": "2"
+								},
+								{
+									"key": "year",
+									"value": "2026"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 2,\r\n    \"leave_type\" : 3,\r\n    \"from_date\" : \"2026-02-12\",\r\n    \"to_date\" : \"2026-02-16\",\r\n    \"reason\" : \"Janoi function\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/apply_leave/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"apply_leave",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 2,\r\n    \"leave_type\" : 3,\r\n    \"from_date\" : \"2026-02-03\",\r\n    \"to_date\" : \"2026-02-06\",\r\n    \"reason\" : \"Janoi function\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/apply_leave/35/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"apply_leave",
+								"35",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/apply_leave/42/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"apply_leave",
+								"42",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin leave approve",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"response_text\" : \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave/17/approve/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave",
+								"17",
+								"approve",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin leave reject",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTQwMjk0LCJpYXQiOjE3NjYwNTM4OTQsImp0aSI6ImQ3YTk4MzY2MWY1NDQ1ZmQ5ZDJiODkxZTI2NDJiYzU3IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.8noF7YhJuKaeKeJ7_yF_mQVKtyoFlL1BNUqHKKWJXrc",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"response_text\" : \"already much holiday taken sooo..sorry\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave/1/reject/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave",
+								"1",
+								"reject",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "employee's leave list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1NjUzMjExLCJpYXQiOjE3NzU1NjY4MTEsImp0aSI6IjYzNGNkYTZmNjE3OTRkYmZhNzZkYWNlMWQ2OTIwZGIwIiwidXNlcl9pZCI6IjI1Iiwicm9sZSI6ImVtcGxveWVlIn0.Zk2krQsCCR8ZTYf9TsiCNWKBKPClw0ZQ0BsBaQLhJzU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/apply_leave/employee_leave_list/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"apply_leave",
+								"employee_leave_list",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Leave balance details",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee_id\" : 2,\r\n    \"start_date\" : \"2026-01-01\",\r\n    \"end_date\" : \"2026-01-31\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/leave_balance_details/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_balance_details",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "weekend_holiday_list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/leave_type/weekend_holiday_list/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"leave_type",
+								"weekend_holiday_list",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employee Attendance",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check in",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/check_in/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"check_in",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check out",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/83/check_out/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"83",
+								"check_out",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 1,\r\n    \"date\" : \"2025-12-12\",\r\n    \"checkin_time\" : \"10:50\",\r\n    \"checkout_time\" : \"11:50\",\r\n    \"total_time\" : null\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/25/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"25",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Employee's Attendance list (ID)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/5/particular_employee/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"5",
+								"particular_employee",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Employee's Attendance List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/37/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"37",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "attendance data fetch",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{live_server}}attendance/employee_attendance/57/",
+							"host": [
+								"{{live_server}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"57",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Attendance summary with break logs",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/get_attendance_summary/?attendance_id=106",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"get_attendance_summary",
+								""
+							],
+							"query": [
+								{
+									"key": "attendance_id",
+									"value": "106"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "attendance with calender",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}attendance/attendance_calender/?employee_id=2&month=2&year=2026",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"attendance_calender",
+								""
+							],
+							"query": [
+								{
+									"key": "employee_id",
+									"value": "2"
+								},
+								{
+									"key": "month",
+									"value": "2"
+								},
+								{
+									"key": "year",
+									"value": "2026"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Employee Break daily logs",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/daily_logs/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"daily_logs",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pause work",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"attendance\" : 1,\r\n    \"pause_time\" : \"12:10\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/57/pause/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"57",
+								"pause",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resume work",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"attendance\" : 1,\r\n    \"resume_time\" : \"12:20\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}attendance/employee_attendance/57/resume/",
+							"host": [
+								"{{local}}attendance"
+							],
+							"path": [
+								"employee_attendance",
+								"57",
+								"resume",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "conversation create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"type\": \"private\",\r\n  \"participants\": [2]\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}chat/conversations/create/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"conversations",
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "converation read",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}chat/conversations/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"conversations",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "conversation delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}chat/conversations/3/delete/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"conversations",
+								"3",
+								"delete",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create chat/media messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "media",
+									"type": "file",
+									"src": "/C:/Users/mmt/OneDrive/Pictures/image_2.jpg"
+								},
+								{
+									"key": "conversation",
+									"value": "49",
+									"type": "text"
+								},
+								{
+									"key": "msg_type",
+									"value": "file",
+									"type": "text"
+								},
+								{
+									"key": "text",
+									"value": "Hello there test message",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{live_server}}chat/upload/",
+							"host": [
+								"{{live_server}}chat"
+							],
+							"path": [
+								"upload",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add reaction to message",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "remove reaction to message",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "reply to message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "conversation",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "user_id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "text",
+									"value": "bolo su keh che",
+									"type": "text"
+								},
+								{
+									"key": "msg_type",
+									"value": "text",
+									"type": "text"
+								},
+								{
+									"key": "reply_to_id",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{local}}chat/upload/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"upload",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "read particular conversation messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}chat/get_conversation_messages/7/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"get_conversation_messages",
+								"7",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "message read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{local}}chat/message_read/173/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"message_read",
+								"173",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "remaining users",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}chat/remaining_users/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"remaining_users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "conversation remaining users list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}chat/remaining_users/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"remaining_users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "group_photo_upload",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "profile",
+									"type": "file",
+									"src": "/C:/Users/mmt/OneDrive/Pictures/134009157574680969.jpg"
+								},
+								{
+									"key": "conversation_id",
+									"value": "49",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{local}}chat/group_profile_upload/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"group_profile_upload",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get conversation messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}chat/get_conversation_messages/2/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"get_conversation_messages",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Common Data",
+			"item": [
+				{
+					"name": "get",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/common_data/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"common_data",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "company_logo",
+									"type": "file",
+									"src": "/C:/Users/mmt/OneDrive/Pictures/134003096815290688.jpg"
+								},
+								{
+									"key": "handbook_file",
+									"type": "file",
+									"src": "/C:/Users/mmt/Downloads/MMT handbook 2026 1.pdf"
+								},
+								{
+									"key": "policy_file",
+									"type": "file",
+									"src": "/C:/Users/mmt/Downloads/AWS.docx"
+								},
+								{
+									"key": "name",
+									"value": "HRMS",
+									"type": "text"
+								},
+								{
+									"key": "company_link",
+									"value": "www.youtube.com",
+									"type": "text"
+								},
+								{
+									"key": "pl_leave",
+									"value": "56",
+									"type": "text"
+								},
+								{
+									"key": "sl_leave",
+									"value": "23",
+									"type": "text"
+								},
+								{
+									"key": "lop_leave",
+									"value": "0",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{local}}superadmin/common_data/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"common_data",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{local}}superadmin/common_data/update/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"common_data",
+								"update",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/common_data/delete/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"common_data",
+								"delete",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get partial data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/common_data/partial",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"common_data",
+								"partial"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Setting Data",
+			"item": [
+				{
+					"name": "get",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDU4NjU1LCJpYXQiOjE3NjU5NzIyNTUsImp0aSI6IjM2MDZiYzNhYzVhYTQ4N2Y4NDdjYjRiZjk1YmZiNTlkIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.sXZtjJiT2rWdLzmB5h84CZTLEF_lG1OlDlAaiCWbcaU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/setting_data/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"setting_data",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDU4NjU1LCJpYXQiOjE3NjU5NzIyNTUsImp0aSI6IjM2MDZiYzNhYzVhYTQ4N2Y4NDdjYjRiZjk1YmZiNTlkIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.sXZtjJiT2rWdLzmB5h84CZTLEF_lG1OlDlAaiCWbcaU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email_host\" : \"email_host\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/setting_data/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"setting_data",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDU4NjU1LCJpYXQiOjE3NjU5NzIyNTUsImp0aSI6IjM2MDZiYzNhYzVhYTQ4N2Y4NDdjYjRiZjk1YmZiNTlkIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.sXZtjJiT2rWdLzmB5h84CZTLEF_lG1OlDlAaiCWbcaU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/setting_data/delete/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"setting_data",
+								"delete",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MDU4NjU1LCJpYXQiOjE3NjU5NzIyNTUsImp0aSI6IjM2MDZiYzNhYzVhYTQ4N2Y4NDdjYjRiZjk1YmZiNTlkIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.sXZtjJiT2rWdLzmB5h84CZTLEF_lG1OlDlAaiCWbcaU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email_host\" : \"updated...5363456.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/setting_data/update/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"setting_data",
+								"update",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payslip",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTIxNjM0LCJpYXQiOjE3NjYwMzUyMzQsImp0aSI6Ijk2Zjg2YjYxZTljNTQwNDc4ZDlkNmVkZDYyMTJmYWFjIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.-Fsk293BcI-n4vs5TxN9w8-BRBJ9pPoAzDqy79dolTU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/pay_slip/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTIxNjM0LCJpYXQiOjE3NjYwMzUyMzQsImp0aSI6Ijk2Zjg2YjYxZTljNTQwNDc4ZDlkNmVkZDYyMTJmYWFjIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.-Fsk293BcI-n4vs5TxN9w8-BRBJ9pPoAzDqy79dolTU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 2,\r\n    \"start_date\" : \"2025-12-01\",\r\n    \"end_date\" : \"2025-12-31\",\r\n    \"basic_salary\" : \"12500\",\r\n    \"hr_allowance\" : \"7500\",\r\n    \"special_allowance\" : \"5000\",\r\n    \"tax_deductions\" : \"200\",\r\n    \"leave_deductions\" : \"0\",\r\n    \"other_deductions\" : \"100\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/pay_slip/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTIxNjM0LCJpYXQiOjE3NjYwMzUyMzQsImp0aSI6Ijk2Zjg2YjYxZTljNTQwNDc4ZDlkNmVkZDYyMTJmYWFjIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.-Fsk293BcI-n4vs5TxN9w8-BRBJ9pPoAzDqy79dolTU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\" : 1,\r\n    \"start_date\" : \"2025-12-01\",\r\n    \"end_date\" : \"2025-12-31\",\r\n    \"basic_salary\" : \"12500\",\r\n    \"hr_allowance\" : \"7500\",\r\n    \"special_allowance\" : \"5000\",\r\n    \"tax_deductions\" : \"400\",\r\n    \"other_deductions\" : \"100\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/pay_slip/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MTIxNjM0LCJpYXQiOjE3NjYwMzUyMzQsImp0aSI6Ijk2Zjg2YjYxZTljNTQwNDc4ZDlkNmVkZDYyMTJmYWFjIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.-Fsk293BcI-n4vs5TxN9w8-BRBJ9pPoAzDqy79dolTU",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/pay_slip/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get single data",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjM0MzA4LCJpYXQiOjE3NjYxNDc5MDgsImp0aSI6ImE0MzIwY2RiMjc2NzRmY2VhOTIzM2Q0MGJhMzU1MDk5IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.S5wrC7yedZlMHVIp9Z4_NgTFe4iifyQP6EIwgXu8LcY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/pay_slip/5/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"5",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get employee salary slip",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjM0MzA4LCJpYXQiOjE3NjYxNDc5MDgsImp0aSI6ImE0MzIwY2RiMjc2NzRmY2VhOTIzM2Q0MGJhMzU1MDk5IiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.S5wrC7yedZlMHVIp9Z4_NgTFe4iifyQP6EIwgXu8LcY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/pay_slip/employee_payslips/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"employee_payslips",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check leave status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee_id\": 2,\r\n    \"start_date\": \"2026-01-01\",\r\n    \"end_date\": \"2026-01-31\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/pay_slip/get_leaves_data_payslip/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"get_leaves_data_payslip",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "generate manual payslip",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee_id\": 19,\r\n    \"start_date\": \"2026-01-01\",\r\n    \"end_date\": \"2026-01-31\",\r\n    \"month_name\" : \"January 2026\",\r\n    \"days\": 22,\r\n    \"month\":1,\r\n    \"year\":2026,\r\n    \"basic_salary\": 22,\r\n    \"hr_allowance\": 22,\r\n    \"special_allowance\": 22,\r\n    \"total_earnings\": 22,\r\n    \"tax_deductions\": 22,\r\n    \"other_deductions\": 22,\r\n    \"leave_deduction\": 22,\r\n    \"total_deductions\": 22,\r\n    \"net_salary\": 22\r\n}   ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/pay_slip/generate_manual_payslip/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"pay_slip",
+								"generate_manual_payslip",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notification-Type",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notification_type/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notification_type",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjA5Njg4LCJpYXQiOjE3NjYxMjMyODgsImp0aSI6ImZmYzljZDI4MmIwOTRkMjliMTA3OGI5NTM2MzZhOTYwIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.IjPdf8d9ptr9X3Q4GJvwNcbEw13WcXnVcd3uzDZvVKs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"Special\",\r\n    \"code\":\"special\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}notify/notification_type/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notification_type",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjA5Njg4LCJpYXQiOjE3NjYxMjMyODgsImp0aSI6ImZmYzljZDI4MmIwOTRkMjliMTA3OGI5NTM2MzZhOTYwIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.IjPdf8d9ptr9X3Q4GJvwNcbEw13WcXnVcd3uzDZvVKs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"tytyt\",\r\n    \"code\":\"rtrt\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}notify/notification_type/4/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notification_type",
+								"4",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjA5Njg4LCJpYXQiOjE3NjYxMjMyODgsImp0aSI6ImZmYzljZDI4MmIwOTRkMjliMTA3OGI5NTM2MzZhOTYwIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.IjPdf8d9ptr9X3Q4GJvwNcbEw13WcXnVcd3uzDZvVKs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}notify/notification_type/4/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notification_type",
+								"4",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notification",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"recipient\" : 1,\r\n    \"actor\" : 2,\r\n    \"notification_type\" : 1,\r\n    \"title\" : \"title 1\",\r\n    \"message\" : \"notify...... 1\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}notify/notifications/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjA5Njg4LCJpYXQiOjE3NjYxMjMyODgsImp0aSI6ImZmYzljZDI4MmIwOTRkMjliMTA3OGI5NTM2MzZhOTYwIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.IjPdf8d9ptr9X3Q4GJvwNcbEw13WcXnVcd3uzDZvVKs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/2/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mark read notification",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/6/read/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								"6",
+								"read",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mark all read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2MjA5Njg4LCJpYXQiOjE3NjYxMjMyODgsImp0aSI6ImZmYzljZDI4MmIwOTRkMjliMTA3OGI5NTM2MzZhOTYwIiwidXNlcl9pZCI6IjEiLCJyb2xlIjoiYWRtaW4ifQ.IjPdf8d9ptr9X3Q4GJvwNcbEw13WcXnVcd3uzDZvVKs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/mark_all_read/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								"mark_all_read",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get unread count",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/unread_count/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								"unread_count",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "notification for particular employee",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}notify/notifications/employee_particular_notification/",
+							"host": [
+								"{{local}}notify"
+							],
+							"path": [
+								"notifications",
+								"employee_particular_notification",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Download payslip",
+			"item": [
+				{
+					"name": "Employee payslip pdf download",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}employee/payslip_download/138/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"payslip_download",
+								"138",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI-chatbot conversations",
+			"item": [
+				{
+					"name": "get",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{local}}ai/conversations/",
+							"host": [
+								"{{local}}ai"
+							],
+							"path": [
+								"conversations",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ai quick_query",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"message\": \"Hello, can you help me?\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}ai/conversations/quick_query/",
+							"host": [
+								"{{local}}ai"
+							],
+							"path": [
+								"conversations",
+								"quick_query",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ticket Issue",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"title\":\"PC issue\",\r\n    \"description\":\"The PC is not working properly.\",\r\n    \"status\":\"open\",\r\n    \"priority\":\"high\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/ticket_issue/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"ticket_issue",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}employee/ticket_issue/?page=1&status=assigned",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"ticket_issue",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "title",
+									"value": "updo",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "assigned"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"title\":\"PC issue updated\",\r\n    \"description\":\"The PC is not working properly.\",\r\n    \"status\":\"assigned\",\r\n    \"priority\":\"high\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/ticket_issue/1/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"ticket_issue",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}employee/ticket_issue/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"ticket_issue",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Item (gadgets)",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"keyboard\",\r\n    \"quantity\":20,\r\n    \"description\":\"A small electronic keyboard, bought from XYZ store\",\r\n    \"purchased_at\":\"2026-03-03\",\r\n    \"purchased_by\":2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}employee/item/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"keyboard updated\",\r\n    \"quantity\":20,\r\n    \"description\":\"A small electronic keyboard, bought from XYZ store\",\r\n    \"purchased_at\":\"2026-03-03\",\r\n    \"purchased_by\":2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}employee/item/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inventory Detail",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"item\":1,\r\n    \"serial_number\": \"103\",\r\n    \"purchase_date\":\"2022-01-01\",\r\n    \"status\":\"available\",\r\n    \"condition\":\"good\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/inventory_detail/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"inventory_detail",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"item\":1,\r\n    \"serial_number\": 101,\r\n    \"purchase_date\":\"2022-01-01\",\r\n    \"status\":\"available\",\r\n    \"condition\":\"good\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/inventory_detail/?page=1&serial_number=101&condition=working&status=unavailable",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"inventory_detail",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "serial_number",
+									"value": "101"
+								},
+								{
+									"key": "condition",
+									"value": "working"
+								},
+								{
+									"key": "status",
+									"value": "unavailable"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"item\":1,\r\n    \"serial_number\": \"101\",\r\n    \"purchase_date\":\"2022-01-01\",\r\n    \"status\":\"available\",\r\n    \"condition\":\"working\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/inventory_detail/1/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"inventory_detail",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"item\":1,\r\n    \"serial_number\": \"101\",\r\n    \"purchase_date\":\"2022-01-01\",\r\n    \"status\":\"available\",\r\n    \"condition\":\"working\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/inventory_detail/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"inventory_detail",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Item Assignment",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"assigned_date\":\"2022-01-01\",\r\n    \"expected_return_date\":\"2022-01-01\",\r\n    \"actual_return_date\":\"2022-01-01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item_assignment/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_assignment",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"assigned_date\":\"2022-01-01\",\r\n    \"expected_return_date\":\"2022-01-01\",\r\n    \"actual_return_date\":\"2022-01-01\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/item_assignment/?page=1&assigned_date=2026-03-27&expected_return_date&actual_return_date&is_active&inventory_item&employee",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_assignment",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "assigned_date",
+									"value": "2026-03-27"
+								},
+								{
+									"key": "expected_return_date",
+									"value": null
+								},
+								{
+									"key": "actual_return_date",
+									"value": null
+								},
+								{
+									"key": "is_active",
+									"value": null
+								},
+								{
+									"key": "inventory_item",
+									"value": null
+								},
+								{
+									"key": "employee",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"assigned_date\":\"2022-01-01\",\r\n    \"expected_return_date\":\"2022-05-02\",\r\n    \"actual_return_date\":\"2022-01-01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item_assignment/1/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_assignment",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"assigned_date\":\"2022-01-01\",\r\n    \"expected_return_date\":\"2022-05-02\",\r\n    \"actual_return_date\":\"2022-01-01\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/item_assignment/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_assignment",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Item History",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"action\": \"returned\",\r\n    \"date\":\"2023-04-10\",\r\n    \"notes\": \"the mouse is taken back from employee\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item_history/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_history",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"action\": \"returned\",\r\n    \"date\":\"2023-04-10\",\r\n    \"notes\": \"the mouse is taken back from employee\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/item_history/?page=1",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_history",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"action\": \"assigned\",\r\n    \"date\":\"2023-04-10\",\r\n    \"notes\": \"new update : the mouse is taken back from employee\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/item_history/1/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_history",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"inventory_item\":1,\r\n    \"employee\":2,\r\n    \"action\": \"assigned\",\r\n    \"date\":\"2023-04-10\",\r\n    \"notes\": \"new update : the mouse is taken back from employee\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/item_history/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"item_history",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"client\": 2,\r\n    \"title\":\"project 1\",\r\n    \"description\":\"description on project 1\",\r\n    \"manager\": 2,\r\n    \"team_members\": [3,13,14],\r\n    \"status\": \"active\",\r\n    \"start_date\":\"2023-01-01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/project/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"project",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"client 1\",\r\n    \"email\":\"client1@client.com\",\r\n    \"company_name\": \"company name\",\r\n    \"phone\": \"34567\",\r\n    \"website\": \"http://google.com\",\r\n    \"country\":\"India\"\r\n\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}superadmin/project/?page=1&title&client&start_date&status",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"project",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "title",
+									"value": null
+								},
+								{
+									"key": "client",
+									"value": null
+								},
+								{
+									"key": "start_date",
+									"value": null
+								},
+								{
+									"key": "status",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"client\": 2,\r\n    \"title\":\"project 1 update\",\r\n    \"description\":\"description on project 1\",\r\n    \"manager\": 2,\r\n    \"team_members\": [3,14],\r\n    \"status\": \"active\",\r\n    \"start_date\":\"2023-01-01\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/project/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"project",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{local}}superadmin/project/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"project",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Client",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"client 1\",\r\n    \"email\":\"client1@client.com\",\r\n    \"company_name\": \"company name\",\r\n    \"phone\": \"34567\",\r\n    \"website\": \"http://google.com\",\r\n    \"country\":\"India\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/client/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"client",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"client 1\",\r\n    \"email\":\"client1@client.com\",\r\n    \"company_name\": \"company name\",\r\n    \"phone\": \"34567\",\r\n    \"website\": \"http://google.com\",\r\n    \"country\":\"India\"\r\n\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}superadmin/client/?page&name&company_name&email&phone&website&country",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"client",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": null
+								},
+								{
+									"key": "name",
+									"value": null
+								},
+								{
+									"key": "company_name",
+									"value": null
+								},
+								{
+									"key": "email",
+									"value": null
+								},
+								{
+									"key": "phone",
+									"value": null
+								},
+								{
+									"key": "website",
+									"value": null
+								},
+								{
+									"key": "country",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"client 1 update\",\r\n    \"email\":\"client1@client.com\",\r\n    \"company_name\": \"company name\",\r\n    \"phone\": \"34567\",\r\n    \"website\": \"http://google.com\",\r\n    \"country\":\"India\"\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}superadmin/client/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"client",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"client 1 update\",\r\n    \"email\":\"client1@client.com\",\r\n    \"company_name\": \"company name\",\r\n    \"phone\": \"34567\",\r\n    \"website\": \"http://google.com\",\r\n    \"country\":\"India\"\r\n\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}superadmin/client/1/",
+							"host": [
+								"{{local}}superadmin"
+							],
+							"path": [
+								"client",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Expense Claim",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"date\":\"2023-04-01\",\r\n    \"amount\":100,\r\n    \"title\":\"Lunch Expense\",\r\n    \"description\":\"Lunch\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/expense_claim/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"expense_claim",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "list",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{local}}employee/expense_claim/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"expense_claim",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"date\":\"2023-04-01\",\r\n    \"amount\":200,\r\n    \"title\":\"Lunch Expense\",\r\n    \"description\":\"Lunch\",\r\n    \"claim_status\":\"approved\",\r\n    \"clearance_status\":\"completed\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}employee/expense_claim/1/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"expense_claim",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"date\":\"2023-04-01\",\r\n    \"amount\":200,\r\n    \"title\":\"Lunch Expense\",\r\n    \"description\":\"Lunch\",\r\n    \"claim_status\":\"approved\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}employee/expense_claim/2/",
+							"host": [
+								"{{local}}employee"
+							],
+							"path": [
+								"expense_claim",
+								"2",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "E2E encryption",
+			"item": [
+				{
+					"name": "get public key",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"date\":\"2023-04-01\",\r\n    \"amount\":100,\r\n    \"title\":\"Lunch Expense\",\r\n    \"description\":\"Lunch\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}chat/keys/get_public_key/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"keys",
+								"get_public_key",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "set public key",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"public_key\":\"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{local}}chat/keys/set_public_key/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"keys",
+								"set_public_key",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "my keys",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"employee\":2,\r\n    \"date\":\"2023-04-01\",\r\n    \"amount\":100,\r\n    \"title\":\"Lunch Expense\",\r\n    \"description\":\"Lunch\"\r\n}"
+						},
+						"url": {
+							"raw": "{{local}}chat/keys/my_keys/",
+							"host": [
+								"{{local}}chat"
+							],
+							"path": [
+								"keys",
+								"my_keys",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
